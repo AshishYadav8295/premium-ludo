@@ -204,55 +204,35 @@ async function initializeRecaptcha() {
 /* =========================================================
    SEND REAL OTP
 ========================================================= */
-
 async function sendOTP() {
-
   if (isProcessing) {
-
     return;
-
   }
 
-
-  const phone =
-    phoneNumber.value
-      .replace(/\D/g, "")
-      .trim();
-
-
-  /* Validate phone */
+  const phone = phoneNumber.value
+    .replace(/\D/g, "")
+    .trim();
 
   if (!validatePhoneNumber(phone)) {
-
     showStatus(
       "Please enter a valid 10-digit Indian mobile number.",
       "error"
     );
 
     phoneNumber.focus();
-
     return;
-
   }
-
 
   isProcessing = true;
 
-  userPhoneNumber =
-    getFullPhoneNumber(phone);
+  userPhoneNumber = getFullPhoneNumber(phone);
 
-
-  sendOtpBtn.disabled =
-    true;
-
-  sendOtpBtn.textContent =
-    "Sending OTP...";
-
+  sendOtpBtn.disabled = true;
+  sendOtpBtn.textContent = "Sending OTP...";
 
   try {
 
-    initializeRecaptcha();
-
+    await initializeRecaptcha();
 
     confirmationResult =
       await signInWithPhoneNumber(
@@ -261,87 +241,85 @@ async function sendOTP() {
         recaptchaVerifier
       );
 
-
     showOtpStep();
-
 
     showStatus(
       "OTP sent successfully to your mobile number!",
       "success"
     );
 
+  } catch (error) {
 
-  }
+    console.error(
+      "Firebase OTP FULL ERROR:",
+      error
+    );
 
-  catch (error) {
-  console.error("Firebase OTP FULL ERROR:", error);
-  console.log("Error code:", error.code);
-  console.log("Error message:", error.message);
+    console.log(
+      "Error code:",
+      error.code
+    );
 
-  showStatus(
-    `${error.code}: ${error.message}`,
-    "error"
-  );
-}
-
+    console.log(
+      "Error message:",
+      error.message
+    );
 
     let message =
       "Could not send OTP. Please try again.";
-
 
     if (
       error.code ===
       "auth/invalid-phone-number"
     ) {
-
       message =
         "Please enter a valid mobile number.";
 
-    }
-
-
-    else if (
+    } else if (
       error.code ===
       "auth/too-many-requests"
     ) {
-
       message =
         "Too many attempts. Please try again later.";
 
-    }
-
-
-    else if (
+    } else if (
       error.code ===
       "auth/captcha-check-failed"
     ) {
-
       message =
-        "Security verification failed. Please try again.";
+        "Security verification failed. Please complete reCAPTCHA again.";
+
+    } else if (
+      error.code ===
+      "auth/operation-not-allowed"
+    ) {
+      message =
+        "Phone authentication is not enabled in Firebase.";
+
+    } else if (
+      error.code ===
+      "auth/invalid-app-credential"
+    ) {
+      message =
+        "Firebase app verification failed. Check authorized domains.";
 
     }
-
 
     showStatus(
       message,
       "error"
     );
 
-
-  }
-
-  finally {
+  } finally {
 
     isProcessing = false;
 
-    sendOtpBtn.disabled =
-      false;
+    sendOtpBtn.disabled = false;
 
     sendOtpBtn.textContent =
       "Continue →";
 
   }
-
 }
 
 
