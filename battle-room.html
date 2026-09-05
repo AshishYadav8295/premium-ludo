@@ -1,0 +1,1190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>Battle Room | LUDOVERSE</title>
+
+  <link
+    rel="stylesheet"
+    href="battle-room.css"
+  >
+</head>
+
+<body>
+
+  <!-- =========================================
+       BACKGROUND EFFECTS
+  ========================================== -->
+
+  <div class="background">
+    <div class="background-glow glow-one"></div>
+    <div class="background-glow glow-two"></div>
+    <div class="background-grid"></div>
+  </div>
+
+
+  <!-- =========================================
+       HEADER
+  ========================================== -->
+
+  <header class="topbar">
+
+    <div class="topbar-container">
+
+      <!-- LOGO -->
+
+      <a
+        href="index.html"
+        class="brand"
+      >
+
+        <span class="brand-icon">
+          🎲
+        </span>
+
+        <span class="brand-text">
+          LUDO<span>VERSE</span>
+        </span>
+
+      </a>
+
+
+      <!-- NAVIGATION -->
+
+      <nav class="top-navigation">
+
+        <a href="index.html">
+          Home
+        </a>
+
+        <a href="battle-lobby.html">
+          Battle Lobby
+        </a>
+
+        <a
+          href="battle-room.html"
+          class="active"
+        >
+          Battle Room
+        </a>
+
+      </nav>
+
+
+      <!-- WALLET -->
+
+      <div class="header-actions">
+
+        <div class="wallet-box">
+
+          <div class="wallet-icon">
+            🪙
+          </div>
+
+          <div class="wallet-info">
+
+            <span>
+              Balance
+            </span>
+
+            <strong>
+              🪙
+              <span id="walletBalance">
+                0
+              </span>
+            </strong>
+
+          </div>
+
+        </div>
+
+
+        <button
+          class="profile-button"
+          id="profileBtn"
+          type="button"
+        >
+
+          👤
+
+          <span>
+            Profile
+          </span>
+
+        </button>
+
+      </div>
+
+    </div>
+
+  </header>
+
+
+  <!-- =========================================
+       MAIN CONTENT
+  ========================================== -->
+
+  <main class="battle-room-page">
+
+
+    <!-- =========================================
+         BACK BUTTON
+    ========================================== -->
+
+    <div class="back-navigation">
+
+      <button
+        id="backToLobbyBtn"
+        class="back-button"
+        type="button"
+      >
+
+        ←
+
+        <span>
+          Back to Battle Lobby
+        </span>
+
+      </button>
+
+    </div>
+
+
+    <!-- =========================================
+         PAGE HEADER
+    ========================================== -->
+
+    <section class="battle-header">
+
+      <div class="battle-header-left">
+
+        <div class="live-badge">
+
+          <span class="live-dot"></span>
+
+          LIVE BATTLE
+
+        </div>
+
+
+        <h1>
+
+          Battle
+
+          <span>
+            Room
+          </span>
+
+        </h1>
+
+
+        <p>
+
+          Get ready for your match.
+          Both players must be ready before
+          the game can begin.
+
+        </p>
+
+      </div>
+
+
+      <!-- ROOM CODE -->
+
+      <div class="room-code-card">
+
+        <span class="room-label">
+          ROOM CODE
+        </span>
+
+        <div class="room-code-row">
+
+          <strong
+            id="roomCode"
+          >
+            ------
+          </strong>
+
+
+          <button
+            id="copyRoomCodeBtn"
+            class="copy-button"
+            type="button"
+            title="Copy Room Code"
+          >
+            📋
+          </button>
+
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- =========================================
+         BATTLE STATUS
+    ========================================== -->
+
+    <section class="battle-status-banner">
+
+      <div class="status-left">
+
+        <div
+          class="status-icon waiting"
+          id="statusIcon"
+        >
+          ⏳
+        </div>
+
+
+        <div>
+
+          <span class="status-label">
+            MATCH STATUS
+          </span>
+
+          <h2
+            id="battleStatus"
+          >
+            Waiting for Opponent
+          </h2>
+
+          <p
+            id="battleStatusDescription"
+          >
+            Waiting for another player to join
+            this battle.
+          </p>
+
+        </div>
+
+      </div>
+
+
+      <div class="status-right">
+
+        <div class="players-count">
+
+          <span>
+            PLAYERS
+          </span>
+
+          <strong>
+
+            <span id="playersJoined">
+              1
+            </span>
+
+            /
+
+            <span id="totalPlayers">
+              2
+            </span>
+
+          </strong>
+
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- =========================================
+         MAIN BATTLE GRID
+    ========================================== -->
+
+    <section class="battle-grid">
+
+
+      <!-- =====================================
+           PLAYERS SECTION
+      ====================================== -->
+
+      <div class="players-panel">
+
+
+        <!-- PANEL HEADER -->
+
+        <div class="panel-header">
+
+          <div>
+
+            <span class="section-tag">
+              PLAYERS
+            </span>
+
+            <h2>
+              Battle Players
+            </h2>
+
+          </div>
+
+
+          <div class="connection-status">
+
+            <span></span>
+
+            ONLINE
+
+          </div>
+
+        </div>
+
+
+        <!-- PLAYERS ARENA -->
+
+        <div class="players-arena">
+
+
+          <!-- PLAYER ONE -->
+
+          <div
+            class="player-card player-one"
+          >
+
+            <div class="player-top">
+
+              <div class="player-avatar">
+
+                👤
+
+              </div>
+
+
+              <div
+                class="player-ready-status"
+                id="playerOneStatus"
+              >
+
+                WAITING
+
+              </div>
+
+            </div>
+
+
+            <div class="player-details">
+
+              <span class="player-label">
+                PLAYER 1
+              </span>
+
+              <h3
+                id="playerOneName"
+              >
+                You
+              </h3>
+
+              <p>
+                Battle Creator
+              </p>
+
+            </div>
+
+
+            <div class="player-footer">
+
+              <span>
+                Entry
+              </span>
+
+              <strong>
+
+                🪙
+
+                <span id="playerOneEntry">
+                  0
+                </span>
+
+              </strong>
+
+            </div>
+
+          </div>
+
+
+          <!-- VS -->
+
+          <div class="vs-container">
+
+            <div class="vs-circle">
+
+              VS
+
+            </div>
+
+          </div>
+
+
+          <!-- PLAYER TWO -->
+
+          <div
+            class="player-card player-two"
+          >
+
+            <div class="player-top">
+
+              <div
+                class="player-avatar opponent-avatar"
+                id="playerTwoAvatar"
+              >
+
+                ?
+
+              </div>
+
+
+              <div
+                class="player-ready-status"
+                id="playerTwoStatus"
+              >
+
+                WAITING
+
+              </div>
+
+            </div>
+
+
+            <div class="player-details">
+
+              <span class="player-label">
+                PLAYER 2
+              </span>
+
+              <h3
+                id="playerTwoName"
+              >
+                Waiting...
+              </h3>
+
+              <p
+                id="playerTwoDescription"
+              >
+                Waiting for opponent
+              </p>
+
+            </div>
+
+
+            <div class="player-footer">
+
+              <span>
+                Entry
+              </span>
+
+              <strong>
+
+                🪙
+
+                <span id="playerTwoEntry">
+                  0
+                </span>
+
+              </strong>
+
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <!-- READY SECTION -->
+
+        <div class="ready-section">
+
+          <div class="ready-info">
+
+            <div class="ready-icon">
+
+              🎯
+
+            </div>
+
+
+            <div>
+
+              <h3>
+                Ready to Play?
+              </h3>
+
+              <p
+                id="readyMessage"
+              >
+                Both players must confirm they are ready.
+              </p>
+
+            </div>
+
+          </div>
+
+
+          <button
+            class="ready-button"
+            id="readyBtn"
+            type="button"
+          >
+
+            ✓
+
+            I'm Ready
+
+          </button>
+
+        </div>
+
+      </div>
+
+
+      <!-- =====================================
+           BATTLE SUMMARY
+      ====================================== -->
+
+      <aside class="battle-summary-panel">
+
+
+        <div class="summary-header">
+
+          <span class="section-tag purple">
+            BATTLE DETAILS
+          </span>
+
+          <h2>
+            Prize Summary
+          </h2>
+
+        </div>
+
+
+        <!-- SUMMARY CARD -->
+
+        <div class="summary-card">
+
+
+          <div class="summary-row">
+
+            <span>
+
+              🎮
+
+              Entry Per Player
+
+            </span>
+
+
+            <strong>
+
+              🪙
+
+              <span id="entryAmount">
+                0
+              </span>
+
+            </strong>
+
+          </div>
+
+
+          <div class="summary-row">
+
+            <span>
+
+              👥
+
+              Total Players
+
+            </span>
+
+
+            <strong>
+
+              <span id="summaryPlayers">
+                2
+              </span>
+
+            </strong>
+
+          </div>
+
+
+          <div class="summary-row">
+
+            <span>
+
+              💰
+
+              Total Battle Pool
+
+            </span>
+
+
+            <strong>
+
+              🪙
+
+              <span id="totalPool">
+                0
+              </span>
+
+            </strong>
+
+          </div>
+
+
+          <div class="summary-row commission">
+
+            <span>
+
+              🛡️
+
+              Platform Fee
+
+            </span>
+
+
+            <strong>
+
+              10%
+
+              (
+
+              🪙
+
+              <span id="commissionAmount">
+                0
+              </span>
+
+              )
+
+            </strong>
+
+          </div>
+
+
+          <div class="summary-divider"></div>
+
+
+          <div class="winner-prize">
+
+            <div>
+
+              <span>
+                🏆 WINNER PRIZE
+              </span>
+
+              <p>
+                Prize after platform fee
+              </p>
+
+            </div>
+
+
+            <strong>
+
+              🪙
+
+              <span id="winnerPrize">
+                0
+              </span>
+
+            </strong>
+
+          </div>
+
+        </div>
+
+
+        <!-- FAIR PLAY -->
+
+        <div class="fair-play-card">
+
+          <div class="fair-play-icon">
+
+            🛡️
+
+          </div>
+
+
+          <div>
+
+            <h3>
+              Fair Play System
+            </h3>
+
+            <p>
+
+              Match activity is tracked
+              to keep battles fair and secure.
+
+            </p>
+
+          </div>
+
+        </div>
+
+      </aside>
+
+    </section>
+
+
+    <!-- =========================================
+         GAME CONTROLS
+    ========================================== -->
+
+    <section class="game-controls-section">
+
+
+      <div class="controls-header">
+
+        <div>
+
+          <span class="section-tag">
+            MATCH CONTROLS
+          </span>
+
+          <h2>
+            Ready to Start?
+          </h2>
+
+          <p>
+
+            The game will unlock when both
+            players are ready.
+
+          </p>
+
+        </div>
+
+      </div>
+
+
+      <div class="game-controls">
+
+
+        <!-- START GAME -->
+
+        <button
+          class="start-game-button"
+          id="startGameBtn"
+          type="button"
+          disabled
+        >
+
+          <span class="button-icon">
+            🎲
+          </span>
+
+
+          <span>
+
+            <strong>
+              Start Ludo Match
+            </strong>
+
+            <small>
+              Both players must be ready
+            </small>
+
+          </span>
+
+        </button>
+
+
+        <!-- CANCEL -->
+
+        <button
+          class="cancel-battle-button"
+          id="cancelBattleBtn"
+          type="button"
+        >
+
+          ✕
+
+          Cancel Battle
+
+        </button>
+
+      </div>
+
+
+      <!-- CANCEL POLICY -->
+
+      <div class="cancel-policy">
+
+        <span>
+          ℹ️
+        </span>
+
+        <p>
+
+          If a player cancels after the match starts,
+          cancellation rules will be applied according
+          to the battle status.
+
+        </p>
+
+      </div>
+
+    </section>
+
+
+    <!-- =========================================
+         BATTLE TIMELINE
+    ========================================== -->
+
+    <section class="timeline-section">
+
+
+      <div class="timeline-header">
+
+        <span class="section-tag purple">
+          MATCH PROGRESS
+        </span>
+
+        <h2>
+          Battle Timeline
+        </h2>
+
+      </div>
+
+
+      <div class="battle-timeline">
+
+
+        <!-- STEP 1 -->
+
+        <div
+          class="timeline-item completed"
+          id="timelineCreated"
+        >
+
+          <div class="timeline-dot">
+
+            ✓
+
+          </div>
+
+
+          <div>
+
+            <span>
+              STEP 1
+            </span>
+
+            <h3>
+              Battle Created
+            </h3>
+
+            <p>
+              Your battle has been created successfully.
+            </p>
+
+          </div>
+
+        </div>
+
+
+        <!-- LINE -->
+
+        <div class="timeline-line"></div>
+
+
+        <!-- STEP 2 -->
+
+        <div
+          class="timeline-item"
+          id="timelineJoined"
+        >
+
+          <div class="timeline-dot">
+
+            2
+
+          </div>
+
+
+          <div>
+
+            <span>
+              STEP 2
+            </span>
+
+            <h3>
+              Opponent Joins
+            </h3>
+
+            <p>
+              Waiting for another player.
+            </p>
+
+          </div>
+
+        </div>
+
+
+        <!-- LINE -->
+
+        <div class="timeline-line"></div>
+
+
+        <!-- STEP 3 -->
+
+        <div
+          class="timeline-item"
+          id="timelineReady"
+        >
+
+          <div class="timeline-dot">
+
+            3
+
+          </div>
+
+
+          <div>
+
+            <span>
+              STEP 3
+            </span>
+
+            <h3>
+              Players Ready
+            </h3>
+
+            <p>
+              Both players confirm readiness.
+            </p>
+
+          </div>
+
+        </div>
+
+
+        <!-- LINE -->
+
+        <div class="timeline-line"></div>
+
+
+        <!-- STEP 4 -->
+
+        <div
+          class="timeline-item"
+          id="timelinePlaying"
+        >
+
+          <div class="timeline-dot">
+
+            🎲
+
+          </div>
+
+
+          <div>
+
+            <span>
+              STEP 4
+            </span>
+
+            <h3>
+              Match Starts
+            </h3>
+
+            <p>
+              Play the Ludo battle.
+            </p>
+
+          </div>
+
+        </div>
+
+
+        <!-- LINE -->
+
+        <div class="timeline-line"></div>
+
+
+        <!-- STEP 5 -->
+
+        <div
+          class="timeline-item"
+          id="timelineWinner"
+        >
+
+          <div class="timeline-dot">
+
+            🏆
+
+          </div>
+
+
+          <div>
+
+            <span>
+              STEP 5
+            </span>
+
+            <h3>
+              Winner Declared
+            </h3>
+
+            <p>
+              Winner receives the prize.
+            </p>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </section>
+
+  </main>
+
+
+  <!-- =========================================
+       CANCEL CONFIRM MODAL
+  ========================================== -->
+
+  <div
+    class="modal-overlay"
+    id="cancelModal"
+  >
+
+    <div class="cancel-modal">
+
+
+      <div class="cancel-modal-icon">
+
+        ⚠️
+
+      </div>
+
+
+      <span class="section-tag danger">
+
+        CANCEL BATTLE
+
+      </span>
+
+
+      <h2>
+        Are you sure?
+      </h2>
+
+
+      <p
+        id="cancelModalMessage"
+      >
+
+        Cancelling this battle may affect
+        the battle balance and status.
+
+      </p>
+
+
+      <div class="cancel-modal-actions">
+
+
+        <button
+          class="modal-secondary-button"
+          id="closeCancelModalBtn"
+          type="button"
+        >
+
+          Keep Playing
+
+        </button>
+
+
+        <button
+          class="modal-danger-button"
+          id="confirmCancelBattleBtn"
+          type="button"
+        >
+
+          Yes, Cancel Battle
+
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <!-- =========================================
+       TOAST NOTIFICATION
+  ========================================== -->
+
+  <div
+    class="toast"
+    id="toast"
+  >
+
+    <div
+      class="toast-icon"
+      id="toastIcon"
+    >
+
+      ✓
+
+    </div>
+
+
+    <span
+      id="toastMessage"
+    >
+      Message
+    </span>
+
+  </div>
+
+
+  <!-- =========================================
+       FOOTER
+  ========================================== -->
+
+  <footer class="footer">
+
+    <div class="footer-logo">
+
+      🎲
+
+      <strong>
+
+        LUDO<span>VERSE</span>
+
+      </strong>
+
+    </div>
+
+
+    <p>
+
+      © 2026 LUDOVERSE.
+      Play responsibly.
+
+    </p>
+
+  </footer>
+
+
+  <!-- =========================================
+       JAVASCRIPT
+  ========================================== -->
+
+  <script src="battle-room.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>Login | LUDOVERSE</title>
+
+  <link
+    rel="stylesheet"
+    href="login.css"
+  >
+</head>
+
+<body>
+
+  <!-- =========================================
+       BACKGROUND EFFECTS
+  ========================================== -->
+
+  <div class="background">
+    <div class="glow glow-one"></div>
+    <div class="glow glow-two"></div>
+    <div class="grid"></div>
+  </div>
+
+
+  <!-- =========================================
+       LOGIN PAGE
+  ========================================== -->
+
+  <main class="login-page">
+
+    <section class="login-card">
+
+
+      <!-- =====================================
+           BRAND / LOGO
+      ====================================== -->
+
+      <div class="brand">
+
+        <div class="logo-icon">
+          🎲
+        </div>
+
+        <h1>
+          LUDO<span>VERSE</span>
+        </h1>
+
+        <p>
+          Premium Ludo Gaming Experience
+        </p>
+
+      </div>
+
+
+      <!-- =====================================
+           PHONE LOGIN STEP
+      ====================================== -->
+
+      <div
+        class="login-step active"
+        id="phoneStep"
+      >
+
+        <div class="step-icon">
+          📱
+        </div>
+
+        <h2>
+          Welcome!
+        </h2>
+
+        <p class="description">
+          Enter your mobile number to continue.
+        </p>
+
+
+        <!-- PHONE INPUT -->
+
+        <div class="phone-input">
+
+          <div class="country-code">
+            🇮🇳 +91
+          </div>
+
+          <input
+            type="tel"
+            id="phoneNumber"
+            placeholder="Enter mobile number"
+            maxlength="10"
+            inputmode="numeric"
+            autocomplete="tel"
+          >
+
+        </div>
+
+
+        <!-- SEND OTP BUTTON -->
+
+        <button
+          class="main-btn"
+          id="sendOtpBtn"
+          type="button"
+        >
+          Continue →
+        </button>
+
+
+        <!-- =====================================
+             FIREBASE reCAPTCHA
+        ====================================== -->
+
+        <div id="recaptcha-container"></div>
+
+
+        <!-- TERMS -->
+
+        <p class="terms">
+          By continuing, you agree to use
+          LUDOVERSE responsibly.
+        </p>
+
+      </div>
+
+
+      <!-- =====================================
+           OTP VERIFICATION STEP
+      ====================================== -->
+
+      <div
+        class="login-step"
+        id="otpStep"
+      >
+
+
+        <!-- BACK BUTTON -->
+
+        <button
+          class="back-btn"
+          id="backBtn"
+          type="button"
+        >
+          ← Back
+        </button>
+
+
+        <div class="step-icon">
+          🔐
+        </div>
+
+
+        <h2>
+          Verify Your Number
+        </h2>
+
+
+        <p class="description">
+          Enter the verification code sent to
+          your mobile number.
+        </p>
+
+
+        <!-- OTP INPUTS -->
+
+        <div class="otp-container">
+
+          <input
+            class="otp-input"
+            type="text"
+            inputmode="numeric"
+            maxlength="1"
+            autocomplete="one-time-code"
+          >
+
+          <input
+            class="otp-input"
+            type="text"
+            inputmode="numeric"
+            maxlength="1"
+          >
+
+          <input
+            class="otp-input"
+            type="text"
+            inputmode="numeric"
+            maxlength="1"
+          >
+
+          <input
+            class="otp-input"
+            type="text"
+            inputmode="numeric"
+            maxlength="1"
+          >
+
+          <input
+            class="otp-input"
+            type="text"
+            inputmode="numeric"
+            maxlength="1"
+          >
+
+          <input
+            class="otp-input"
+            type="text"
+            inputmode="numeric"
+            maxlength="1"
+          >
+
+        </div>
+
+
+        <!-- VERIFY OTP BUTTON -->
+
+        <button
+          class="main-btn"
+          id="verifyOtpBtn"
+          type="button"
+        >
+          Verify & Continue →
+        </button>
+
+
+        <!-- RESEND OTP -->
+
+        <p class="resend">
+
+          Didn't receive a code?
+
+          <button
+            id="resendBtn"
+            type="button"
+          >
+            Resend
+          </button>
+
+        </p>
+
+
+      </div>
+
+
+    </section>
+
+  </main>
+
+
+  <!-- =========================================
+       FIREBASE LOGIN SCRIPT
+  ========================================== -->
+
+  <script
+    type="module"
+    src="login.js"
+  ></script>
+
+</body>
+</html>

@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>Create Battle | LUDOVERSE</title>
+
+  <link
+    rel="stylesheet"
+    href="battle.css"
+  >
+</head>
+
+<body>
+
+  <!-- =====================================
+       BACKGROUND EFFECTS
+       ===================================== -->
+
+  <div class="background">
+
+    <div class="glow glow-one"></div>
+
+    <div class="glow glow-two"></div>
+
+    <div class="grid"></div>
+
+  </div>
+
+
+  <!-- =====================================
+       NAVBAR
+       ===================================== -->
+
+  <nav class="navbar">
+
+    <a
+      href="index.html"
+      class="brand"
+    >
+      🎲 LUDO<span>VERSE</span>
+    </a>
+
+
+    <div class="nav-actions">
+
+      <a
+        href="wallet.html"
+        class="wallet-link"
+      >
+        💳 Wallet
+      </a>
+
+
+      <button
+        class="profile-btn"
+        id="profileBtn"
+        type="button"
+      >
+        👤 Profile
+      </button>
+
+    </div>
+
+  </nav>
+
+
+  <!-- =====================================
+       MAIN PAGE
+       ===================================== -->
+
+  <main class="battle-page">
+
+
+    <!-- =====================================
+         PAGE HEADER
+         ===================================== -->
+
+    <section class="page-header">
+
+      <div class="header-content">
+
+        <p class="eyebrow">
+          ⚔️ DEMO LUDO BATTLE
+        </p>
+
+
+        <h1>
+          Create Your
+          <span>Battle</span>
+        </h1>
+
+
+        <p class="header-description">
+
+          Choose your demo entry amount,
+          create a private battle and invite
+          another player using your room code.
+
+        </p>
+
+      </div>
+
+
+      <!-- WALLET MINI CARD -->
+
+      <div class="mini-wallet">
+
+        <div class="mini-wallet-icon">
+          💳
+        </div>
+
+        <div>
+
+          <p>
+            Demo Balance
+          </p>
+
+          <h2>
+            ₹<span id="walletBalance">
+              0
+            </span>
+          </h2>
+
+        </div>
+
+      </div>
+
+    </section>
+
+
+
+    <!-- =====================================
+         BATTLE LAYOUT
+         ===================================== -->
+
+    <section class="battle-layout">
+
+
+      <!-- =====================================
+           LEFT SIDE
+           ===================================== -->
+
+      <div class="battle-form-container">
+
+
+        <!-- =====================================
+             GAME TYPE
+             ===================================== -->
+
+        <section class="battle-section">
+
+          <div class="section-title">
+
+            <div class="step-number">
+              1
+            </div>
+
+            <div>
+
+              <h2>
+                Select Game Mode
+              </h2>
+
+              <p>
+                Choose how you want to play.
+              </p>
+
+            </div>
+
+          </div>
+
+
+          <div class="mode-grid">
+
+
+            <!-- PRIVATE MODE -->
+
+            <button
+              class="mode-card active"
+              data-mode="private"
+              type="button"
+            >
+
+              <div class="mode-icon">
+                🔒
+              </div>
+
+              <div>
+
+                <h3>
+                  Private Battle
+                </h3>
+
+                <p>
+                  Create a room and share
+                  the room code.
+                </p>
+
+              </div>
+
+              <span class="selected-check">
+                ✓
+              </span>
+
+            </button>
+
+
+
+            <!-- QUICK MATCH -->
+
+            <button
+              class="mode-card"
+              data-mode="quick"
+              type="button"
+            >
+
+              <div class="mode-icon">
+                ⚡
+              </div>
+
+              <div>
+
+                <h3>
+                  Quick Match
+                </h3>
+
+                <p>
+                  Demo matchmaking interface.
+                </p>
+
+              </div>
+
+              <span class="selected-check">
+                ✓
+              </span>
+
+            </button>
+
+
+          </div>
+
+        </section>
+
+
+
+        <!-- =====================================
+             ENTRY AMOUNT
+             ===================================== -->
+
+        <section class="battle-section">
+
+
+          <div class="section-title">
+
+            <div class="step-number">
+              2
+            </div>
+
+            <div>
+
+              <h2>
+                Select Demo Entry
+              </h2>
+
+              <p>
+                Choose the amount for this battle.
+              </p>
+
+            </div>
+
+          </div>
+
+
+          <div
+            class="entry-grid"
+            id="entryGrid"
+          >
+
+            <button
+              class="entry-btn"
+              data-amount="10"
+              type="button"
+            >
+              ₹10
+            </button>
+
+            <button
+              class="entry-btn"
+              data-amount="20"
+              type="button"
+            >
+              ₹20
+            </button>
+
+            <button
+              class="entry-btn active"
+              data-amount="50"
+              type="button"
+            >
+              ₹50
+            </button>
+
+            <button
+              class="entry-btn"
+              data-amount="100"
+              type="button"
+            >
+              ₹100
+            </button>
+
+            <button
+              class="entry-btn"
+              data-amount="200"
+              type="button"
+            >
+              ₹200
+            </button>
+
+            <button
+              class="entry-btn"
+              data-amount="500"
+              type="button"
+            >
+              ₹500
+            </button>
+
+          </div>
+
+
+          <!-- CUSTOM AMOUNT -->
+
+          <div class="custom-entry">
+
+            <span class="currency">
+              ₹
+            </span>
+
+            <input
+              type="number"
+              id="customEntry"
+              placeholder="Enter custom demo amount"
+              min="1"
+              inputmode="numeric"
+            >
+
+          </div>
+
+
+        </section>
+
+
+
+        <!-- =====================================
+             BATTLE SETTINGS
+             ===================================== -->
+
+        <section class="battle-section">
+
+
+          <div class="section-title">
+
+            <div class="step-number">
+              3
+            </div>
+
+            <div>
+
+              <h2>
+                Battle Settings
+              </h2>
+
+              <p>
+                Configure your Ludo match.
+              </p>
+
+            </div>
+
+          </div>
+
+
+          <div class="settings-grid">
+
+
+            <!-- PLAYER COUNT -->
+
+            <div class="setting-card">
+
+              <label
+                for="playerCount"
+              >
+                👥 Players
+              </label>
+
+              <select
+                id="playerCount"
+              >
+
+                <option value="2">
+                  2 Players
+                </option>
+
+              </select>
+
+            </div>
+
+
+
+            <!-- GAME TYPE -->
+
+            <div class="setting-card">
+
+              <label
+                for="gameType"
+              >
+                🎲 Game Type
+              </label>
+
+              <select
+                id="gameType"
+              >
+
+                <option value="classic">
+                  Classic Ludo
+                </option>
+
+              </select>
+
+            </div>
+
+
+          </div>
+
+
+        </section>
+
+
+
+        <!-- =====================================
+             CREATE BUTTON
+             ===================================== -->
+
+        <button
+          class="create-battle-btn"
+          id="createBattleBtn"
+          type="button"
+        >
+
+          <span>
+            ⚔️
+          </span>
+
+          Create Demo Battle
+
+        </button>
+
+
+        <p class="demo-note">
+
+          🎮 This battle currently uses
+          demo balance only.
+
+        </p>
+
+
+      </div>
+
+
+
+      <!-- =====================================
+           RIGHT SIDE
+           BATTLE PREVIEW
+           ===================================== -->
+
+      <aside class="battle-preview">
+
+
+        <div class="preview-header">
+
+          <p>
+            BATTLE PREVIEW
+          </p>
+
+          <span class="live-dot">
+            ● DEMO
+          </span>
+
+        </div>
+
+
+
+        <!-- BATTLE VISUAL -->
+
+        <div class="battle-visual">
+
+
+          <div class="player player-one">
+
+            <div class="player-avatar">
+              👤
+            </div>
+
+            <p>
+              YOU
+            </p>
+
+          </div>
+
+
+          <div class="vs">
+
+            VS
+
+          </div>
+
+
+          <div class="player player-two">
+
+            <div class="player-avatar opponent">
+
+              ?
+
+            </div>
+
+            <p>
+              OPPONENT
+            </p>
+
+          </div>
+
+
+        </div>
+
+
+
+        <!-- BATTLE DETAILS -->
+
+        <div class="preview-details">
+
+
+          <div class="preview-row">
+
+            <span>
+              🎮 Game
+            </span>
+
+            <strong>
+              Classic Ludo
+            </strong>
+
+          </div>
+
+
+          <div class="preview-row">
+
+            <span>
+              💰 Demo Entry
+            </span>
+
+            <strong>
+              ₹<span id="previewEntry">
+                50
+              </span>
+            </strong>
+
+          </div>
+
+
+          <div class="preview-row">
+
+            <span>
+              🏆 Demo Prize
+            </span>
+
+            <strong class="prize">
+
+              ₹<span id="previewPrize">
+                100
+              </span>
+
+            </strong>
+
+          </div>
+
+
+          <div class="preview-row">
+
+            <span>
+              👥 Players
+            </span>
+
+            <strong>
+              2 Players
+            </strong>
+
+          </div>
+
+
+        </div>
+
+
+
+        <!-- STATUS -->
+
+        <div class="battle-status">
+
+          <div class="status-icon">
+            ⏳
+          </div>
+
+          <div>
+
+            <h3>
+              Waiting for Opponent
+            </h3>
+
+            <p>
+              Your room will be created
+              after confirmation.
+            </p>
+
+          </div>
+
+        </div>
+
+
+      </aside>
+
+
+    </section>
+
+
+  </main>
+
+
+
+  <!-- =====================================
+       BATTLE CREATED MODAL
+       ===================================== -->
+
+  <div
+    class="modal"
+    id="battleCreatedModal"
+  >
+
+    <div class="modal-box battle-success-box">
+
+
+      <div class="success-animation">
+
+        <div class="success-icon">
+          ⚔️
+        </div>
+
+      </div>
+
+
+      <p class="success-label">
+
+        BATTLE CREATED
+
+      </p>
+
+
+      <h2>
+
+        Your Battle is Ready!
+
+      </h2>
+
+
+      <p class="success-description">
+
+        Share this room code with
+        your opponent to join the battle.
+
+      </p>
+
+
+
+      <!-- ROOM CODE -->
+
+      <div class="room-code-box">
+
+        <p>
+          ROOM CODE
+        </p>
+
+        <div class="room-code-row">
+
+          <strong
+            id="roomCode"
+          >
+            000000
+          </strong>
+
+          <button
+            id="copyRoomCodeBtn"
+            type="button"
+            title="Copy Room Code"
+          >
+            📋
+          </button>
+
+        </div>
+
+      </div>
+
+
+
+      <!-- BATTLE SUMMARY -->
+
+      <div class="success-summary">
+
+        <div>
+
+          <span>
+            Demo Entry
+          </span>
+
+          <strong>
+            ₹<span id="successEntry">
+              50
+            </span>
+          </strong>
+
+        </div>
+
+
+        <div>
+
+          <span>
+            Demo Prize
+          </span>
+
+          <strong>
+            ₹<span id="successPrize">
+              100
+            </span>
+          </strong>
+
+        </div>
+
+      </div>
+
+
+
+      <!-- ACTIONS -->
+
+      <div class="success-actions">
+
+        <button
+          class="secondary-action"
+          id="backToWalletBtn"
+          type="button"
+        >
+
+          💳 Wallet
+
+        </button>
+
+
+        <button
+          class="primary-action"
+          id="goToGameBtn"
+          type="button"
+        >
+
+          🎲 Open Ludo Game
+
+        </button>
+
+      </div>
+
+
+    </div>
+
+  </div>
+
+
+
+  <!-- =====================================
+       TOAST MESSAGE
+       ===================================== -->
+
+  <div
+    class="toast"
+    id="toast"
+  >
+
+    <span id="toastMessage"></span>
+
+  </div>
+
+
+
+  <!-- =====================================
+       JAVASCRIPT
+       ===================================== -->
+
+  <script src="battle.js"></script>
+
+</body>
+</html>

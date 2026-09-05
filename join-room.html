@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>Join Battle | LUDOVERSE</title>
+
+  <link
+    rel="stylesheet"
+    href="join-room.css"
+  >
+</head>
+
+<body>
+
+  <!-- BACKGROUND -->
+  <div class="background">
+
+    <div class="glow glow-one"></div>
+
+    <div class="glow glow-two"></div>
+
+    <div class="grid"></div>
+
+  </div>
+
+
+  <!-- NAVBAR -->
+
+  <nav class="navbar">
+
+    <a
+      href="index.html"
+      class="brand"
+    >
+
+      <span class="brand-icon">🎲</span>
+
+      <span>
+        LUDO<span>VERSE</span>
+      </span>
+
+    </a>
+
+
+    <div class="nav-actions">
+
+      <a
+        href="wallet.html"
+        class="nav-btn"
+      >
+        💳
+        <span>Wallet</span>
+      </a>
+
+
+      <a
+        href="index.html"
+        class="nav-btn profile-btn"
+      >
+        👤
+        <span>Profile</span>
+      </a>
+
+    </div>
+
+  </nav>
+
+
+  <!-- MAIN -->
+
+  <main class="join-page">
+
+
+    <!-- HEADER -->
+
+    <section class="hero-section">
+
+      <div class="hero-badge">
+        🎮 LUDOVERSE BATTLE ROOM
+      </div>
+
+
+      <h1>
+        Join Your
+        <span>Battle Room</span>
+      </h1>
+
+
+      <p>
+        Enter the 6-digit room code shared by the battle creator.
+      </p>
+
+
+      <!-- BALANCE -->
+
+      <div class="balance-pill">
+
+        <div class="balance-icon">
+          💳
+        </div>
+
+        <div>
+
+          <span>Demo Balance</span>
+
+          <strong>
+            ₹<span id="walletBalance">0</span>
+          </strong>
+
+        </div>
+
+      </div>
+
+    </section>
+
+
+
+    <!-- JOIN CARD -->
+
+    <section class="join-card">
+
+
+      <!-- CARD HEADER -->
+
+      <div class="card-header">
+
+        <div class="card-icon">
+          🎲
+        </div>
+
+
+        <div>
+
+          <span class="small-label">
+            PRIVATE BATTLE
+          </span>
+
+          <h2>
+            Enter Room Code
+          </h2>
+
+          <p>
+            Ask the battle creator for their 6-digit room code.
+          </p>
+
+        </div>
+
+      </div>
+
+
+
+      <!-- ROOM CODE INPUT -->
+
+      <div class="input-section">
+
+        <label for="roomCodeInput">
+
+          🔐 Room Code
+
+        </label>
+
+
+        <input
+          type="text"
+          id="roomCodeInput"
+          maxlength="6"
+          inputmode="numeric"
+          autocomplete="off"
+          placeholder="000000"
+        >
+
+      </div>
+
+
+
+      <!-- JOIN BUTTON -->
+
+      <button
+        id="joinBattleBtn"
+        class="join-btn"
+        type="button"
+      >
+
+        <span>🚀</span>
+
+        Join Battle
+
+      </button>
+
+
+
+      <!-- DIVIDER -->
+
+      <div class="divider">
+
+        <span>OR</span>
+
+      </div>
+
+
+
+      <!-- CREATE OWN BATTLE -->
+
+      <a
+        href="battle.html"
+        class="create-own-btn"
+      >
+
+        <span>⚔️</span>
+
+        Create Your Own Battle
+
+      </a>
+
+
+      <!-- INFO -->
+
+      <div class="security-note">
+
+        <span>🔒</span>
+
+        <p>
+          Your room code is used to identify your demo battle room.
+        </p>
+
+      </div>
+
+
+    </section>
+
+
+
+    <!-- BATTLE PREVIEW -->
+
+    <section
+      class="battle-preview hidden"
+      id="battlePreview"
+    >
+
+
+      <div class="preview-top">
+
+        <div>
+
+          <span class="small-label">
+            BATTLE FOUND
+          </span>
+
+          <h2>
+            Battle Ready!
+          </h2>
+
+        </div>
+
+
+        <div class="status-badge">
+
+          <span class="status-dot"></span>
+
+          READY
+
+        </div>
+
+      </div>
+
+
+
+      <!-- PLAYERS -->
+
+      <div class="players-container">
+
+
+        <div class="player-card">
+
+          <div class="avatar you">
+
+            👤
+
+          </div>
+
+          <strong>
+            YOU
+          </strong>
+
+          <span>
+            Player 2
+          </span>
+
+        </div>
+
+
+
+        <div class="vs">
+
+          VS
+
+        </div>
+
+
+
+        <div class="player-card">
+
+          <div class="avatar opponent">
+
+            ?
+
+          </div>
+
+          <strong>
+            OPPONENT
+          </strong>
+
+          <span>
+            Player 1
+          </span>
+
+        </div>
+
+
+      </div>
+
+
+
+      <!-- DETAILS -->
+
+      <div class="battle-details">
+
+
+        <div class="detail-item">
+
+          <span>🎲 Game</span>
+
+          <strong>
+            Classic Ludo
+          </strong>
+
+        </div>
+
+
+        <div class="detail-item">
+
+          <span>💰 Demo Entry</span>
+
+          <strong>
+            ₹<span id="battleEntry">0</span>
+          </strong>
+
+        </div>
+
+
+        <div class="detail-item">
+
+          <span>🏆 Demo Prize</span>
+
+          <strong class="prize">
+
+            ₹<span id="battlePrize">0</span>
+
+          </strong>
+
+        </div>
+
+
+        <div class="detail-item">
+
+          <span>👥 Players</span>
+
+          <strong>
+            2 / 2
+          </strong>
+
+        </div>
+
+
+      </div>
+
+
+
+      <!-- ACTIONS -->
+
+      <div class="preview-actions">
+
+        <button
+          id="backBtn"
+          class="back-btn"
+          type="button"
+        >
+
+          ← Back
+
+        </button>
+
+
+        <button
+          id="openGameBtn"
+          class="open-game-btn"
+          type="button"
+        >
+
+          🎮 Continue
+
+        </button>
+
+
+      </div>
+
+
+    </section>
+
+
+
+    <!-- SIMPLE HELP -->
+
+    <section class="help-row">
+
+      <div>
+
+        <span>🔐</span>
+
+        <p>
+          Get the room code from the battle creator.
+        </p>
+
+      </div>
+
+
+      <div>
+
+        <span>🎮</span>
+
+        <p>
+          Enter the code and join the battle.
+        </p>
+
+      </div>
+
+
+      <div>
+
+        <span>🚀</span>
+
+        <p>
+          Continue when the battle is ready.
+        </p>
+
+      </div>
+
+    </section>
+
+
+  </main>
+
+
+
+  <!-- TOAST -->
+
+  <div
+    class="toast"
+    id="toast"
+  >
+
+    <span id="toastMessage"></span>
+
+  </div>
+
+
+
+  <script src="join-room.js"></script>
+
+</body>
+
+</html>

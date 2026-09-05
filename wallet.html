@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>Wallet | LUDOVERSE</title>
+
+  <link rel="stylesheet" href="wallet.css">
+</head>
+
+<body>
+
+  <!-- BACKGROUND EFFECTS -->
+  <div class="background">
+    <div class="glow glow-one"></div>
+    <div class="glow glow-two"></div>
+    <div class="grid"></div>
+  </div>
+
+
+  <!-- NAVBAR -->
+  <nav class="navbar">
+
+    <a href="index.html" class="brand">
+      🎲 LUDO<span>VERSE</span>
+    </a>
+
+    <div class="nav-actions">
+
+      <a
+        href="index.html"
+        class="home-btn"
+      >
+        ← Home
+      </a>
+
+      <button
+        class="profile-btn"
+        id="profileBtn"
+      >
+        👤 Profile
+      </button>
+
+    </div>
+
+  </nav>
+
+
+  <!-- MAIN -->
+  <main class="wallet-page">
+
+
+    <!-- PAGE HEADER -->
+    <section class="page-header">
+
+      <div>
+
+        <p class="eyebrow">
+          💳 DEMO WALLET
+        </p>
+
+        <h1>
+          Your <span>Wallet</span>
+        </h1>
+
+        <p>
+          Manage your demo balance and get ready
+          to create exciting Ludo battles.
+        </p>
+
+      </div>
+
+    </section>
+
+
+    <!-- WALLET BALANCE -->
+    <section class="wallet-card">
+
+      <div class="wallet-top">
+
+        <div>
+
+          <p class="balance-label">
+            Available Balance
+          </p>
+
+          <h2 class="balance">
+
+            ₹<span id="walletBalance">0</span>
+
+          </h2>
+
+          <p class="demo-text">
+            Demo balance for testing the website.
+          </p>
+
+        </div>
+
+
+        <div class="wallet-icon">
+          💰
+        </div>
+
+      </div>
+
+
+      <!-- WALLET ACTIONS -->
+      <div class="wallet-actions">
+
+        <button
+          class="add-money-btn"
+          id="addMoneyBtn"
+        >
+          ➕ Add Demo Money
+        </button>
+
+
+        <button
+          class="withdraw-btn"
+          id="withdrawBtn"
+        >
+          💳 Withdraw
+        </button>
+
+      </div>
+
+    </section>
+
+
+
+    <!-- QUICK AMOUNTS -->
+    <section class="section-card">
+
+      <div class="section-heading">
+
+        <div>
+
+          <h2>
+            Add Demo Balance
+          </h2>
+
+          <p>
+            Select an amount for testing.
+          </p>
+
+        </div>
+
+      </div>
+
+
+      <div class="amount-grid">
+
+        <button class="amount-btn" data-amount="50">
+          ₹50
+        </button>
+
+        <button class="amount-btn" data-amount="100">
+          ₹100
+        </button>
+
+        <button class="amount-btn" data-amount="200">
+          ₹200
+        </button>
+
+        <button class="amount-btn" data-amount="500">
+          ₹500
+        </button>
+
+      </div>
+
+    </section>
+
+
+
+    <!-- CREATE BATTLE -->
+    <section class="battle-card">
+
+      <div class="battle-info">
+
+        <div class="battle-icon">
+          ⚔️
+        </div>
+
+
+        <div>
+
+          <p class="eyebrow">
+            LUDO BATTLE
+          </p>
+
+          <h2>
+            Ready to Play?
+          </h2>
+
+          <p>
+            Create a battle using your available
+            demo wallet balance.
+          </p>
+
+        </div>
+
+      </div>
+
+
+      <button
+        class="create-battle-btn"
+        id="createBattleBtn"
+      >
+        ⚔️ Create Battle
+      </button>
+
+    </section>
+
+
+
+    <!-- TRANSACTION HISTORY -->
+    <section class="section-card transactions-card">
+
+      <div class="section-heading">
+
+        <div>
+
+          <h2>
+            Transaction History
+          </h2>
+
+          <p>
+            Your recent demo wallet activity.
+          </p>
+
+        </div>
+
+
+        <span class="history-badge">
+          DEMO
+        </span>
+
+      </div>
+
+
+      <div
+        class="transaction-list"
+        id="transactionList"
+      >
+
+        <div class="empty-history">
+
+          <div class="empty-icon">
+            📜
+          </div>
+
+          <h3>
+            No transactions yet
+          </h3>
+
+          <p>
+            Add demo money to see your
+            wallet activity here.
+          </p>
+
+        </div>
+
+      </div>
+
+    </section>
+
+
+  </main>
+
+
+
+  <!-- ADD MONEY MODAL -->
+  <div
+    class="modal"
+    id="addMoneyModal"
+  >
+
+    <div class="modal-box">
+
+      <button
+        class="close-btn"
+        id="closeModalBtn"
+      >
+        ✕
+      </button>
+
+
+      <div class="modal-icon">
+        💰
+      </div>
+
+
+      <h2>
+        Add Demo Money
+      </h2>
+
+
+      <p>
+        Choose an amount to add for testing.
+      </p>
+
+
+      <div class="modal-amounts">
+
+        <button data-modal-amount="50">
+          ₹50
+        </button>
+
+        <button data-modal-amount="100">
+          ₹100
+        </button>
+
+        <button data-modal-amount="200">
+          ₹200
+        </button>
+
+        <button data-modal-amount="500">
+          ₹500
+        </button>
+
+        <button data-modal-amount="1000">
+          ₹1000
+        </button>
+
+        <button data-modal-amount="2000">
+          ₹2000
+        </button>
+
+      </div>
+
+
+      <div class="custom-amount">
+
+        <span>
+          ₹
+        </span>
+
+        <input
+          type="number"
+          id="customAmount"
+          placeholder="Enter custom amount"
+          min="1"
+        >
+
+      </div>
+
+
+      <button
+        class="confirm-add-btn"
+        id="confirmAddBtn"
+      >
+        Add Demo Balance
+      </button>
+
+
+      <p class="modal-note">
+        ⚠️ This is currently a demo wallet.
+        No real money is processed.
+      </p>
+
+    </div>
+
+  </div>
+
+
+
+  <!-- TOAST -->
+  <div
+    class="toast"
+    id="toast"
+  >
+    <span id="toastMessage"></span>
+  </div>
+
+
+
+  <script src="wallet.js"></script>
+
+</body>
+</html>
