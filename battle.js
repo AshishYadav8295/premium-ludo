@@ -1,5 +1,13 @@
 "use strict";
 
+import {
+  auth,
+  database,
+  ref,
+  set,
+  get
+} from "./firebase.js";
+
 /* =========================================================
    LUDOVERSE - BATTLE SYSTEM
    DEMO BATTLE CREATION
@@ -373,8 +381,8 @@ document.addEventListener("DOMContentLoaded", () => {
   if (createBattleBtn) {
 
     createBattleBtn.addEventListener(
-      "click",
-      () => {
+  "click",
+  async () => {
 
         /* -----------------------------------------
            VALIDATE ENTRY
@@ -491,13 +499,52 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
         /* -----------------------------------------
-           SAVE CURRENT BATTLE
-           ----------------------------------------- */
+   SAVE BATTLE TO FIREBASE
+   ----------------------------------------- */
 
-        localStorage.setItem(
-          "ludoverseCurrentBattle",
-          JSON.stringify(battle)
-        );
+const currentUser = auth.currentUser;
+
+if (!currentUser) {
+  showToast(
+    "Please login again."
+  );
+  return;
+}
+
+battle.hostUid = currentUser.uid;
+
+battle.hostName =
+  currentUser.displayName || "Player";
+
+battle.hostEmail =
+  currentUser.email || "";
+
+battle.hostPhoto =
+  currentUser.photoURL || "";
+
+try {
+
+  await set(
+    ref(
+      database,
+      "battles/" + generatedRoomCode
+    ),
+    battle
+  );
+
+} catch (error) {
+
+  console.error(
+    "Firebase battle error:",
+    error
+  );
+
+  showToast(
+    "❌ Failed to create battle. Please try again."
+  );
+
+  return;
+}
 
 
         /* -----------------------------------------
