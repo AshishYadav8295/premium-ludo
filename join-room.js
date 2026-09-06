@@ -1,9 +1,19 @@
 "use strict";
 
 /* =========================================================
-   LUDOVERSE - JOIN ROOM SYSTEM
-   PROFESSIONAL DEMO VERSION
+   LUDOVERSE - FIREBASE JOIN ROOM SYSTEM
    ========================================================= */
+
+import {
+  auth,
+  database,
+  ref,
+  get,
+  update,
+  set,
+  onAuthStateChanged
+} from "./firebase.js";
+
 
 document.addEventListener("DOMContentLoaded", () => {
 
@@ -15,50 +25,19 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("walletBalance");
 
   const roomCodeInput =
-    document.getElementById("roomCodeInput") ||
-    document.getElementById("roomCode");
+    document.getElementById("roomCodeInput");
 
   const joinBattleBtn =
     document.getElementById("joinBattleBtn");
 
-  const createBattleBtn =
-    document.getElementById("createBattleBtn");
+  const battlePreview =
+    document.getElementById("battlePreview");
 
-  const roomPreview =
-    document.getElementById("roomPreview");
+  const battleEntry =
+    document.getElementById("battleEntry");
 
-  const statusText =
-    document.getElementById("statusText");
-
-  const previewRoomCode =
-    document.getElementById("previewRoomCode");
-
-  const previewEntry =
-    document.getElementById("previewEntry");
-
-  const previewPrize =
-    document.getElementById("previewPrize");
-
-  const previewPlayers =
-    document.getElementById("previewPlayers");
-
-  const toast =
-    document.getElementById("toast");
-
-  const toastMessage =
-    document.getElementById("toastMessage");
-
-  const successModal =
-    document.getElementById("successModal");
-
-  const successRoomCode =
-    document.getElementById("successRoomCode");
-
-  const successEntry =
-    document.getElementById("successEntry");
-
-  const successPrize =
-    document.getElementById("successPrize");
+  const battlePrize =
+    document.getElementById("battlePrize");
 
   const openGameBtn =
     document.getElementById("openGameBtn");
@@ -66,22 +45,50 @@ document.addEventListener("DOMContentLoaded", () => {
   const backBtn =
     document.getElementById("backBtn");
 
-  const profileBtn =
-    document.getElementById("profileBtn");
+  const toast =
+    document.getElementById("toast");
+
+  const toastMessage =
+    document.getElementById("toastMessage");
 
 
   /* =========================================================
-     WALLET DATA
+     APP STATE
      ========================================================= */
 
-  let walletBalance =
-    Number(
-      localStorage.getItem("ludoverseBalance")
-    ) || 0;
+  let currentUser = null;
+
+  let walletBalance = 0;
+
+  let foundBattle = null;
 
 
   /* =========================================================
-     UPDATE WALLET DISPLAY
+     SHOW TOAST
+     ========================================================= */
+
+  function showToast(message) {
+
+    if (!toast || !toastMessage) {
+      alert(message);
+      return;
+    }
+
+    toastMessage.textContent = message;
+
+    toast.classList.add("show");
+
+    setTimeout(() => {
+
+      toast.classList.remove("show");
+
+    }, 3000);
+
+  }
+
+
+  /* =========================================================
+     UPDATE WALLET UI
      ========================================================= */
 
   function updateWalletDisplay() {
@@ -89,81 +96,56 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!walletBalanceElement) return;
 
     walletBalanceElement.textContent =
-      walletBalance.toFixed(0);
+      Number(walletBalance).toFixed(0);
 
   }
 
 
   /* =========================================================
-     SHOW TOAST
+     LOAD USER WALLET
      ========================================================= */
 
-  function showToast(
-    message,
-    type = "success"
-  ) {
+  async function loadWallet() {
 
-    if (!toast || !toastMessage) {
-
-      alert(message);
-
-      return;
-
-    }
-
-    toastMessage.textContent =
-      message;
-
-    toast.classList.remove(
-      "success",
-      "error",
-      "show"
-    );
-
-    toast.classList.add(type);
-
-    setTimeout(() => {
-
-      toast.classList.add("show");
-
-    }, 10);
-
-    setTimeout(() => {
-
-      toast.classList.remove("show");
-
-    }, 3500);
-
-  }
-
-
-  /* =========================================================
-     GET ALL BATTLES
-     ========================================================= */
-
-  function getBattles() {
+    if (!currentUser) return;
 
     try {
 
-      const battles =
-        JSON.parse(
-          localStorage.getItem(
-            "ludoverseBattles"
-          )
+      const walletRef =
+        ref(
+          database,
+          `users/${currentUser.uid}/wallet`
         );
 
-      return Array.isArray(battles)
-        ? battles
-        : [];
+      const snapshot =
+        await get(walletRef);
+
+      if (snapshot.exists()) {
+
+        const walletData =
+          snapshot.val();
+
+        walletBalance =
+          Number(walletData.balance) || 0;
+
+      } else {
+
+        walletBalance = 0;
+
+      }
+
+      updateWalletDisplay();
 
     } catch (error) {
 
       console.error(
-        "Battle data error:",
+        "Wallet load error:",
         error
       );
 
-      return [];
+      showToast(
+        "Could not load wallet."
+      );
 
     }
 
@@ -171,33 +153,40 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
   /* =========================================================
-     SAVE ALL BATTLES
+     SAVE USER WALLET
      ========================================================= */
 
-  function saveBattles(battles) {
+  async function saveWallet() {
 
-    localStorage.setItem(
-      "ludoverseBattles",
-      JSON.stringify(battles)
-    );
+    if (!currentUser) return;
 
-  }
+    try {
 
+      const walletRef =
+        ref(
+          database,
+          `users/${currentUser.uid}/wallet`
+        );
 
-  /* =========================================================
-     FIND BATTLE BY ROOM CODE
-     ========================================================= */
+      await update(
+        walletRef,
+        {
+          balance: walletBalance,
+          updatedAt:
+            new Date().toISOString()
+        }
+      );
 
-  function findBattle(roomCode) {
+    } catch (error) {
 
-    const battles =
-      getBattles();
+      console.error(
+        "Wallet save error:",
+        error
+      );
 
-    return battles.find(
-      battle =>
-        String(battle.roomCode) ===
-        String(roomCode)
-    );
+      throw error;
+
+    }
 
   }
 
@@ -208,27 +197,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function validateRoomCode(code) {
 
-    const cleanCode =
-      String(code)
-        .trim()
-        .replace(/\s/g, "");
-
-    if (!cleanCode) {
+    if (!/^\d{6}$/.test(code)) {
 
       showToast(
-        "Please enter a room code.",
-        "error"
-      );
-
-      return false;
-
-    }
-
-    if (!/^\d{6}$/.test(cleanCode)) {
-
-      showToast(
-        "Please enter a valid 6-digit room code.",
-        "error"
+        "Please enter a valid 6-digit room code."
       );
 
       return false;
@@ -241,77 +213,40 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
   /* =========================================================
-     FORMAT AMOUNT
+     FIND BATTLE FROM FIREBASE
      ========================================================= */
 
-  function formatAmount(amount) {
+  async function findBattle(roomCode) {
 
-    return Number(
-      amount || 0
-    ).toLocaleString("en-IN");
+    try {
 
-  }
+      const battleRef =
+        ref(
+          database,
+          `battles/${roomCode}`
+        );
 
+      const snapshot =
+        await get(battleRef);
 
-  /* =========================================================
-     GET ENTRY AMOUNT
-     
-     Supports old and new battle formats.
-     ========================================================= */
+      if (!snapshot.exists()) {
 
-  function getEntryAmount(battle) {
+        return null;
 
-    return Number(
-      battle.entry ||
-      battle.entryAmount ||
-      0
-    );
+      }
 
-  }
+      return snapshot.val();
 
+    } catch (error) {
 
-  /* =========================================================
-     GET PRIZE AMOUNT
-     
-     Supports old and new battle formats.
-     ========================================================= */
+      console.error(
+        "Battle search error:",
+        error
+      );
 
-  function getPrizeAmount(battle) {
+      return null;
 
-    return Number(
-      battle.prize ||
-      battle.prizeAmount ||
-      0
-    );
-
-  }
-
-
-  /* =========================================================
-     GET PLAYER COUNT
-     ========================================================= */
-
-  function getPlayersJoined(battle) {
-
-    return Number(
-      battle.playersJoined ||
-      battle.players ||
-      1
-    );
-
-  }
-
-
-  /* =========================================================
-     GET MAX PLAYERS
-     ========================================================= */
-
-  function getMaxPlayers(battle) {
-
-    return Number(
-      battle.maxPlayers ||
-      2
-    );
+    }
 
   }
 
@@ -322,134 +257,29 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function showBattlePreview(battle) {
 
-    if (!battle) return;
+    foundBattle = battle;
 
-    const entry =
-      getEntryAmount(battle);
+    if (!battlePreview) return;
 
-    const prize =
-      getPrizeAmount(battle);
-
-    const playersJoined =
-      getPlayersJoined(battle);
-
-    const maxPlayers =
-      getMaxPlayers(battle);
-
-
-    if (roomPreview) {
-
-      roomPreview.classList.add(
-        "active"
-      );
-
-    }
-
-
-    if (previewRoomCode) {
-
-      previewRoomCode.textContent =
-        battle.roomCode;
-
-    }
-
-
-    if (previewEntry) {
-
-      previewEntry.textContent =
-        formatAmount(entry);
-
-    }
-
-
-    if (previewPrize) {
-
-      previewPrize.textContent =
-        formatAmount(prize);
-
-    }
-
-
-    if (previewPlayers) {
-
-      previewPlayers.textContent =
-        `${playersJoined} / ${maxPlayers}`;
-
-    }
-
-
-    if (statusText) {
-
-      if (battle.status === "ready") {
-
-        statusText.textContent =
-          "Battle Ready";
-
-      } else {
-
-        statusText.textContent =
-          "Battle Found";
-
-      }
-
-    }
-
-  }
-
-
-  /* =========================================================
-     ADD TRANSACTION
-     ========================================================= */
-
-  function addTransaction(
-    type,
-    amount,
-    description
-  ) {
-
-    let transactions = [];
-
-    try {
-
-      transactions =
-        JSON.parse(
-          localStorage.getItem(
-            "ludoverseTransactions"
-          )
-        ) || [];
-
-    } catch (error) {
-
-      transactions = [];
-
-    }
-
-
-    const transaction = {
-
-      id: Date.now(),
-
-      type: type,
-
-      amount: Number(amount),
-
-      description: description,
-
-      date:
-        new Date().toLocaleString()
-
-    };
-
-
-    transactions.unshift(
-      transaction
+    battlePreview.classList.remove(
+      "hidden"
     );
 
+    if (battleEntry) {
 
-    localStorage.setItem(
-      "ludoverseTransactions",
-      JSON.stringify(transactions)
-    );
+      battleEntry.textContent =
+        Number(battle.entry || 0)
+          .toLocaleString("en-IN");
+
+    }
+
+    if (battlePrize) {
+
+      battlePrize.textContent =
+        Number(battle.prize || 0)
+          .toLocaleString("en-IN");
+
+    }
 
   }
 
@@ -458,13 +288,12 @@ document.addEventListener("DOMContentLoaded", () => {
      JOIN BATTLE
      ========================================================= */
 
-  function joinBattle() {
+  async function joinBattle() {
 
-    if (!roomCodeInput) {
+    if (!currentUser) {
 
       showToast(
-        "Room code input not found.",
-        "error"
+        "Please login first."
       );
 
       return;
@@ -474,12 +303,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const roomCode =
       roomCodeInput.value
-        .trim()
         .replace(/\D/g, "")
         .slice(0, 6);
 
 
-    /* Validate */
+    roomCodeInput.value =
+      roomCode;
+
+
+    /* VALIDATE */
 
     if (!validateRoomCode(roomCode)) {
 
@@ -488,482 +320,355 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
 
-    /* Find Battle */
+    /* BUTTON LOADING */
 
-    const battle =
-      findBattle(roomCode);
+    joinBattleBtn.disabled = true;
+
+    joinBattleBtn.textContent =
+      "Finding Battle...";
 
 
-    /* Battle Not Found */
+    try {
 
-    if (!battle) {
+      /* FIND BATTLE */
 
-      if (roomPreview) {
+      const battle =
+        await findBattle(roomCode);
 
-        roomPreview.classList.remove(
-          "active"
+
+      if (!battle) {
+
+        showToast(
+          "❌ No battle found with this room code."
         );
+
+        return;
 
       }
 
-      showToast(
-        "No battle found with this room code.",
-        "error"
-      );
 
-      return;
+      /* CHECK CREATOR */
 
-    }
+      if (
+        battle.creatorUid ===
+        currentUser.uid
+      ) {
 
+        showToast(
+          "You cannot join your own battle."
+        );
 
-    /* Check Status */
+        return;
 
-    if (
-      battle.status === "completed"
-    ) {
-
-      showToast(
-        "This battle has already been completed.",
-        "error"
-      );
-
-      return;
-
-    }
+      }
 
 
-    /* Get battle values */
+      /* CHECK STATUS */
 
-    const entryAmount =
-      getEntryAmount(battle);
+      if (
+        battle.status === "completed"
+      ) {
 
-    const maxPlayers =
-      getMaxPlayers(battle);
+        showToast(
+          "This battle has already ended."
+        );
 
+        return;
 
-    /* Get current joined players */
-
-    let playersJoined =
-      Number(
-        battle.playersJoined || 1
-      );
+      }
 
 
-    /* Room Full */
+      /* CHECK IF ROOM FULL */
 
-    if (
-      playersJoined >= maxPlayers
-    ) {
+      if (
+        battle.playersJoined >=
+        battle.maxPlayers
+      ) {
 
-      showToast(
-        "This battle room is already full.",
-        "error"
-      );
+        showToast(
+          "This battle room is already full."
+        );
 
-      return;
+        return;
 
-    }
-
-
-    /* Wallet Check */
-
-    if (
-      walletBalance < entryAmount
-    ) {
-
-      showToast(
-        `Insufficient demo balance. You need ₹${formatAmount(entryAmount)} to join.`,
-        "error"
-      );
-
-      return;
-
-    }
+      }
 
 
-    /* Prevent double click */
+      /* WALLET CHECK */
 
-    if (joinBattleBtn) {
+      const entryAmount =
+        Number(battle.entry || 0);
 
-      joinBattleBtn.disabled = true;
+
+      if (
+        walletBalance < entryAmount
+      ) {
+
+        showToast(
+          `Insufficient demo balance. You need ₹${entryAmount}.`
+        );
+
+        return;
+
+      }
+
+
+      /* JOIN BUTTON */
 
       joinBattleBtn.textContent =
         "Joining Battle...";
 
-    }
+
+      /* DEDUCT DEMO BALANCE */
+
+      walletBalance -=
+        entryAmount;
 
 
-    /* Deduct Entry */
-
-    walletBalance -=
-      entryAmount;
+      await saveWallet();
 
 
-    localStorage.setItem(
-      "ludoverseBalance",
-      walletBalance.toString()
-    );
+      /* UPDATE BATTLE */
+
+      const battleRef =
+        ref(
+          database,
+          `battles/${roomCode}`
+        );
 
 
-    /* Update Battle Data */
+      await update(
+        battleRef,
+        {
+          playersJoined: 2,
 
-    const battles =
-      getBattles();
+          status: "ready",
 
+          opponentUid:
+            currentUser.uid,
 
-    const battleIndex =
-      battles.findIndex(
-        item =>
-          String(item.roomCode) ===
-          String(roomCode)
+          opponentEmail:
+            currentUser.email || "Player",
+
+          joinedAt:
+            new Date().toISOString()
+        }
       );
 
 
-    if (battleIndex !== -1) {
+      /* SAVE USER CURRENT BATTLE */
 
-      battles[battleIndex].playersJoined =
-        2;
+      await set(
+        ref(
+          database,
+          `users/${currentUser.uid}/currentBattle`
+        ),
+        {
+          roomCode: roomCode,
+          battleId:
+            battle.battleId || roomCode,
+          entry: entryAmount,
+          prize:
+            Number(battle.prize || 0),
+          status: "ready"
+        }
+      );
 
-      battles[battleIndex].status =
-        "ready";
 
-      battles[battleIndex].joinedAt =
-        new Date().toLocaleString();
+      /* UPDATE LOCAL BATTLE */
 
-      saveBattles(battles);
+      foundBattle = {
+        ...battle,
+        playersJoined: 2,
+        status: "ready"
+      };
+
+
+      showBattlePreview(
+        foundBattle
+      );
+
+
+      showToast(
+        "🎉 Battle joined successfully!"
+      );
+
+
+      joinBattleBtn.textContent =
+        "Battle Joined ✓";
+
+
+      /* SAVE CURRENT ROOM */
+
+      localStorage.setItem(
+        "ludoverseCurrentRoom",
+        roomCode
+      );
+
+
+    } catch (error) {
+
+      console.error(
+        "Join battle error:",
+        error
+      );
+
+      showToast(
+        "❌ Could not join battle."
+      );
+
+    } finally {
+
+      setTimeout(() => {
+
+        joinBattleBtn.disabled =
+          false;
+
+        if (
+          joinBattleBtn.textContent !==
+          "Battle Joined ✓"
+        ) {
+
+          joinBattleBtn.innerHTML =
+            "<span>🚀</span> Join Battle";
+
+        }
+
+      }, 1000);
 
     }
 
-
-    /* Updated Battle */
-
-    const joinedBattle = {
-
-      ...battle,
-
-      playersJoined: 2,
-
-      maxPlayers: maxPlayers,
-
-      entry: entryAmount,
-
-      prize:
-        getPrizeAmount(battle),
-
-      status: "ready",
-
-      joinedAt:
-        new Date().toLocaleString()
-
-    };
-
-
-    /* Save Current Battle */
-
-    localStorage.setItem(
-      "ludoverseCurrentBattle",
-      JSON.stringify(joinedBattle)
-    );
-
-
-    /* Add Transaction */
-
-    addTransaction(
-
-      "debit",
-
-      entryAmount,
-
-      "Joined Demo Battle - Room " +
-        roomCode
-
-    );
-
-
-    /* Update Display */
-
-    updateWalletDisplay();
-
-
-    /* Update Preview */
-
-    showBattlePreview(
-      joinedBattle
-    );
-
-
-    /* Show Success */
-
-    showJoinSuccess(
-      joinedBattle
-    );
-
-
-    /* Restore Button */
-
-    setTimeout(() => {
-
-      if (joinBattleBtn) {
-
-        joinBattleBtn.disabled = false;
-
-        joinBattleBtn.textContent =
-          "Join Battle";
-
-      }
-
-    }, 1000);
-
   }
 
 
   /* =========================================================
-     SHOW JOIN SUCCESS
+     ROOM CODE INPUT
      ========================================================= */
 
-  function showJoinSuccess(battle) {
+  roomCodeInput?.addEventListener(
+    "input",
+    () => {
 
-  if (successRoomCode) {
-    successRoomCode.textContent = battle.roomCode;
-  }
+      roomCodeInput.value =
+        roomCodeInput.value
+          .replace(/\D/g, "")
+          .slice(0, 6);
 
-  if (successEntry) {
-    successEntry.textContent =
-      formatAmount(battle.entryAmount);
-  }
-
-  if (successPrize) {
-    successPrize.textContent =
-      formatAmount(battle.prizeAmount);
-  }
-
-  if (successModal) {
-
-    successModal.classList.add("active");
-
-  } else {
-
-    showToast(
-      "Battle joined successfully! Opening game...",
-      "success"
-    );
-
-    setTimeout(() => {
-
-      window.location.href = "game.html";
-
-    }, 1500);
-  }
-}
-
-
-  /* =========================================================
-     LIVE ROOM CODE PREVIEW
-     ========================================================= */
-
-  if (roomCodeInput) {
-
-    roomCodeInput.addEventListener(
-      "input",
-      () => {
-
-        let value =
-          roomCodeInput.value
-            .replace(/\D/g, "")
-            .slice(0, 6);
-
-        roomCodeInput.value =
-          value;
-
-
-        if (
-          value.length === 6
-        ) {
-
-          const battle =
-            findBattle(value);
-
-
-          if (battle) {
-
-            showBattlePreview(
-              battle
-            );
-
-          } else {
-
-            if (roomPreview) {
-
-              roomPreview.classList.remove(
-                "active"
-              );
-
-            }
-
-          }
-
-        }
-
-      }
-    );
-
-
-    /* Enter Key */
-
-    roomCodeInput.addEventListener(
-      "keydown",
-      event => {
-
-        if (
-          event.key === "Enter"
-        ) {
-
-          event.preventDefault();
-
-          joinBattle();
-
-        }
-
-      }
-    );
-
-  }
+    }
+  );
 
 
   /* =========================================================
      JOIN BUTTON
      ========================================================= */
 
-  if (joinBattleBtn) {
+  joinBattleBtn?.addEventListener(
+    "click",
+    joinBattle
+  );
 
-    joinBattleBtn.addEventListener(
-      "click",
-      event => {
+
+  /* =========================================================
+     ENTER KEY
+     ========================================================= */
+
+  roomCodeInput?.addEventListener(
+    "keydown",
+    event => {
+
+      if (
+        event.key === "Enter"
+      ) {
 
         event.preventDefault();
 
         joinBattle();
 
       }
-    );
 
-  }
-
-
-  /* =========================================================
-     CREATE YOUR OWN BATTLE
-     ========================================================= */
-
-  if (createBattleBtn) {
-
-    createBattleBtn.addEventListener(
-      "click",
-      () => {
-
-        window.location.href =
-          "battle.html";
-
-      }
-    );
-
-  }
+    }
+  );
 
 
   /* =========================================================
-     OPEN LUDO GAME
-     
-     Currently opens local demo game.
+     OPEN GAME
      ========================================================= */
 
-  if (openGameBtn) {
+  openGameBtn?.addEventListener(
+    "click",
+    () => {
 
-    openGameBtn.addEventListener(
-      "click",
-      () => {
+      if (!foundBattle) {
 
-        window.location.href =
-          "game.html";
+        showToast(
+          "Please join a battle first."
+        );
+
+        return;
 
       }
-    );
 
-  }
+      window.location.href =
+        "game.html";
+
+    }
+  );
 
 
   /* =========================================================
      BACK BUTTON
      ========================================================= */
 
-  if (backBtn) {
+  backBtn?.addEventListener(
+    "click",
+    () => {
 
-    backBtn.addEventListener(
-      "click",
-      () => {
+      if (battlePreview) {
 
-        window.location.href =
-          "index.html";
-
-      }
-    );
-
-  }
-
-
-  /* =========================================================
-     PROFILE BUTTON
-     ========================================================= */
-
-  if (profileBtn) {
-
-    profileBtn.addEventListener(
-      "click",
-      () => {
-
-        showToast(
-          "Profile section coming soon."
+        battlePreview.classList.add(
+          "hidden"
         );
 
       }
-    );
 
-  }
+      foundBattle = null;
+
+    }
+  );
 
 
   /* =========================================================
-     CLOSE SUCCESS MODAL
+     FIREBASE AUTH CHECK
      ========================================================= */
 
-  if (successModal) {
+  onAuthStateChanged(
+    auth,
+    async user => {
 
-    successModal.addEventListener(
-      "click",
-      event => {
+      if (!user) {
 
-        if (
-          event.target === successModal
-        ) {
+        window.location.href =
+          "login.html";
 
-          successModal.classList.remove(
-            "active"
-          );
-
-        }
+        return;
 
       }
-    );
 
-  }
+      currentUser = user;
 
+      console.log(
+        "Join Room User:",
+        user.email
+      );
 
-  /* =========================================================
-     INITIALIZE
-     ========================================================= */
+      await loadWallet();
 
-  updateWalletDisplay();
+    }
+  );
 
 
   console.log(
-    "LUDOVERSE Join Room System Ready!"
+    "🎮 LUDOVERSE Firebase Join Room Ready!"
   );
 
 });
