@@ -7,6 +7,7 @@ import {
   initializeApp
 } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js";
 
+
 /* =========================================================
    FIREBASE AUTHENTICATION
 ========================================================= */
@@ -21,6 +22,7 @@ import {
   signOut
 } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-auth.js";
 
+
 /* =========================================================
    FIREBASE REALTIME DATABASE
 ========================================================= */
@@ -33,8 +35,10 @@ import {
   update,
   remove,
   onValue,
-  push
+  push,
+  runTransaction
 } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-database.js";
+
 
 /* =========================================================
    FIREBASE CONFIG
@@ -63,12 +67,14 @@ const firebaseConfig = {
     "1:235676552405:web:2f0164ea815abe5e11e65c"
 };
 
+
 /* =========================================================
-   INITIALIZE FIREBASE
+   INITIALIZE FIREBASE APP
 ========================================================= */
 
 const app =
   initializeApp(firebaseConfig);
+
 
 /* =========================================================
    INITIALIZE AUTHENTICATION
@@ -77,12 +83,14 @@ const app =
 const auth =
   getAuth(app);
 
+
 /* =========================================================
    GOOGLE AUTH PROVIDER
 ========================================================= */
 
 const googleProvider =
   new GoogleAuthProvider();
+
 
 /* =========================================================
    INITIALIZE DATABASE
@@ -91,12 +99,16 @@ const googleProvider =
 const database =
   getDatabase(app);
 
+
 /* =========================================================
    EXPORT FIREBASE SERVICES
 ========================================================= */
 
 export {
-  /* Authentication */
+
+  /* =========================
+     AUTHENTICATION
+  ========================= */
 
   auth,
 
@@ -114,7 +126,10 @@ export {
 
   signOut,
 
-  /* Database */
+
+  /* =========================
+     REALTIME DATABASE
+  ========================= */
 
   database,
 
@@ -130,5 +145,8 @@ export {
 
   onValue,
 
-  push
+  push,
+
+  runTransaction
+
 };
