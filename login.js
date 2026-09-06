@@ -1,7 +1,7 @@
 "use strict";
 
 /* =========================================================
-   LUDOVERSE REAL FIREBASE PHONE LOGIN
+   LUDOVERSE GOOGLE LOGIN
 ========================================================= */
 
 import {
@@ -10,8 +10,8 @@ import {
   ref,
   set,
   get,
-  RecaptchaVerifier,
-  signInWithPhoneNumber
+  googleProvider,
+  signInWithPopup
 } from "./firebase.js";
 
 
@@ -19,42 +19,15 @@ import {
    DOM ELEMENTS
 ========================================================= */
 
-const phoneStep =
-  document.getElementById("phoneStep");
-
-const otpStep =
-  document.getElementById("otpStep");
-
-const phoneNumber =
-  document.getElementById("phoneNumber");
-
-const sendOtpBtn =
-  document.getElementById("sendOtpBtn");
-
-const verifyOtpBtn =
-  document.getElementById("verifyOtpBtn");
-
-const backBtn =
-  document.getElementById("backBtn");
-
-const resendBtn =
-  document.getElementById("resendBtn");
-
-const otpInputs =
-  document.querySelectorAll(".otp-input");
+const googleLoginBtn =
+  document.getElementById("googleLoginBtn");
 
 
 /* =========================================================
    LOGIN STATE
 ========================================================= */
 
-let confirmationResult = null;
-
-let userPhoneNumber = "";
-
 let isProcessing = false;
-
-let recaptchaVerifier = null;
 
 
 /* =========================================================
@@ -67,9 +40,12 @@ const statusMessage =
 statusMessage.className =
   "login-status";
 
-document
-  .querySelector(".login-card")
-  .appendChild(statusMessage);
+const loginCard =
+  document.querySelector(".login-card");
+
+if (loginCard) {
+  loginCard.appendChild(statusMessage);
+}
 
 
 /* =========================================================
@@ -80,7 +56,6 @@ function showStatus(
   message,
   type = "info"
 ) {
-
   statusMessage.textContent =
     message;
 
@@ -88,257 +63,11 @@ function showStatus(
     "login-status";
 
   statusMessage.classList.add(type);
-
   statusMessage.classList.add("show");
 
   setTimeout(() => {
-
     statusMessage.classList.remove("show");
-
-  }, 4000);
-
-}
-
-
-/* =========================================================
-   VALIDATE INDIAN PHONE NUMBER
-========================================================= */
-
-function validatePhoneNumber(number) {
-
-  const cleaned =
-    number.replace(/\D/g, "");
-
-  return /^[6-9][0-9]{9}$/
-    .test(cleaned);
-
-}
-
-
-/* =========================================================
-   FORMAT PHONE NUMBER
-========================================================= */
-
-function getFullPhoneNumber(number) {
-
-  return "+91" +
-    number.replace(/\D/g, "");
-
-}
-
-
-/* =========================================================
-   SHOW OTP STEP
-========================================================= */
-
-function showOtpStep() {
-
-  phoneStep.classList.remove("active");
-
-  otpStep.classList.add("active");
-
-  otpInputs.forEach(input => {
-
-    input.value = "";
-
-  });
-
-  setTimeout(() => {
-
-    otpInputs[0]?.focus();
-
-  }, 300);
-
-}
-
-
-/* =========================================================
-   SHOW PHONE STEP
-========================================================= */
-
-function showPhoneStep() {
-
-  otpStep.classList.remove("active");
-
-  phoneStep.classList.add("active");
-
-  otpInputs.forEach(input => {
-
-    input.value = "";
-
-  });
-
-}
-
-
-/* =========================================================
-   INITIALIZE FIREBASE reCAPTCHA
-========================================================= */
-
-async function initializeRecaptcha() {
-  if (recaptchaVerifier) {
-    return;
-  }
-
-  recaptchaVerifier = new RecaptchaVerifier(
-    auth,
-    "recaptcha-container",
-    {
-      size: "normal",
-      callback: () => {
-        console.log("reCAPTCHA verified");
-      },
-      "expired-callback": () => {
-        showStatus(
-          "Verification expired. Please complete reCAPTCHA again.",
-          "error"
-        );
-      }
-    }
-  );
-
-  await recaptchaVerifier.render();
-}
-
-
-/* =========================================================
-   SEND REAL OTP
-========================================================= */
-async function sendOTP() {
-  if (isProcessing) {
-    return;
-  }
-
-  const phone = phoneNumber.value
-    .replace(/\D/g, "")
-    .trim();
-
-  if (!validatePhoneNumber(phone)) {
-    showStatus(
-      "Please enter a valid 10-digit Indian mobile number.",
-      "error"
-    );
-
-    phoneNumber.focus();
-    return;
-  }
-
-  isProcessing = true;
-
-  userPhoneNumber = getFullPhoneNumber(phone);
-
-  sendOtpBtn.disabled = true;
-  sendOtpBtn.textContent = "Sending OTP...";
-
-  try {
-
-    await initializeRecaptcha();
-
-    confirmationResult =
-      await signInWithPhoneNumber(
-        auth,
-        userPhoneNumber,
-        recaptchaVerifier
-      );
-
-    showOtpStep();
-
-    showStatus(
-      "OTP sent successfully to your mobile number!",
-      "success"
-    );
-
-  } catch (error) {
-
-    console.error(
-      "Firebase OTP FULL ERROR:",
-      error
-    );
-
-    console.log(
-      "Error code:",
-      error.code
-    );
-
-    console.log(
-      "Error message:",
-      error.message
-    );
-
-    let message =
-      "Could not send OTP. Please try again.";
-
-    if (
-      error.code ===
-      "auth/invalid-phone-number"
-    ) {
-      message =
-        "Please enter a valid mobile number.";
-
-    } else if (
-      error.code ===
-      "auth/too-many-requests"
-    ) {
-      message =
-        "Too many attempts. Please try again later.";
-
-    } else if (
-      error.code ===
-      "auth/captcha-check-failed"
-    ) {
-      message =
-        "Security verification failed. Please complete reCAPTCHA again.";
-
-    } else if (
-      error.code ===
-      "auth/operation-not-allowed"
-    ) {
-      message =
-        "Phone authentication is not enabled in Firebase.";
-
-    } else if (
-      error.code ===
-      "auth/invalid-app-credential"
-    ) {
-      message =
-        "Firebase app verification failed. Check authorized domains.";
-
-    }
-
-    showStatus(
-      message,
-      "error"
-    );
-
-  } finally {
-
-    isProcessing = false;
-
-    sendOtpBtn.disabled = false;
-
-    sendOtpBtn.textContent =
-      "Continue →";
-
-  }
-}
-
-
-/* =========================================================
-   GET ENTERED OTP
-========================================================= */
-
-function getEnteredOTP() {
-
-  let otp = "";
-
-  otpInputs.forEach(input => {
-
-    otp += input.value;
-
-  });
-
-  return otp;
-
+  }, 5000);
 }
 
 
@@ -354,22 +83,38 @@ async function saveUserToDatabase(user) {
       `users/${user.uid}`
     );
 
-
   const snapshot =
     await get(userReference);
 
 
-  /* Existing user */
+  /* =============================================
+     EXISTING USER
+  ============================================= */
 
   if (snapshot.exists()) {
+
+    const existingUser =
+      snapshot.val();
 
     await set(
       userReference,
       {
-        ...snapshot.val(),
+        ...existingUser,
 
-        phone:
-          user.phoneNumber,
+        uid:
+          user.uid,
+
+        displayName:
+          user.displayName || null,
+
+        email:
+          user.email || null,
+
+        photoURL:
+          user.photoURL || null,
+
+        provider:
+          "google",
 
         lastLogin:
           new Date().toISOString(),
@@ -380,24 +125,31 @@ async function saveUserToDatabase(user) {
     );
 
     return;
-
   }
 
 
-  /* New user */
+  /* =============================================
+     NEW USER
+  ============================================= */
 
   const newUser = {
 
     uid:
       user.uid,
 
-    phone:
-      user.phoneNumber,
+    displayName:
+      user.displayName || "LUDOVERSE Player",
+
+    email:
+      user.email || null,
+
+    photoURL:
+      user.photoURL || null,
+
+    provider:
+      "google",
 
     username:
-      null,
-
-    displayName:
       null,
 
     accountStatus:
@@ -412,6 +164,9 @@ async function saveUserToDatabase(user) {
     lastLogin:
       new Date().toISOString(),
 
+    loggedIn:
+      true,
+
     totalBattles:
       0,
 
@@ -422,8 +177,10 @@ async function saveUserToDatabase(user) {
       0,
 
     cancelledBattles:
-      0
+      0,
 
+    xp:
+      0
   };
 
 
@@ -431,65 +188,45 @@ async function saveUserToDatabase(user) {
     userReference,
     newUser
   );
-
 }
 
 
 /* =========================================================
-   VERIFY REAL OTP
+   GOOGLE LOGIN
 ========================================================= */
 
-async function verifyOTP() {
+async function loginWithGoogle() {
 
   if (isProcessing) {
-
     return;
-
   }
 
-
-  if (!confirmationResult) {
-
-    showStatus(
-      "Please request an OTP first.",
-      "error"
+  if (!googleLoginBtn) {
+    console.error(
+      "Google login button not found!"
     );
-
     return;
-
-  }
-
-
-  const enteredOTP =
-    getEnteredOTP();
-
-
-  if (enteredOTP.length !== 6) {
-
-    showStatus(
-      "Please enter all 6 OTP digits.",
-      "error"
-    );
-
-    return;
-
   }
 
 
   isProcessing = true;
 
-  verifyOtpBtn.disabled =
+  googleLoginBtn.disabled =
     true;
 
-  verifyOtpBtn.textContent =
-    "Verifying...";
+  googleLoginBtn.innerHTML =
+    `
+      <span class="google-icon">G</span>
+      Connecting to Google...
+    `;
 
 
   try {
 
     const result =
-      await confirmationResult.confirm(
-        enteredOTP
+      await signInWithPopup(
+        auth,
+        googleProvider
       );
 
 
@@ -497,27 +234,45 @@ async function verifyOTP() {
       result.user;
 
 
+    console.log(
+      "Google login successful:",
+      user
+    );
+
+
+    /* Save user to database */
+
     await saveUserToDatabase(
       user
     );
 
 
-    /* Save local login state */
+    /* =============================================
+       SAVE LOCAL LOGIN STATE
+    ============================================= */
 
     const userData = {
 
       uid:
         user.uid,
 
-      phone:
-        user.phoneNumber,
+      displayName:
+        user.displayName,
+
+      email:
+        user.email,
+
+      photoURL:
+        user.photoURL,
+
+      provider:
+        "google",
 
       loggedIn:
         true,
 
       loginTime:
         new Date().toISOString()
-
     };
 
 
@@ -533,15 +288,26 @@ async function verifyOTP() {
     );
 
 
-    verifyOtpBtn.textContent =
-      "Login Successful!";
+    /* =============================================
+       SUCCESS
+    ============================================= */
+
+    googleLoginBtn.innerHTML =
+      `
+        <span class="google-icon">✓</span>
+        Login Successful!
+      `;
 
 
     showStatus(
-      "Welcome to LUDOVERSE!",
+      `Welcome, ${
+        user.displayName || "Player"
+      }!`,
       "success"
     );
 
+
+    /* Redirect to main website */
 
     setTimeout(() => {
 
@@ -552,26 +318,59 @@ async function verifyOTP() {
 
 
   }
-
   catch (error) {
 
     console.error(
-      "OTP verification error:",
+      "Google Login Error:",
       error
     );
 
 
     let message =
-      "Invalid OTP. Please try again.";
+      "Google login failed. Please try again.";
 
+
+    /* =============================================
+       ERROR HANDLING
+    ============================================= */
 
     if (
       error.code ===
-      "auth/code-expired"
+      "auth/popup-closed-by-user"
     ) {
 
       message =
-        "OTP has expired. Please request a new OTP.";
+        "Google login was cancelled.";
+
+    }
+
+    else if (
+      error.code ===
+      "auth/popup-blocked"
+    ) {
+
+      message =
+        "Popup was blocked. Please allow popups and try again.";
+
+    }
+
+    else if (
+      error.code ===
+      "auth/unauthorized-domain"
+    ) {
+
+      message =
+        "This website domain is not authorized in Firebase.";
+
+    }
+
+    else if (
+      error.code ===
+      "auth/network-request-failed"
+    ) {
+
+      message =
+        "Network error. Please check your internet connection.";
 
     }
 
@@ -582,17 +381,33 @@ async function verifyOTP() {
     );
 
 
-    verifyOtpBtn.disabled =
+    console.log(
+      "Error code:",
+      error.code
+    );
+
+    console.log(
+      "Error message:",
+      error.message
+    );
+
+
+    googleLoginBtn.disabled =
       false;
 
-    verifyOtpBtn.textContent =
-      "Verify & Continue →";
+
+    googleLoginBtn.innerHTML =
+      `
+        <span class="google-icon">G</span>
+        Continue with Google
+      `;
 
   }
 
   finally {
 
-    isProcessing = false;
+    isProcessing =
+      false;
 
   }
 
@@ -600,226 +415,12 @@ async function verifyOTP() {
 
 
 /* =========================================================
-   OTP INPUT CONTROLS
+   GOOGLE LOGIN BUTTON EVENT
 ========================================================= */
 
-otpInputs.forEach(
-  (input, index) => {
-
-    input.addEventListener(
-      "input",
-      event => {
-
-        event.target.value =
-          event.target.value
-            .replace(/\D/g, "")
-            .slice(0, 1);
-
-
-        if (
-          event.target.value &&
-          index <
-            otpInputs.length - 1
-        ) {
-
-          otpInputs[
-            index + 1
-          ].focus();
-
-        }
-
-      }
-    );
-
-
-    input.addEventListener(
-      "keydown",
-      event => {
-
-        if (
-          event.key === "Backspace" &&
-          !input.value &&
-          index > 0
-        ) {
-
-          otpInputs[
-            index - 1
-          ].focus();
-
-        }
-
-
-        if (
-          event.key === "Enter"
-        ) {
-
-          verifyOTP();
-
-        }
-
-      }
-    );
-
-
-    input.addEventListener(
-      "paste",
-      event => {
-
-        event.preventDefault();
-
-
-        const pasted =
-          event.clipboardData
-            .getData("text")
-            .replace(/\D/g, "")
-            .slice(0, 6);
-
-
-        pasted
-          .split("")
-          .forEach(
-            (
-              digit,
-              digitIndex
-            ) => {
-
-              if (
-                otpInputs[digitIndex]
-              ) {
-
-                otpInputs[
-                  digitIndex
-                ].value =
-                  digit;
-
-              }
-
-            }
-          );
-
-
-        if (pasted.length) {
-
-          const focusIndex =
-            Math.min(
-              pasted.length,
-              otpInputs.length - 1
-            );
-
-
-          otpInputs[
-            focusIndex
-          ].focus();
-
-        }
-
-      }
-    );
-
-  }
-);
-
-
-/* =========================================================
-   BACK BUTTON
-========================================================= */
-
-backBtn?.addEventListener(
+googleLoginBtn?.addEventListener(
   "click",
-  () => {
-
-    showPhoneStep();
-
-  }
-);
-
-
-/* =========================================================
-   RESEND OTP
-========================================================= */
-
-resendBtn?.addEventListener(
-  "click",
-  () => {
-
-    otpInputs.forEach(input => {
-
-      input.value = "";
-
-    });
-
-
-    confirmationResult =
-      null;
-
-
-    showPhoneStep();
-
-
-    setTimeout(() => {
-
-      sendOTP();
-
-    }, 300);
-
-  }
-);
-
-
-/* =========================================================
-   SEND OTP BUTTON
-========================================================= */
-
-sendOtpBtn?.addEventListener(
-  "click",
-  sendOTP
-);
-
-
-/* =========================================================
-   VERIFY OTP BUTTON
-========================================================= */
-
-verifyOtpBtn?.addEventListener(
-  "click",
-  verifyOTP
-);
-
-
-/* =========================================================
-   PHONE NUMBER INPUT
-========================================================= */
-
-phoneNumber?.addEventListener(
-  "input",
-  () => {
-
-    phoneNumber.value =
-      phoneNumber.value
-        .replace(/\D/g, "")
-        .slice(0, 10);
-
-  }
-);
-
-
-/* =========================================================
-   ENTER KEY
-========================================================= */
-
-phoneNumber?.addEventListener(
-  "keydown",
-  event => {
-
-    if (
-      event.key === "Enter"
-    ) {
-
-      sendOTP();
-
-    }
-
-  }
+  loginWithGoogle
 );
 
 
@@ -832,7 +433,7 @@ document.addEventListener(
   () => {
 
     console.log(
-      "LUDOVERSE Firebase Phone Login Ready"
+      "LUDOVERSE Google Login Ready"
     );
 
   }

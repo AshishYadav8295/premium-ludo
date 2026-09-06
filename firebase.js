@@ -7,7 +7,6 @@ import {
   initializeApp
 } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js";
 
-
 /* =========================================================
    FIREBASE AUTHENTICATION
 ========================================================= */
@@ -16,10 +15,11 @@ import {
   getAuth,
   RecaptchaVerifier,
   signInWithPhoneNumber,
+  GoogleAuthProvider,
+  signInWithPopup,
   onAuthStateChanged,
   signOut
 } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-auth.js";
-
 
 /* =========================================================
    FIREBASE REALTIME DATABASE
@@ -36,13 +36,11 @@ import {
   push
 } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-database.js";
 
-
 /* =========================================================
    FIREBASE CONFIG
 ========================================================= */
 
 const firebaseConfig = {
-
   apiKey:
     "AIzaSyAEgDLew-aJibSqERi_RbccsdR69Ogtb7U",
 
@@ -63,9 +61,7 @@ const firebaseConfig = {
 
   appId:
     "1:235676552405:web:2f0164ea815abe5e11e65c"
-
 };
-
 
 /* =========================================================
    INITIALIZE FIREBASE
@@ -74,7 +70,6 @@ const firebaseConfig = {
 const app =
   initializeApp(firebaseConfig);
 
-
 /* =========================================================
    INITIALIZE AUTHENTICATION
 ========================================================= */
@@ -82,6 +77,12 @@ const app =
 const auth =
   getAuth(app);
 
+/* =========================================================
+   GOOGLE AUTH PROVIDER
+========================================================= */
+
+const googleProvider =
+  new GoogleAuthProvider();
 
 /* =========================================================
    INITIALIZE DATABASE
@@ -90,13 +91,11 @@ const auth =
 const database =
   getDatabase(app);
 
-
 /* =========================================================
    EXPORT FIREBASE SERVICES
 ========================================================= */
 
 export {
-
   /* Authentication */
 
   auth,
@@ -105,10 +104,15 @@ export {
 
   signInWithPhoneNumber,
 
+  GoogleAuthProvider,
+
+  googleProvider,
+
+  signInWithPopup,
+
   onAuthStateChanged,
 
   signOut,
-
 
   /* Database */
 
@@ -127,5 +131,4 @@ export {
   onValue,
 
   push
-
 };
