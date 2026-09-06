@@ -1,11 +1,25 @@
 "use strict";
 
 /* =========================================
-   LUDOVERSE WALLET
-   DEMO BALANCE SYSTEM
+   LUDOVERSE FIREBASE DEMO WALLET
+   ========================================= */
+
+import {
+  auth,
+  database,
+  ref,
+  set,
+  get,
+  onAuthStateChanged
+} from "./firebase.js";
+
+
+/* =========================================
+   DOM READY
    ========================================= */
 
 document.addEventListener("DOMContentLoaded", () => {
+
 
   /* =========================================
      DOM ELEMENTS
@@ -42,66 +56,174 @@ document.addEventListener("DOMContentLoaded", () => {
     document.querySelectorAll(".amount-btn");
 
   const modalAmountButtons =
-    document.querySelectorAll("[data-modal-amount]");
+    document.querySelectorAll(
+      "[data-modal-amount]"
+    );
 
 
   /* =========================================
-     WALLET DATA
+     WALLET STATE
      ========================================= */
 
-  let walletBalance =
-    Number(
-      localStorage.getItem("ludoverseBalance")
-    ) || 0;
+  let currentUser = null;
 
+  let walletBalance = 0;
 
   let transactions = [];
 
-  try {
+  let walletLoaded = false;
 
-    transactions =
-      JSON.parse(
-        localStorage.getItem(
-          "ludoverseTransactions"
-        )
-      ) || [];
 
-  } catch (error) {
+  /* =========================================
+     GET WALLET DATABASE REFERENCE
+     ========================================= */
 
-    transactions = [];
+  function getWalletRef() {
+
+    if (!currentUser) {
+      return null;
+    }
+
+    return ref(
+      database,
+      `users/${currentUser.uid}/wallet`
+    );
 
   }
 
 
   /* =========================================
-     UPDATE BALANCE
+     UPDATE BALANCE ON SCREEN
      ========================================= */
 
-  function updateBalance() {
+  function updateBalanceUI() {
 
-    if (!walletBalanceElement) return;
+    if (!walletBalanceElement) {
+      return;
+    }
 
     walletBalanceElement.textContent =
-      walletBalance.toFixed(0);
-
-    localStorage.setItem(
-      "ludoverseBalance",
-      walletBalance.toString()
-    );
+      Number(walletBalance).toFixed(0);
 
   }
 
 
   /* =========================================
-     SAVE TRANSACTIONS
+     SAVE WALLET TO FIREBASE
      ========================================= */
 
-  function saveTransactions() {
+  async function saveWallet() {
 
-    localStorage.setItem(
-      "ludoverseTransactions",
-      JSON.stringify(transactions)
-    );
+    const walletRef =
+      getWalletRef();
+
+    if (!walletRef) {
+      return;
+    }
+
+    try {
+
+      await set(
+        walletRef,
+        {
+          balance: walletBalance,
+
+          transactions: transactions,
+
+          updatedAt:
+            new Date().toISOString()
+        }
+      );
+
+      console.log(
+        "Wallet saved to Firebase"
+      );
+
+    } catch (error) {
+
+      console.error(
+        "Wallet save error:",
+        error
+      );
+
+      alert(
+        "Could not save wallet data."
+      );
+
+    }
+
+  }
+
+
+  /* =========================================
+     LOAD WALLET FROM FIREBASE
+     ========================================= */
+
+  async function loadWallet() {
+
+    const walletRef =
+      getWalletRef();
+
+    if (!walletRef) {
+      return;
+    }
+
+    try {
+
+      const snapshot =
+        await get(walletRef);
+
+      if (snapshot.exists()) {
+
+        const walletData =
+          snapshot.val();
+
+        walletBalance =
+          Number(
+            walletData.balance
+          ) || 0;
+
+        transactions =
+          Array.isArray(
+            walletData.transactions
+          )
+            ? walletData.transactions
+            : [];
+
+      } else {
+
+        /* NEW USER WALLET */
+
+        walletBalance = 0;
+
+        transactions = [];
+
+        await saveWallet();
+
+      }
+
+      walletLoaded = true;
+
+      updateBalanceUI();
+
+      renderTransactions();
+
+      console.log(
+        "Firebase wallet loaded"
+      );
+
+    } catch (error) {
+
+      console.error(
+        "Wallet load error:",
+        error
+      );
+
+      alert(
+        "Could not load wallet data."
+      );
+
+    }
 
   }
 
@@ -110,7 +232,7 @@ document.addEventListener("DOMContentLoaded", () => {
      ADD TRANSACTION
      ========================================= */
 
-  function addTransaction(
+  async function addTransaction(
     type,
     amount,
     description
@@ -118,24 +240,44 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const transaction = {
 
-      id: Date.now(),
+      id:
+        Date.now(),
 
-      type: type,
+      type:
+        type,
 
-      amount: amount,
+      amount:
+        Number(amount),
 
-      description: description,
+      description:
+        description,
 
-      date: new Date().toLocaleString()
+      date:
+        new Date().toLocaleString(),
+
+      createdAt:
+        new Date().toISOString()
 
     };
 
+    transactions.unshift(
+      transaction
+    );
 
-    transactions.unshift(transaction);
+    /* Keep only latest 50 transactions */
 
-    saveTransactions();
+    if (
+      transactions.length > 50
+    ) {
+
+      transactions =
+        transactions.slice(0, 50);
+
+    }
 
     renderTransactions();
+
+    await saveWallet();
 
   }
 
@@ -146,17 +288,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function renderTransactions() {
 
-    if (!transactionList) return;
+    if (!transactionList) {
+      return;
+    }
 
     transactionList.innerHTML = "";
 
 
-    if (transactions.length === 0) {
+    if (
+      transactions.length === 0
+    ) {
 
       transactionList.innerHTML = `
-
         <div class="empty-history">
-
           <div class="empty-icon">
             🎮
           </div>
@@ -169,9 +313,7 @@ document.addEventListener("DOMContentLoaded", () => {
             Your demo wallet activity
             will appear here.
           </p>
-
         </div>
-
       `;
 
       return;
@@ -179,62 +321,74 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
 
-    transactions.forEach(transaction => {
+    transactions.forEach(
+      transaction => {
 
-      const item =
-        document.createElement("div");
+        const item =
+          document.createElement("div");
 
-      item.className =
-        "transaction-item";
-
-
-      const isCredit =
-        transaction.type === "credit";
+        item.className =
+          "transaction-item";
 
 
-      item.innerHTML = `
+        const isCredit =
+          transaction.type ===
+          "credit";
 
-        <div class="transaction-left">
 
-          <div class="transaction-icon
-            ${isCredit ? "credit" : "debit"}">
+        item.innerHTML = `
 
-            ${isCredit ? "↓" : "↑"}
+          <div class="transaction-left">
+
+            <div
+              class="transaction-icon
+              ${isCredit
+                ? "credit"
+                : "debit"}"
+            >
+              ${isCredit
+                ? "↓"
+                : "↑"}
+            </div>
+
+            <div>
+
+              <h4>
+                ${transaction.description}
+              </h4>
+
+              <p>
+                ${transaction.date}
+              </p>
+
+            </div>
 
           </div>
 
-          <div>
 
-            <h4>
-              ${transaction.description}
-            </h4>
+          <div
+            class="transaction-amount
+            ${isCredit
+              ? "positive"
+              : "negative"}"
+          >
 
-            <p>
-              ${transaction.date}
-            </p>
+            ${isCredit
+              ? "+"
+              : "-"}
+
+            ₹${transaction.amount}
 
           </div>
 
-        </div>
+        `;
 
+        transactionList.appendChild(
+          item
+        );
 
-        <div class="
-          transaction-amount
-          ${isCredit ? "positive" : "negative"}
-        ">
-
-          ${isCredit ? "+" : "-"}
-
-          ₹${transaction.amount}
-
-        </div>
-
-      `;
-
-
-      transactionList.appendChild(item);
-
-    });
+      }
+    );
 
   }
 
@@ -245,19 +399,27 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function openAddMoneyModal() {
 
-    if (!addMoneyModal) return;
+    if (!addMoneyModal) {
+      return;
+    }
 
-    addMoneyModal.classList.add("active");
+    addMoneyModal.classList.add(
+      "active"
+    );
+
 
     if (customAmount) {
 
       customAmount.value = "";
 
-      setTimeout(() => {
+      setTimeout(
+        () => {
 
-        customAmount.focus();
+          customAmount.focus();
 
-      }, 200);
+        },
+        200
+      );
 
     }
 
@@ -265,14 +427,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
   /* =========================================
-     CLOSE ADD MONEY MODAL
+     CLOSE MODAL
      ========================================= */
 
   function closeAddMoneyModal() {
 
-    if (!addMoneyModal) return;
+    if (!addMoneyModal) {
+      return;
+    }
 
-    addMoneyModal.classList.remove("active");
+    addMoneyModal.classList.remove(
+      "active"
+    );
 
   }
 
@@ -281,9 +447,23 @@ document.addEventListener("DOMContentLoaded", () => {
      ADD DEMO BALANCE
      ========================================= */
 
-  function addDemoBalance(amount) {
+  async function addDemoBalance(
+    amount
+  ) {
 
-    amount = Number(amount);
+    if (!walletLoaded) {
+
+      alert(
+        "Wallet is still loading. Please wait."
+      );
+
+      return;
+
+    }
+
+
+    amount =
+      Number(amount);
 
 
     if (
@@ -300,7 +480,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
 
-    if (amount > 50000) {
+    if (
+      amount > 50000
+    ) {
 
       alert(
         "Demo limit is ₹50,000."
@@ -311,20 +493,20 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
 
+    /* UPDATE BALANCE */
+
     walletBalance += amount;
 
 
-    updateBalance();
+    updateBalanceUI();
 
 
-    addTransaction(
+    /* ADD FIREBASE TRANSACTION */
 
+    await addTransaction(
       "credit",
-
       amount,
-
       "Demo Balance Added"
-
     );
 
 
@@ -351,120 +533,74 @@ document.addEventListener("DOMContentLoaded", () => {
      ADD MONEY BUTTON
      ========================================= */
 
-  if (addMoneyBtn) {
+  addMoneyBtn?.addEventListener(
+    "click",
+    event => {
 
-    addMoneyBtn.addEventListener(
-      "click",
-      event => {
+      event.preventDefault();
 
-        event.preventDefault();
+      openAddMoneyModal();
 
-        openAddMoneyModal();
-
-      }
-    );
-
-  }
+    }
+  );
 
 
   /* =========================================
      CLOSE MODAL BUTTON
      ========================================= */
 
-  if (closeModalBtn) {
-
-    closeModalBtn.addEventListener(
-      "click",
-      closeAddMoneyModal
-    );
-
-  }
+  closeModalBtn?.addEventListener(
+    "click",
+    closeAddMoneyModal
+  );
 
 
   /* =========================================
      CONFIRM ADD BUTTON
      ========================================= */
 
-  if (confirmAddBtn) {
+  confirmAddBtn?.addEventListener(
+    "click",
+    async event => {
 
-    confirmAddBtn.addEventListener(
-      "click",
-      event => {
-
-        event.preventDefault();
-
-        if (!customAmount) {
-
-          alert(
-            "Amount input not found."
-          );
-
-          return;
-
-        }
+      event.preventDefault();
 
 
-        const amount =
-          customAmount.value;
+      if (!customAmount) {
 
+        alert(
+          "Amount input not found."
+        );
 
-        addDemoBalance(amount);
+        return;
 
       }
-    );
 
-  }
+
+      await addDemoBalance(
+        customAmount.value
+      );
+
+    }
+  );
 
 
   /* =========================================
      MODAL QUICK AMOUNTS
      ========================================= */
 
-  modalAmountButtons.forEach(button => {
+  modalAmountButtons.forEach(
+    button => {
 
-    button.addEventListener(
-      "click",
-      () => {
+      button.addEventListener(
+        "click",
+        () => {
 
-        const amount =
-          Number(
-            button.dataset.modalAmount
-          );
+          const amount =
+            Number(
+              button.dataset.modalAmount
+            );
 
-
-        if (customAmount) {
-
-          customAmount.value =
-            amount;
-
-        }
-
-      }
-    );
-
-  });
-
-
-  /* =========================================
-     MAIN QUICK AMOUNT BUTTONS
-     ========================================= */
-
-  quickAmountButtons.forEach(button => {
-
-    button.addEventListener(
-      "click",
-      () => {
-
-        const amount =
-          Number(
-            button.dataset.amount
-          );
-
-
-        openAddMoneyModal();
-
-
-        setTimeout(() => {
 
           if (customAmount) {
 
@@ -473,116 +609,191 @@ document.addEventListener("DOMContentLoaded", () => {
 
           }
 
-        }, 100);
+        }
+      );
 
-      }
-    );
-
-  });
+    }
+  );
 
 
   /* =========================================
-     ENTER KEY SUPPORT
+     MAIN QUICK AMOUNT BUTTONS
      ========================================= */
 
-  if (customAmount) {
+  quickAmountButtons.forEach(
+    button => {
 
-    customAmount.addEventListener(
-      "keydown",
-      event => {
-
-        if (event.key === "Enter") {
+      button.addEventListener(
+        "click",
+        () => {
 
           const amount =
-            customAmount.value;
+            Number(
+              button.dataset.amount
+            );
 
-          addDemoBalance(amount);
+
+          openAddMoneyModal();
+
+
+          setTimeout(
+            () => {
+
+              if (customAmount) {
+
+                customAmount.value =
+                  amount;
+
+              }
+
+            },
+            100
+          );
 
         }
+      );
+
+    }
+  );
+
+
+  /* =========================================
+     ENTER KEY
+     ========================================= */
+
+  customAmount?.addEventListener(
+    "keydown",
+    async event => {
+
+      if (
+        event.key === "Enter"
+      ) {
+
+        await addDemoBalance(
+          customAmount.value
+        );
 
       }
-    );
 
-  }
+    }
+  );
 
 
   /* =========================================
      CLOSE MODAL ON BACKGROUND CLICK
      ========================================= */
 
-  if (addMoneyModal) {
+  addMoneyModal?.addEventListener(
+    "click",
+    event => {
 
-    addMoneyModal.addEventListener(
-      "click",
-      event => {
+      if (
+        event.target ===
+        addMoneyModal
+      ) {
 
-        if (
-          event.target === addMoneyModal
-        ) {
-
-          closeAddMoneyModal();
-
-        }
+        closeAddMoneyModal();
 
       }
-    );
 
-  }
+    }
+  );
 
 
   /* =========================================
      WITHDRAW BUTTON
      ========================================= */
 
-  if (withdrawBtn) {
-
-    withdrawBtn.addEventListener(
-      "click",
-      () => {
-
-        alert(
-          "Demo wallet mode is active. Real withdrawals are not available."
-        );
-
-      }
-    );
-
-  }
-
-
-/* =========================================
-   CREATE BATTLE BUTTON
-   ========================================= */
-if (createBattleBtn) {
-  createBattleBtn.addEventListener(
+  withdrawBtn?.addEventListener(
     "click",
     () => {
 
-      if (walletBalance <= 0) {
-        alert(
-          "Please add demo balance first."
-        );
-        return;
-      }
-
-      window.location.href = "battle.html";
+      alert(
+        "🎮 Demo Wallet Mode\n\nThis wallet contains virtual demo balance only. Real withdrawals are not available."
+      );
 
     }
   );
-}
 
 
   /* =========================================
-     INITIALIZE WALLET
+     CREATE BATTLE
      ========================================= */
 
-  updateBalance();
+  createBattleBtn?.addEventListener(
+    "click",
+    () => {
 
-  renderTransactions();
+      if (!walletLoaded) {
+
+        alert(
+          "Wallet is loading. Please wait."
+        );
+
+        return;
+
+      }
+
+
+      if (
+        walletBalance <= 0
+      ) {
+
+        alert(
+          "Please add demo balance first."
+        );
+
+        return;
+
+      }
+
+
+      window.location.href =
+        "battle.html";
+
+    }
+  );
+
+
+  /* =========================================
+     FIREBASE LOGIN CHECK
+     ========================================= */
+
+  onAuthStateChanged(
+    auth,
+    async user => {
+
+      if (!user) {
+
+        console.log(
+          "User not logged in"
+        );
+
+        window.location.href =
+          "login.html";
+
+        return;
+
+      }
+
+
+      currentUser = user;
+
+
+      console.log(
+        "Wallet user:",
+        user.email
+      );
+
+
+      await loadWallet();
+
+    }
+  );
 
 
   console.log(
-    "🎮 LUDOVERSE Demo Wallet Ready!"
+    "🎮 LUDOVERSE Firebase Wallet Ready!"
   );
 
 });
