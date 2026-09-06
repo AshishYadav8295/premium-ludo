@@ -1,157 +1,413 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>DR LUDO | Premium Gaming</title>
-  <link rel="stylesheet" href="style.css">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>LUDOVERSE | Premium Gaming</title>
+
+  <link
+    rel="stylesheet"
+    href="style.css"
+  >
 </head>
+
 <body>
 
+  <!-- =========================
+       NAVBAR
+  ========================== -->
+
   <nav class="navbar">
-    <div class="logo">🎲 LUDO<span>VERSE</span></div>
+
+    <div class="logo">
+      🎲 LUDO<span>VERSE</span>
+    </div>
+
 
     <div class="nav-links">
-      <a href="#home">Home</a>
-      <a href="#games">Games</a>
-      <a href="#leaderboard">Leaderboard</a>
+
+      <a href="#home">
+        Home
+      </a>
+
+      <a href="#games">
+        Games
+      </a>
+
+      <a href="#leaderboard">
+        Leaderboard
+      </a>
+
     </div>
 
-    <button class="profile-btn" id="profileBtn">
-  👤 Profile
-</button>
 
-<div class="profile-menu" id="profileMenu">
-  <div class="profile-header">
-    <div class="profile-avatar">👤</div>
-    <div>
-      <strong id="userPhone">Player</strong>
-      <span>Premium Player</span>
+    <!-- PROFILE BUTTON -->
+
+    <button
+      class="profile-btn"
+      id="profileBtn"
+    >
+      👤 Profile
+    </button>
+
+
+    <!-- PROFILE MENU -->
+
+    <div
+      class="profile-menu"
+      id="profileMenu"
+    >
+
+      <div class="profile-header">
+
+        <img
+          id="userPhoto"
+          class="profile-avatar-image"
+          src=""
+          alt="Profile Photo"
+        >
+
+
+        <div class="profile-user-info">
+
+          <strong id="userName">
+            Player
+          </strong>
+
+
+          <span id="userEmail">
+            Loading...
+          </span>
+
+        </div>
+
+      </div>
+
+
+      <button onclick="openWallet()">
+        🪙 My Wallet
+      </button>
+
+
+      <button onclick="openBattles()">
+        🎮 My Games
+      </button>
+
+
+      <button
+        class="logout-btn"
+        onclick="logout()"
+      >
+        🚪 Logout
+      </button>
+
     </div>
-  </div>
 
-  <button onclick="openWallet()">
-    🪙 My Wallet
-  </button>
-
-  <button onclick="openBattles()">
-    🎮 My Games
-  </button>
-
-  <button class="logout-btn" onclick="logout()">
-    🚪 Logout
-  </button>
-</div>
   </nav>
+
+
+  <!-- =========================
+       HOME
+  ========================== -->
 
   <main id="home">
 
     <section class="hero">
-      <div class="hero-content">
-        <div class="badge">🔥 PREMIUM LUDO EXPERIENCE</div>
 
-        <h1>PLAY. COMPETE.<br><span>RULE THE BOARD.</span></h1>
+      <div class="hero-content">
+
+        <div class="badge">
+          🔥 PREMIUM LUDO EXPERIENCE
+        </div>
+
+
+        <h1>
+          PLAY. COMPETE.<br>
+          <span>RULE THE BOARD.</span>
+        </h1>
+
 
         <p>
           Experience Ludo with a modern premium gaming interface.
           Play with friends, challenge AI and climb the leaderboard.
         </p>
 
+
         <div class="hero-buttons">
-          <button class="primary-btn" onclick="location.href='game.html'">🎲 Play Now</button>
-          <button class="secondary-btn">👥 Play With Friends</button>
+
+          <button
+            class="primary-btn"
+            onclick="location.href='game.html'"
+          >
+            🎲 Play Now
+          </button>
+
+
+          <button
+            class="secondary-btn"
+            onclick="createRoom()"
+          >
+            👥 Play With Friends
+          </button>
+
         </div>
 
+
         <div class="stats">
+
           <div>
             <h3>10K+</h3>
             <p>Players</p>
           </div>
+
+
           <div>
             <h3>50K+</h3>
             <p>Games Played</p>
           </div>
+
+
           <div>
             <h3>24/7</h3>
             <p>Online Fun</p>
           </div>
+
         </div>
+
       </div>
+
+
+      <!-- GAME PREVIEW -->
 
       <div class="hero-game">
-        <div class="dice">🎲</div>
-        <div class="board-preview">
-          <div class="red"></div>
-          <div class="green"></div>
-          <div class="blue"></div>
-          <div class="yellow"></div>
-          <div class="center">★</div>
+
+        <div class="dice">
+          🎲
         </div>
+
+
+        <div class="board-preview">
+
+          <div class="red"></div>
+
+          <div class="green"></div>
+
+          <div class="blue"></div>
+
+          <div class="yellow"></div>
+
+          <div class="center">
+            ★
+          </div>
+
+        </div>
+
       </div>
+
     </section>
 
-    <section id="games" class="games">
-      <h2>Choose Your Game</h2>
-      <p class="subtitle">Select a mode and start playing</p>
+
+    <!-- =========================
+         GAMES
+    ========================== -->
+
+    <section
+      id="games"
+      class="games"
+    >
+
+      <h2>
+        Choose Your Game
+      </h2>
+
+
+      <p class="subtitle">
+        Select a mode and start playing
+      </p>
+
 
       <div class="game-grid">
 
+
+        <!-- PLAY VS AI -->
+
         <div class="game-card">
-          <div class="icon">🤖</div>
-          <h3>Play vs AI</h3>
-          <p>Practice your skills against computer opponents.</p>
-          <button onclick="location.href='game.html'">Play Now →</button>
+
+          <div class="icon">
+            🤖
+          </div>
+
+          <h3>
+            Play vs AI
+          </h3>
+
+          <p>
+            Practice your skills against computer opponents.
+          </p>
+
+          <button
+            onclick="location.href='game.html'"
+          >
+            Play Now →
+          </button>
+
         </div>
+
+
+        <!-- ONLINE MATCH -->
 
         <div class="game-card featured">
-          <div class="popular">POPULAR</div>
-          <div class="icon">🌐</div>
-          <h3>Online Match</h3>
-          <p>Challenge players and compete for the top position.</p>
-           Match →</but<button onclick="playNow()">Findton>
+
+          <div class="popular">
+            POPULAR
+          </div>
+
+          <div class="icon">
+            🌐
+          </div>
+
+          <h3>
+            Online Match
+          </h3>
+
+          <p>
+            Challenge players and compete for the top position.
+          </p>
+
+          <button onclick="playNow()">
+            Find Match →
+          </button>
+
         </div>
+
+
+        <!-- PRIVATE ROOM -->
 
         <div class="game-card">
-          <div class="icon">👥</div>
-          <h3>Private Room</h3>
-          <p>Create a room and invite your friends.</p>
-          <button onclick="createRoom()">Create Room →</button>
+
+          <div class="icon">
+            👥
+          </div>
+
+          <h3>
+            Private Room
+          </h3>
+
+          <p>
+            Create a room and invite your friends.
+          </p>
+
+          <button onclick="createRoom()">
+            Create Room →
+          </button>
+
         </div>
 
+
       </div>
+
     </section>
 
-    <section id="leaderboard" class="leaderboard">
-      <h2>🏆 Top Players</h2>
+
+    <!-- =========================
+         LEADERBOARD
+    ========================== -->
+
+    <section
+      id="leaderboard"
+      class="leaderboard"
+    >
+
+      <h2>
+        🏆 Top Players
+      </h2>
+
 
       <div class="leaderboard-list">
+
+
         <div class="player rank1">
+
           <span>🥇</span>
-          <strong>Player One</strong>
-          <b>2,450 XP</b>
+
+          <strong>
+            Player One
+          </strong>
+
+          <b>
+            2,450 XP
+          </b>
+
         </div>
 
+
         <div class="player">
+
           <span>🥈</span>
-          <strong>Game Master</strong>
-          <b>2,180 XP</b>
+
+          <strong>
+            Game Master
+          </strong>
+
+          <b>
+            2,180 XP
+          </b>
+
         </div>
 
+
         <div class="player">
+
           <span>🥉</span>
-          <strong>Ludo King</strong>
-          <b>1,950 XP</b>
+
+          <strong>
+            Ludo King
+          </strong>
+
+          <b>
+            1,950 XP
+          </b>
+
         </div>
+
+
       </div>
+
     </section>
 
   </main>
 
+
+  <!-- =========================
+       FOOTER
+  ========================== -->
+
   <footer>
-    <div class="logo">🎲 LUDOVERSE</div>
-    <p>© 2026 LUDOVERSE. Play for fun.</p>
+
+    <div class="logo">
+      🎲 LUDOVERSE
+    </div>
+
+    <p>
+      © 2026 LUDOVERSE. Play for fun.
+    </p>
+
   </footer>
 
-  <script type="module" src="script.js"></script>
+
+  <!-- JAVASCRIPT -->
+
+  <script
+    type="module"
+    src="script.js"
+  ></script>
+
 </body>
+
 </html>

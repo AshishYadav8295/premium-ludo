@@ -6,9 +6,14 @@
 
 import {
   auth,
+  onAuthStateChanged,
   signOut
 } from "./firebase.js";
 
+
+/* ==========================================
+   DOM ELEMENTS
+========================================== */
 
 const profileBtn =
   document.getElementById("profileBtn");
@@ -16,99 +21,34 @@ const profileBtn =
 const profileMenu =
   document.getElementById("profileMenu");
 
+const userName =
+  document.getElementById("userName");
+
+const userEmail =
+  document.getElementById("userEmail");
+
+const userPhoto =
+  document.getElementById("userPhoto");
+
 
 /* ==========================================
-   LOGIN CHECK + PROFILE DATA
+   FIREBASE LOGIN CHECK
 ========================================== */
 
-function checkUserLogin() {
+onAuthStateChanged(
+  auth,
+  (user) => {
 
-  const loggedIn =
-    localStorage.getItem(
-      "ludoverseLoggedIn"
-    );
+    if (!user) {
 
-  const userData =
-    localStorage.getItem(
-      "ludoverseUser"
-    );
+      console.log(
+        "No user logged in"
+      );
 
+      window.location.href =
+        "login.html";
 
-  /* Redirect if not logged in */
-
-  if (
-    loggedIn !== "true" ||
-    !userData
-  ) {
-
-    window.location.href =
-      "login.html";
-
-    return;
-  }
-
-
-  try {
-
-    const user =
-      JSON.parse(userData);
-
-
-    /* ======================================
-       FIND PROFILE ELEMENTS
-    ====================================== */
-
-    const profileName =
-      document.getElementById("profileName");
-
-    const profileEmail =
-      document.getElementById("profileEmail");
-
-    const profileImage =
-      document.getElementById("profileImage");
-
-
-    /* ======================================
-       SET GOOGLE NAME
-    ====================================== */
-
-    if (profileName) {
-
-      profileName.textContent =
-        user.displayName ||
-        "Player";
-
-    }
-
-
-    /* ======================================
-       SET GOOGLE EMAIL
-    ====================================== */
-
-    if (profileEmail) {
-
-      profileEmail.textContent =
-        user.email ||
-        "Premium Player";
-
-    }
-
-
-    /* ======================================
-       SET GOOGLE PROFILE PHOTO
-    ====================================== */
-
-    if (
-      profileImage &&
-      user.photoURL
-    ) {
-
-      profileImage.src =
-        user.photoURL;
-
-      profileImage.style.display =
-        "block";
-
+      return;
     }
 
 
@@ -118,17 +58,60 @@ function checkUserLogin() {
     );
 
 
-  }
-  catch (error) {
+    /* ==============================
+       GOOGLE REAL NAME
+    ============================== */
 
-    console.error(
-      "User data error:",
-      error
+    if (userName) {
+
+      userName.textContent =
+        user.displayName ||
+        "LUDOVERSE Player";
+
+    }
+
+
+    /* ==============================
+       GOOGLE REAL EMAIL
+    ============================== */
+
+    if (userEmail) {
+
+      userEmail.textContent =
+        user.email ||
+        user.phoneNumber ||
+        "";
+
+    }
+
+
+    /* ==============================
+       GOOGLE PROFILE PHOTO
+    ============================== */
+
+    if (userPhoto) {
+
+      if (user.photoURL) {
+
+        userPhoto.src =
+          user.photoURL;
+
+      } else {
+
+        userPhoto.style.display =
+          "none";
+
+      }
+
+    }
+
+
+    console.log(
+      "LUDOVERSE user loaded successfully"
     );
 
   }
-
-}
+);
 
 
 /* ==========================================
@@ -149,6 +132,10 @@ profileBtn?.addEventListener(
 );
 
 
+/* ==========================================
+   CLOSE PROFILE MENU
+========================================== */
+
 document.addEventListener(
   "click",
   (event) => {
@@ -156,12 +143,8 @@ document.addEventListener(
     if (
       profileMenu &&
       profileBtn &&
-      !profileMenu.contains(
-        event.target
-      ) &&
-      !profileBtn.contains(
-        event.target
-      )
+      !profileMenu.contains(event.target) &&
+      !profileBtn.contains(event.target)
     ) {
 
       profileMenu.classList.remove(
@@ -175,7 +158,7 @@ document.addEventListener(
 
 
 /* ==========================================
-   PLAY VS AI
+   PLAY NOW
 ========================================== */
 
 function playNow() {
@@ -187,7 +170,7 @@ function playNow() {
 
 
 /* ==========================================
-   PLAY WITH FRIENDS
+   CREATE ROOM
 ========================================== */
 
 function createRoom() {
@@ -199,7 +182,7 @@ function createRoom() {
 
 
 /* ==========================================
-   WALLET
+   OPEN WALLET
 ========================================== */
 
 function openWallet() {
@@ -217,14 +200,14 @@ function openWallet() {
 function openBattles() {
 
   alert(
-    "🎮 My Games feature is coming next!"
+    "🎮 My Games feature is coming soon!"
   );
 
 }
 
 
 /* ==========================================
-   LOGOUT
+   FIREBASE PROPER LOGOUT
 ========================================== */
 
 async function logout() {
@@ -244,36 +227,42 @@ async function logout() {
 
   try {
 
-    /* Firebase Google logout */
-
     await signOut(auth);
 
-  }
-  catch (error) {
+
+    /* Remove old local data */
+
+    localStorage.removeItem(
+      "ludoverseLoggedIn"
+    );
+
+    localStorage.removeItem(
+      "ludoverseUser"
+    );
+
+
+    console.log(
+      "Firebase logout successful"
+    );
+
+
+    window.location.href =
+      "login.html";
+
+
+  } catch (error) {
 
     console.error(
-      "Firebase logout error:",
+      "Logout error:",
       error
     );
 
+
+    alert(
+      "Logout failed. Please try again."
+    );
+
   }
-
-
-  /* Remove local login data */
-
-  localStorage.removeItem(
-    "ludoverseLoggedIn"
-  );
-
-  localStorage.removeItem(
-    "ludoverseUser"
-  );
-
-
-  /* Redirect */
-
-  window.location.href =
-    "login.html";
 
 }
 
@@ -299,18 +288,9 @@ window.logout =
 
 
 /* ==========================================
-   START WEBSITE
+   WEBSITE READY
 ========================================== */
 
-document.addEventListener(
-  "DOMContentLoaded",
-  () => {
-
-    checkUserLogin();
-
-    console.log(
-      "🎲 LUDOVERSE Home System Ready"
-    );
-
-  }
+console.log(
+  "🎲 LUDOVERSE Home System Ready"
 );
