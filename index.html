@@ -151,9 +151,9 @@
 
           <button
             class="secondary-btn"
-            onclick="createRoom()"
+            onclick="location.href='join-room.html'"
           >
-            👥 Play With Friends
+            👥 Join Battle
           </button>
 
         </div>
@@ -288,26 +288,30 @@
 
 
         <!-- PRIVATE ROOM -->
+<div class="game-card">
+  <div class="icon">
+    👥
+  </div>
 
-        <div class="game-card">
+  <h3>
+    Private Room
+  </h3>
 
-          <div class="icon">
-            👥
-          </div>
+  <p>
+    Create a battle room or join your friend's battle using a room code.
+  </p>
 
-          <h3>
-            Private Room
-          </h3>
+  <button onclick="createRoom()">
+    Create Room →
+  </button>
 
-          <p>
-            Create a room and invite your friends.
-          </p>
-
-          <button onclick="createRoom()">
-            Create Room →
-          </button>
-
-        </div>
+  <button
+    onclick="location.href='join-room.html'"
+    style="margin-top: 12px;"
+  >
+    Join Battle →
+  </button>
+</div>
 
 
       </div>
