@@ -1,17 +1,20 @@
 "use strict";
 
+/* =========================================================
+   LUDOVERSE - FIREBASE BATTLE SYSTEM
+   DEMO BATTLE CREATION
+   ========================================================= */
+
 import {
   auth,
   database,
   ref,
   set,
-  get
+  get,
+  update,
+  onAuthStateChanged
 } from "./firebase.js";
 
-/* =========================================================
-   LUDOVERSE - BATTLE SYSTEM
-   DEMO BATTLE CREATION
-   ========================================================= */
 
 document.addEventListener("DOMContentLoaded", () => {
 
@@ -72,14 +75,30 @@ document.addEventListener("DOMContentLoaded", () => {
      BATTLE STATE
      ========================================================= */
 
-  let selectedMode = "private";
+  let currentUser = null;
+  let walletBalance = 0;
 
+  let selectedMode = "private";
   let selectedEntry = 50;
 
-  let walletBalance =
-    Number(
-      localStorage.getItem("ludoverseBalance")
-    ) || 0;
+  let walletLoaded = false;
+
+
+  /* =========================================================
+     GET WALLET REFERENCE
+     ========================================================= */
+
+  function getWalletRef() {
+
+    if (!currentUser) {
+      return null;
+    }
+
+    return ref(
+      database,
+      `users/${currentUser.uid}/wallet`
+    );
+  }
 
 
   /* =========================================================
@@ -88,26 +107,71 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function updateWalletDisplay() {
 
-    if (!walletBalanceElement) return;
+    if (!walletBalanceElement) {
+      return;
+    }
 
     walletBalanceElement.textContent =
-      walletBalance.toFixed(0);
+      Number(walletBalance).toFixed(0);
+  }
 
+
+  /* =========================================================
+     LOAD WALLET FROM FIREBASE
+     ========================================================= */
+
+  async function loadWallet() {
+
+    const walletRef = getWalletRef();
+
+    if (!walletRef) {
+      return;
+    }
+
+    try {
+
+      const snapshot =
+        await get(walletRef);
+
+      if (snapshot.exists()) {
+
+        const walletData =
+          snapshot.val();
+
+        walletBalance =
+          Number(walletData.balance) || 0;
+
+      } else {
+
+        walletBalance = 0;
+
+      }
+
+      walletLoaded = true;
+
+      updateWalletDisplay();
+
+      console.log(
+        "Firebase battle wallet loaded:",
+        walletBalance
+      );
+
+    } catch (error) {
+
+      console.error(
+        "Battle wallet load error:",
+        error
+      );
+
+      showToast(
+        "❌ Could not load wallet."
+      );
+    }
   }
 
 
   /* =========================================================
      CALCULATE DEMO PRIZE
-     
-     Example:
-     
-     Entry = ₹20 per player
-     Total Pot = ₹40
-     
-     Demo Platform Fee = 10%
-     Fee = ₹4
-     
-     Demo Prize = ₹36
      ========================================================= */
 
   function calculatePrize(entryAmount) {
@@ -122,7 +186,6 @@ document.addEventListener("DOMContentLoaded", () => {
       totalPot - commission;
 
     return Math.round(prize);
-
   }
 
 
@@ -139,16 +202,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
       previewEntry.textContent =
         selectedEntry;
-
     }
 
     if (previewPrize) {
 
       previewPrize.textContent =
         prize;
-
     }
-
   }
 
 
@@ -161,9 +221,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!toast || !toastMessage) {
 
       alert(message);
-
       return;
-
     }
 
     toastMessage.textContent =
@@ -176,7 +234,6 @@ document.addEventListener("DOMContentLoaded", () => {
       toast.classList.remove("show");
 
     }, 3000);
-
   }
 
 
@@ -201,19 +258,11 @@ document.addEventListener("DOMContentLoaded", () => {
         selectedMode =
           card.dataset.mode;
 
-        if (selectedMode === "quick") {
-
-          showToast(
-            "⚡ Quick Match selected!"
-          );
-
-        } else {
-
-          showToast(
-            "🔒 Private Battle selected!"
-          );
-
-        }
+        showToast(
+          selectedMode === "quick"
+            ? "⚡ Quick Match selected!"
+            : "🔒 Private Battle selected!"
+        );
 
       }
     );
@@ -240,14 +289,11 @@ document.addEventListener("DOMContentLoaded", () => {
         button.classList.add("active");
 
         selectedEntry =
-          Number(
-            button.dataset.amount
-          );
+          Number(button.dataset.amount);
 
         if (customEntry) {
 
           customEntry.value = "";
-
         }
 
         updatePreview();
@@ -262,115 +308,68 @@ document.addEventListener("DOMContentLoaded", () => {
      CUSTOM ENTRY AMOUNT
      ========================================================= */
 
-  if (customEntry) {
+  customEntry?.addEventListener(
+    "input",
+    () => {
 
-    customEntry.addEventListener(
-      "input",
-      () => {
+      const amount =
+        Number(customEntry.value);
 
-        const amount =
-          Number(customEntry.value);
+      if (
+        Number.isFinite(amount) &&
+        amount > 0
+      ) {
 
-        if (
-          Number.isFinite(amount) &&
-          amount > 0
-        ) {
+        selectedEntry =
+          Math.floor(amount);
 
-          selectedEntry =
-            Math.floor(amount);
+        entryButtons.forEach(item => {
 
-          entryButtons.forEach(item => {
+          item.classList.remove("active");
 
-            item.classList.remove("active");
+        });
 
-          });
-
-          updatePreview();
-
-        }
+        updatePreview();
 
       }
-    );
 
-  }
+    }
+  );
 
 
   /* =========================================================
-     GENERATE 6 DIGIT ROOM CODE
+     GENERATE ROOM CODE
      ========================================================= */
 
-  function generateRoomCode() {
+  async function generateUniqueRoomCode() {
 
-    let code = "";
+    let code;
+    let exists = true;
 
-    for (
-      let i = 0;
-      i < 6;
-      i++
-    ) {
+    while (exists) {
 
-      code += Math.floor(
-        Math.random() * 10
+      code = String(
+        Math.floor(
+          100000 +
+          Math.random() * 900000
+        )
       );
+
+      const roomRef =
+        ref(
+          database,
+          `battles/${code}`
+        );
+
+      const snapshot =
+        await get(roomRef);
+
+      exists =
+        snapshot.exists();
 
     }
 
     return code;
-
-  }
-
-
-  /* =========================================================
-     SAVE TRANSACTION
-     ========================================================= */
-
-  function saveTransaction(
-    type,
-    amount,
-    description
-  ) {
-
-    let transactions = [];
-
-    try {
-
-      transactions =
-        JSON.parse(
-          localStorage.getItem(
-            "ludoverseTransactions"
-          )
-        ) || [];
-
-    } catch (error) {
-
-      transactions = [];
-
-    }
-
-    const transaction = {
-
-      id: Date.now(),
-
-      type: type,
-
-      amount: amount,
-
-      description: description,
-
-      date:
-        new Date().toLocaleString()
-
-    };
-
-    transactions.unshift(
-      transaction
-    );
-
-    localStorage.setItem(
-      "ludoverseTransactions",
-      JSON.stringify(transactions)
-    );
-
   }
 
 
@@ -378,58 +377,100 @@ document.addEventListener("DOMContentLoaded", () => {
      CREATE BATTLE
      ========================================================= */
 
-  if (createBattleBtn) {
+  createBattleBtn?.addEventListener(
+    "click",
+    async () => {
 
-    createBattleBtn.addEventListener(
-  "click",
-  async () => {
+      /* -----------------------------------------
+         AUTH CHECK
+         ----------------------------------------- */
+
+      if (!currentUser) {
+
+        showToast(
+          "Please login first."
+        );
+
+        return;
+      }
+
+
+      /* -----------------------------------------
+         WALLET CHECK
+         ----------------------------------------- */
+
+      if (!walletLoaded) {
+
+        showToast(
+          "Wallet is loading..."
+        );
+
+        return;
+      }
+
+
+      /* -----------------------------------------
+         ENTRY VALIDATION
+         ----------------------------------------- */
+
+      if (
+        !selectedEntry ||
+        selectedEntry <= 0
+      ) {
+
+        showToast(
+          "Please select a valid demo entry."
+        );
+
+        return;
+      }
+
+
+      /* -----------------------------------------
+         BALANCE CHECK
+         ----------------------------------------- */
+
+      if (
+        walletBalance < selectedEntry
+      ) {
+
+        showToast(
+          "❌ Insufficient demo balance."
+        );
+
+        return;
+      }
+
+
+      /* -----------------------------------------
+         DISABLE BUTTON
+         ----------------------------------------- */
+
+      createBattleBtn.disabled = true;
+
+      const originalText =
+        createBattleBtn.innerHTML;
+
+      createBattleBtn.innerHTML =
+        "Creating Battle...";
+
+
+      try {
 
         /* -----------------------------------------
-           VALIDATE ENTRY
-           ----------------------------------------- */
-
-        if (
-          !selectedEntry ||
-          selectedEntry <= 0
-        ) {
-
-          showToast(
-            "Please select a valid demo entry."
-          );
-
-          return;
-
-        }
-
-
-        /* -----------------------------------------
-           DEMO BALANCE CHECK
-           ----------------------------------------- */
-
-        if (
-          walletBalance < selectedEntry
-        ) {
-
-          showToast(
-            "❌ Insufficient demo balance. Please add demo balance first."
-          );
-
-          return;
-
-        }
-
-
-        /* -----------------------------------------
-           GENERATE BATTLE DATA
+           GENERATE ROOM CODE
            ----------------------------------------- */
 
         const generatedRoomCode =
-          generateRoomCode();
+          await generateUniqueRoomCode();
+
+
+        /* -----------------------------------------
+           CALCULATE PRIZE
+           ----------------------------------------- */
 
         const prize =
-          calculatePrize(
-            selectedEntry
-          );
+          calculatePrize(selectedEntry);
 
         const totalPot =
           selectedEntry * 2;
@@ -439,22 +480,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
         /* -----------------------------------------
-           DEDUCT DEMO ENTRY
-           ----------------------------------------- */
-
-        walletBalance -=
-          selectedEntry;
-
-        localStorage.setItem(
-          "ludoverseBalance",
-          walletBalance.toString()
-        );
-
-        updateWalletDisplay();
-
-
-        /* -----------------------------------------
-           CREATE BATTLE OBJECT
+           CREATE BATTLE DATA
            ----------------------------------------- */
 
         const battle = {
@@ -483,8 +509,34 @@ document.addEventListener("DOMContentLoaded", () => {
           prize:
             prize,
 
-          players:
-            1,
+          creatorUid:
+            currentUser.uid,
+
+          creatorName:
+            currentUser.displayName ||
+            "Player",
+
+          creatorPhoto:
+            currentUser.photoURL ||
+            "",
+
+          players: {
+            [currentUser.uid]: {
+              uid:
+                currentUser.uid,
+
+              name:
+                currentUser.displayName ||
+                "Player",
+
+              photo:
+                currentUser.photoURL ||
+                "",
+
+              joinedAt:
+                new Date().toISOString()
+            }
+          },
 
           maxPlayers:
             2,
@@ -493,305 +545,217 @@ document.addEventListener("DOMContentLoaded", () => {
             "waiting",
 
           createdAt:
-            new Date().toLocaleString()
+            new Date().toISOString()
 
         };
 
 
         /* -----------------------------------------
-   SAVE BATTLE TO FIREBASE
-   ----------------------------------------- */
+           DEDUCT WALLET BALANCE
+           ----------------------------------------- */
 
-const currentUser = auth.currentUser;
-
-if (!currentUser) {
-  showToast(
-    "Please login again."
-  );
-  return;
-}
-
-battle.hostUid = currentUser.uid;
-
-battle.hostName =
-  currentUser.displayName || "Player";
-
-battle.hostEmail =
-  currentUser.email || "";
-
-battle.hostPhoto =
-  currentUser.photoURL || "";
-
-try {
-
-  await set(
-    ref(
-      database,
-      "battles/" + generatedRoomCode
-    ),
-    battle
-  );
-
-} catch (error) {
-
-  console.error(
-    "Firebase battle error:",
-    error
-  );
-
-  showToast(
-    "❌ Failed to create battle. Please try again."
-  );
-
-  return;
-}
+        walletBalance -=
+          selectedEntry;
 
 
         /* -----------------------------------------
-           SAVE BATTLE HISTORY
+           GET CURRENT WALLET DATA
            ----------------------------------------- */
 
-        let battles = [];
+        const walletRef =
+          getWalletRef();
 
-        try {
+        const walletSnapshot =
+          await get(walletRef);
 
-          battles =
-            JSON.parse(
-              localStorage.getItem(
-                "ludoverseBattles"
-              )
-            ) || [];
+        let walletData =
+          walletSnapshot.exists()
+            ? walletSnapshot.val()
+            : {
+                balance: 0,
+                transactions: []
+              };
 
-        } catch (error) {
 
-          battles = [];
+        let firebaseTransactions =
+          Array.isArray(
+            walletData.transactions
+          )
+            ? walletData.transactions
+            : [];
 
-        }
 
-        battles.unshift(battle);
+        /* -----------------------------------------
+           ADD TRANSACTION
+           ----------------------------------------- */
 
-        localStorage.setItem(
-          "ludoverseBattles",
-          JSON.stringify(battles)
+        const transaction = {
+
+          id:
+            Date.now(),
+
+          type:
+            "debit",
+
+          amount:
+            selectedEntry,
+
+          description:
+            "Demo Battle Entry - Room " +
+            generatedRoomCode,
+
+          date:
+            new Date().toLocaleString(),
+
+          createdAt:
+            new Date().toISOString()
+
+        };
+
+
+        firebaseTransactions.unshift(
+          transaction
+        );
+
+
+        /* KEEP ONLY 50 TRANSACTIONS */
+
+        firebaseTransactions =
+          firebaseTransactions.slice(
+            0,
+            50
+          );
+
+
+        /* -----------------------------------------
+           SAVE WALLET
+           ----------------------------------------- */
+
+        await update(
+          walletRef,
+          {
+
+            balance:
+              walletBalance,
+
+            transactions:
+              firebaseTransactions,
+
+            updatedAt:
+              new Date().toISOString()
+
+          }
         );
 
 
         /* -----------------------------------------
-           SAVE WALLET TRANSACTION
+           SAVE BATTLE TO FIREBASE
            ----------------------------------------- */
 
-        saveTransaction(
-
-          "debit",
-
-          selectedEntry,
-
-          "Demo Battle Entry - Room " +
-            generatedRoomCode
-
+        await set(
+          ref(
+            database,
+            `battles/${generatedRoomCode}`
+          ),
+          battle
         );
 
 
+        updateWalletDisplay();
+
+
         /* -----------------------------------------
-           UPDATE SUCCESS MODAL
+           SUCCESS MODAL
            ----------------------------------------- */
 
         if (roomCode) {
 
           roomCode.textContent =
             generatedRoomCode;
-
         }
 
         if (successEntry) {
 
           successEntry.textContent =
             selectedEntry;
-
         }
 
         if (successPrize) {
 
           successPrize.textContent =
             prize;
-
         }
 
-
-        /* -----------------------------------------
-           OPEN SUCCESS MODAL
-           ----------------------------------------- */
-
-        if (battleCreatedModal) {
-
-          battleCreatedModal.classList.add(
-            "active"
-          );
-
-        }
+        battleCreatedModal?.classList.add(
+          "active"
+        );
 
 
         showToast(
-          "🎉 Demo battle created successfully!"
+          "🎉 Battle created successfully!"
         );
 
-      }
-    );
 
-  }
+        console.log(
+          "Firebase battle created:",
+          generatedRoomCode
+        );
+
+
+      } catch (error) {
+
+        console.error(
+          "Battle creation error:",
+          error
+        );
+
+        showToast(
+          "❌ Could not create battle."
+        );
+
+      } finally {
+
+        createBattleBtn.disabled =
+          false;
+
+        createBattleBtn.innerHTML =
+          originalText;
+
+      }
+
+    }
+  );
 
 
   /* =========================================================
      COPY ROOM CODE
      ========================================================= */
 
-  if (copyRoomCodeBtn) {
+  copyRoomCodeBtn?.addEventListener(
+    "click",
+    async () => {
 
-    copyRoomCodeBtn.addEventListener(
-      "click",
-      async () => {
+      const code =
+        roomCode?.textContent.trim();
 
-        if (!roomCode) return;
-
-        const code =
-          roomCode.textContent.trim();
-
-        try {
-
-          await navigator.clipboard.writeText(
-            code
-          );
-
-          copyRoomCodeBtn.textContent =
-            "✓";
-
-          showToast(
-            "Room code copied!"
-          );
-
-          setTimeout(() => {
-
-            copyRoomCodeBtn.textContent =
-              "📋";
-
-          }, 2000);
-
-        } catch (error) {
-
-          /* FALLBACK */
-
-          const textarea =
-            document.createElement(
-              "textarea"
-            );
-
-          textarea.value =
-            code;
-
-          document.body.appendChild(
-            textarea
-          );
-
-          textarea.select();
-
-          document.execCommand(
-            "copy"
-          );
-
-          textarea.remove();
-
-          showToast(
-            "Room code copied!"
-          );
-
-        }
-
+      if (!code) {
+        return;
       }
-    );
 
-  }
+      try {
 
+        await navigator.clipboard.writeText(
+          code
+        );
 
-  /* =========================================================
-     BACK TO WALLET
-     ========================================================= */
+        showToast(
+          "Room code copied!"
+        );
 
-  if (backToWalletBtn) {
+      } catch (error) {
 
-    backToWalletBtn.addEventListener(
-      "click",
-      () => {
-
-        window.location.href =
-          "wallet.html";
-
-      }
-    );
-
-  }
-
-
-  /* =========================================================
-     OPEN DEMO JOIN ROOM PAGE
-     ========================================================= */
-
-  if (goToGameBtn) {
-
-    goToGameBtn.addEventListener(
-      "click",
-      () => {
-
-        window.location.href =
-          "join-room.html";
-
-      }
-    );
-
-  }
-
-
-  /* =========================================================
-     CLOSE MODAL ON BACKGROUND CLICK
-     ========================================================= */
-
-  if (battleCreatedModal) {
-
-    battleCreatedModal.addEventListener(
-      "click",
-      event => {
-
-        if (
-          event.target ===
-          battleCreatedModal
-        ) {
-
-          battleCreatedModal.classList.remove(
-            "active"
-          );
-
-        }
-
-      }
-    );
-
-  }
-
-
-  /* =========================================================
-     ESC KEY CLOSE MODAL
-     ========================================================= */
-
-  document.addEventListener(
-    "keydown",
-    event => {
-
-      if (
-        event.key === "Escape" &&
-        battleCreatedModal
-      ) {
-
-        battleCreatedModal.classList.remove(
-          "active"
+        showToast(
+          "Please copy the room code manually."
         );
 
       }
@@ -801,16 +765,67 @@ try {
 
 
   /* =========================================================
-     INITIALIZE PAGE
+     BACK TO WALLET
      ========================================================= */
 
-  updateWalletDisplay();
+  backToWalletBtn?.addEventListener(
+    "click",
+    () => {
+
+      window.location.href =
+        "wallet.html";
+
+    }
+  );
+
+
+  /* =========================================================
+     GO TO JOIN ROOM
+     ========================================================= */
+
+  goToGameBtn?.addEventListener(
+    "click",
+    () => {
+
+      window.location.href =
+        "join-room.html";
+
+    }
+  );
+
+
+  /* =========================================================
+     AUTH STATE
+     ========================================================= */
+
+  onAuthStateChanged(
+    auth,
+    async user => {
+
+      if (!user) {
+
+        window.location.href =
+          "login.html";
+
+        return;
+      }
+
+      currentUser = user;
+
+      await loadWallet();
+
+    }
+  );
+
+
+  /* =========================================================
+     INITIALIZE
+     ========================================================= */
 
   updatePreview();
 
-
   console.log(
-    "🎲 LUDOVERSE Battle System Ready!"
+    "🎲 LUDOVERSE Firebase Battle System Ready!"
   );
 
 });
