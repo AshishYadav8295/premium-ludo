@@ -10,7 +10,6 @@ import {
   ref,
   get,
   update,
-  set,
   onAuthStateChanged
 } from "./firebase.js";
 
@@ -57,65 +56,104 @@ document.addEventListener("DOMContentLoaded", () => {
      ========================================================= */
 
   let currentUser = null;
-
   let walletBalance = 0;
-
-  let foundBattle = null;
+  let walletLoaded = false;
+  let currentBattle = null;
 
 
   /* =========================================================
      SHOW TOAST
      ========================================================= */
 
-  function showToast(message) {
+  function showToast(
+    message,
+    type = "success"
+  ) {
 
     if (!toast || !toastMessage) {
       alert(message);
       return;
     }
 
-    toastMessage.textContent = message;
+    toastMessage.textContent =
+      message;
 
-    toast.classList.add("show");
+    toast.classList.remove(
+      "success",
+      "error",
+      "show"
+    );
+
+    toast.classList.add(type);
 
     setTimeout(() => {
+      toast.classList.add("show");
+    }, 10);
 
+    setTimeout(() => {
       toast.classList.remove("show");
-
-    }, 3000);
-
+    }, 3500);
   }
 
 
   /* =========================================================
-     UPDATE WALLET UI
+     FORMAT AMOUNT
+     ========================================================= */
+
+  function formatAmount(amount) {
+
+    return Number(
+      amount || 0
+    ).toLocaleString("en-IN");
+  }
+
+
+  /* =========================================================
+     UPDATE WALLET DISPLAY
      ========================================================= */
 
   function updateWalletDisplay() {
 
-    if (!walletBalanceElement) return;
+    if (!walletBalanceElement) {
+      return;
+    }
 
     walletBalanceElement.textContent =
-      Number(walletBalance).toFixed(0);
-
+      formatAmount(walletBalance);
   }
 
 
   /* =========================================================
-     LOAD USER WALLET
+     GET WALLET REFERENCE
+     ========================================================= */
+
+  function getWalletRef() {
+
+    if (!currentUser) {
+      return null;
+    }
+
+    return ref(
+      database,
+      `users/${currentUser.uid}/wallet`
+    );
+  }
+
+
+  /* =========================================================
+     LOAD WALLET FROM FIREBASE
      ========================================================= */
 
   async function loadWallet() {
 
-    if (!currentUser) return;
+    const walletRef =
+      getWalletRef();
+
+    if (!walletRef) {
+      return;
+    }
 
     try {
-
-      const walletRef =
-        ref(
-          database,
-          `users/${currentUser.uid}/wallet`
-        );
 
       const snapshot =
         await get(walletRef);
@@ -131,10 +169,16 @@ document.addEventListener("DOMContentLoaded", () => {
       } else {
 
         walletBalance = 0;
-
       }
 
+      walletLoaded = true;
+
       updateWalletDisplay();
+
+      console.log(
+        "Firebase join wallet loaded:",
+        walletBalance
+      );
 
     } catch (error) {
 
@@ -144,50 +188,10 @@ document.addEventListener("DOMContentLoaded", () => {
       );
 
       showToast(
-        "Could not load wallet."
+        "Could not load wallet.",
+        "error"
       );
-
     }
-
-  }
-
-
-  /* =========================================================
-     SAVE USER WALLET
-     ========================================================= */
-
-  async function saveWallet() {
-
-    if (!currentUser) return;
-
-    try {
-
-      const walletRef =
-        ref(
-          database,
-          `users/${currentUser.uid}/wallet`
-        );
-
-      await update(
-        walletRef,
-        {
-          balance: walletBalance,
-          updatedAt:
-            new Date().toISOString()
-        }
-      );
-
-    } catch (error) {
-
-      console.error(
-        "Wallet save error:",
-        error
-      );
-
-      throw error;
-
-    }
-
   }
 
 
@@ -197,26 +201,35 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function validateRoomCode(code) {
 
-    if (!/^\d{6}$/.test(code)) {
+    if (!code) {
 
       showToast(
-        "Please enter a valid 6-digit room code."
+        "Please enter a room code.",
+        "error"
       );
 
       return false;
+    }
 
+    if (!/^\d{6}$/.test(code)) {
+
+      showToast(
+        "Please enter a valid 6-digit room code.",
+        "error"
+      );
+
+      return false;
     }
 
     return true;
-
   }
 
 
   /* =========================================================
-     FIND BATTLE FROM FIREBASE
+     GET BATTLE FROM FIREBASE
      ========================================================= */
 
-  async function findBattle(roomCode) {
+  async function getBattle(roomCode) {
 
     try {
 
@@ -230,9 +243,7 @@ document.addEventListener("DOMContentLoaded", () => {
         await get(battleRef);
 
       if (!snapshot.exists()) {
-
         return null;
-
       }
 
       return snapshot.val();
@@ -240,14 +251,28 @@ document.addEventListener("DOMContentLoaded", () => {
     } catch (error) {
 
       console.error(
-        "Battle search error:",
+        "Battle load error:",
         error
       );
 
       return null;
+    }
+  }
 
+
+  /* =========================================================
+     GET PLAYER COUNT
+     ========================================================= */
+
+  function getPlayerCount(battle) {
+
+    if (!battle || !battle.players) {
+      return 0;
     }
 
+    return Object.keys(
+      battle.players
+    ).length;
   }
 
 
@@ -257,30 +282,133 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function showBattlePreview(battle) {
 
-    foundBattle = battle;
+    if (!battle) {
+      return;
+    }
 
-    if (!battlePreview) return;
-
-    battlePreview.classList.remove(
-      "hidden"
-    );
+    currentBattle = battle;
 
     if (battleEntry) {
 
       battleEntry.textContent =
-        Number(battle.entry || 0)
-          .toLocaleString("en-IN");
-
+        formatAmount(battle.entry);
     }
 
     if (battlePrize) {
 
       battlePrize.textContent =
-        Number(battle.prize || 0)
-          .toLocaleString("en-IN");
-
+        formatAmount(battle.prize);
     }
 
+    if (battlePreview) {
+
+      battlePreview.classList.remove(
+        "hidden"
+      );
+
+      battlePreview.scrollIntoView({
+        behavior: "smooth",
+        block: "center"
+      });
+    }
+  }
+
+
+  /* =========================================================
+     HIDE BATTLE PREVIEW
+     ========================================================= */
+
+  function hideBattlePreview() {
+
+    if (battlePreview) {
+
+      battlePreview.classList.add(
+        "hidden"
+      );
+    }
+
+    currentBattle = null;
+  }
+
+
+  /* =========================================================
+     LOAD ROOM PREVIEW
+     ========================================================= */
+
+  async function previewBattle() {
+
+    if (!roomCodeInput) {
+      return;
+    }
+
+    const roomCode =
+      roomCodeInput.value
+        .replace(/\D/g, "")
+        .slice(0, 6);
+
+    roomCodeInput.value =
+      roomCode;
+
+    if (roomCode.length !== 6) {
+
+      hideBattlePreview();
+      return;
+    }
+
+    const battle =
+      await getBattle(roomCode);
+
+    if (!battle) {
+
+      hideBattlePreview();
+
+      showToast(
+        "No battle found with this room code.",
+        "error"
+      );
+
+      return;
+    }
+
+    if (
+      battle.status === "completed"
+    ) {
+
+      hideBattlePreview();
+
+      showToast(
+        "This battle has already been completed.",
+        "error"
+      );
+
+      return;
+    }
+
+    showBattlePreview(battle);
+  }
+
+
+  /* =========================================================
+     ADD WALLET TRANSACTION
+     ========================================================= */
+
+  function createTransaction(
+    roomCode,
+    entryAmount
+  ) {
+
+    return {
+      id: Date.now(),
+      type: "debit",
+      amount: Number(entryAmount),
+      description:
+        "Joined Demo Battle - Room " +
+        roomCode,
+      date:
+        new Date().toLocaleString(),
+      createdAt:
+        new Date().toISOString()
+    };
   }
 
 
@@ -293,61 +421,97 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!currentUser) {
 
       showToast(
-        "Please login first."
+        "Please login first.",
+        "error"
       );
 
       return;
+    }
 
+    if (!walletLoaded) {
+
+      showToast(
+        "Wallet is still loading.",
+        "error"
+      );
+
+      return;
+    }
+
+    if (!roomCodeInput) {
+
+      showToast(
+        "Room code input not found.",
+        "error"
+      );
+
+      return;
     }
 
 
+    /* -----------------------------------------
+       GET ROOM CODE
+       ----------------------------------------- */
+
     const roomCode =
       roomCodeInput.value
+        .trim()
         .replace(/\D/g, "")
         .slice(0, 6);
 
 
-    roomCodeInput.value =
-      roomCode;
-
-
-    /* VALIDATE */
+    /* -----------------------------------------
+       VALIDATE CODE
+       ----------------------------------------- */
 
     if (!validateRoomCode(roomCode)) {
-
       return;
-
     }
 
 
-    /* BUTTON LOADING */
+    /* -----------------------------------------
+       DISABLE BUTTON
+       ----------------------------------------- */
 
-    joinBattleBtn.disabled = true;
+    if (joinBattleBtn) {
 
-    joinBattleBtn.textContent =
-      "Finding Battle...";
+      joinBattleBtn.disabled = true;
+
+      joinBattleBtn.innerHTML =
+        "Joining Battle...";
+    }
 
 
     try {
 
-      /* FIND BATTLE */
+      /* -----------------------------------------
+         GET LATEST BATTLE DATA
+         ----------------------------------------- */
 
       const battle =
-        await findBattle(roomCode);
+        await getBattle(roomCode);
 
+
+      /* -----------------------------------------
+         BATTLE NOT FOUND
+         ----------------------------------------- */
 
       if (!battle) {
 
+        hideBattlePreview();
+
         showToast(
-          "❌ No battle found with this room code."
+          "No battle found with this room code.",
+          "error"
         );
 
         return;
-
       }
 
 
-      /* CHECK CREATOR */
+      /* -----------------------------------------
+         CREATOR CANNOT JOIN OWN ROOM
+         ----------------------------------------- */
 
       if (
         battle.creatorUid ===
@@ -355,80 +519,227 @@ document.addEventListener("DOMContentLoaded", () => {
       ) {
 
         showToast(
-          "You cannot join your own battle."
+          "You are already the creator of this battle.",
+          "error"
         );
 
         return;
-
       }
 
 
-      /* CHECK STATUS */
+      /* -----------------------------------------
+         CHECK BATTLE STATUS
+         ----------------------------------------- */
 
       if (
         battle.status === "completed"
       ) {
 
         showToast(
-          "This battle has already ended."
+          "This battle has already been completed.",
+          "error"
         );
 
         return;
-
       }
 
 
-      /* CHECK IF ROOM FULL */
+      /* -----------------------------------------
+         CHECK IF ALREADY JOINED
+         ----------------------------------------- */
 
       if (
-        battle.playersJoined >=
-        battle.maxPlayers
+        battle.players &&
+        battle.players[currentUser.uid]
       ) {
 
         showToast(
-          "This battle room is already full."
+          "You have already joined this battle.",
+          "error"
         );
 
         return;
-
       }
 
 
-      /* WALLET CHECK */
+      /* -----------------------------------------
+         CHECK PLAYER COUNT
+         ----------------------------------------- */
+
+      const playersJoined =
+        getPlayerCount(battle);
+
+      const maxPlayers =
+        Number(battle.maxPlayers) || 2;
+
+
+      if (
+        playersJoined >= maxPlayers
+      ) {
+
+        showToast(
+          "This battle room is already full.",
+          "error"
+        );
+
+        return;
+      }
+
+
+      /* -----------------------------------------
+         GET ENTRY AMOUNT
+         ----------------------------------------- */
 
       const entryAmount =
-        Number(battle.entry || 0);
+        Number(battle.entry) || 0;
 
+
+      if (
+        entryAmount <= 0
+      ) {
+
+        showToast(
+          "Invalid battle entry amount.",
+          "error"
+        );
+
+        return;
+      }
+
+
+      /* -----------------------------------------
+         WALLET CHECK
+         ----------------------------------------- */
 
       if (
         walletBalance < entryAmount
       ) {
 
         showToast(
-          `Insufficient demo balance. You need ₹${entryAmount}.`
+          `Insufficient demo balance. You need ₹${formatAmount(entryAmount)}.`,
+          "error"
         );
 
         return;
-
       }
 
 
-      /* JOIN BUTTON */
+      /* -----------------------------------------
+         LOAD LATEST WALLET DATA
+         ----------------------------------------- */
 
-      joinBattleBtn.textContent =
-        "Joining Battle...";
+      const walletRef =
+        getWalletRef();
+
+      const walletSnapshot =
+        await get(walletRef);
+
+      const walletData =
+        walletSnapshot.exists()
+          ? walletSnapshot.val()
+          : {
+              balance: 0,
+              transactions: []
+            };
 
 
-      /* DEDUCT DEMO BALANCE */
-
-      walletBalance -=
-        entryAmount;
+      const latestBalance =
+        Number(walletData.balance) || 0;
 
 
-      await saveWallet();
+      /* -----------------------------------------
+         CHECK LATEST BALANCE
+         ----------------------------------------- */
+
+      if (
+        latestBalance < entryAmount
+      ) {
+
+        showToast(
+          "Insufficient demo balance.",
+          "error"
+        );
+
+        return;
+      }
 
 
-      /* UPDATE BATTLE */
+      /* -----------------------------------------
+         UPDATE TRANSACTIONS
+         ----------------------------------------- */
+
+      let transactions =
+        Array.isArray(
+          walletData.transactions
+        )
+          ? walletData.transactions
+          : [];
+
+
+      transactions.unshift(
+        createTransaction(
+          roomCode,
+          entryAmount
+        )
+      );
+
+
+      transactions =
+        transactions.slice(0, 50);
+
+
+      /* -----------------------------------------
+         NEW WALLET BALANCE
+         ----------------------------------------- */
+
+      const newBalance =
+        latestBalance - entryAmount;
+
+
+      /* -----------------------------------------
+         SAVE WALLET
+         ----------------------------------------- */
+
+      await update(
+        walletRef,
+        {
+          balance:
+            newBalance,
+
+          transactions:
+            transactions,
+
+          updatedAt:
+            new Date().toISOString()
+        }
+      );
+
+
+      /* -----------------------------------------
+         ADD PLAYER TO BATTLE
+         ----------------------------------------- */
+
+      const playerData = {
+
+        uid:
+          currentUser.uid,
+
+        name:
+          currentUser.displayName ||
+          "Player",
+
+        photo:
+          currentUser.photoURL ||
+          "",
+
+        joinedAt:
+          new Date().toISOString()
+      };
+
+
+      /* -----------------------------------------
+         UPDATE FIREBASE BATTLE
+         ----------------------------------------- */
 
       const battleRef =
         ref(
@@ -440,68 +751,77 @@ document.addEventListener("DOMContentLoaded", () => {
       await update(
         battleRef,
         {
-          playersJoined: 2,
+          [`players/${currentUser.uid}`]:
+            playerData,
 
-          status: "ready",
-
-          opponentUid:
-            currentUser.uid,
-
-          opponentEmail:
-            currentUser.email || "Player",
+          status:
+            "ready",
 
           joinedAt:
+            new Date().toISOString(),
+
+          updatedAt:
             new Date().toISOString()
         }
       );
 
 
-      /* SAVE USER CURRENT BATTLE */
+      /* -----------------------------------------
+         UPDATE LOCAL STATE
+         ----------------------------------------- */
 
-      await set(
-        ref(
-          database,
-          `users/${currentUser.uid}/currentBattle`
-        ),
-        {
-          roomCode: roomCode,
-          battleId:
-            battle.battleId || roomCode,
-          entry: entryAmount,
-          prize:
-            Number(battle.prize || 0),
-          status: "ready"
-        }
-      );
+      walletBalance =
+        newBalance;
+
+      updateWalletDisplay();
 
 
-      /* UPDATE LOCAL BATTLE */
+      /* -----------------------------------------
+         SAVE CURRENT BATTLE
+         ----------------------------------------- */
 
-      foundBattle = {
+      const joinedBattle = {
         ...battle,
-        playersJoined: 2,
-        status: "ready"
+
+        players: {
+          ...battle.players,
+
+          [currentUser.uid]:
+            playerData
+        },
+
+        status:
+          "ready"
       };
 
 
+      currentBattle =
+        joinedBattle;
+
+
+      localStorage.setItem(
+        "ludoverseCurrentBattle",
+        JSON.stringify(joinedBattle)
+      );
+
+
+      /* -----------------------------------------
+         SHOW PREVIEW
+         ----------------------------------------- */
+
       showBattlePreview(
-        foundBattle
+        joinedBattle
       );
 
 
       showToast(
-        "🎉 Battle joined successfully!"
+        "Battle joined successfully! 🎉",
+        "success"
       );
 
 
-      joinBattleBtn.textContent =
-        "Battle Joined ✓";
-
-
-      /* SAVE CURRENT ROOM */
-
-      localStorage.setItem(
-        "ludoverseCurrentRoom",
+      console.log(
+        "Firebase battle joined:",
         roomCode
       );
 
@@ -514,30 +834,21 @@ document.addEventListener("DOMContentLoaded", () => {
       );
 
       showToast(
-        "❌ Could not join battle."
+        "Could not join the battle.",
+        "error"
       );
 
     } finally {
 
-      setTimeout(() => {
+      if (joinBattleBtn) {
 
         joinBattleBtn.disabled =
           false;
 
-        if (
-          joinBattleBtn.textContent !==
-          "Battle Joined ✓"
-        ) {
-
-          joinBattleBtn.innerHTML =
-            "<span>🚀</span> Join Battle";
-
-        }
-
-      }, 1000);
-
+        joinBattleBtn.innerHTML =
+          "<span>🚀</span> Join Battle";
+      }
     }
-
   }
 
 
@@ -554,17 +865,17 @@ document.addEventListener("DOMContentLoaded", () => {
           .replace(/\D/g, "")
           .slice(0, 6);
 
+      if (
+        roomCodeInput.value.length === 6
+      ) {
+
+        previewBattle();
+
+      } else {
+
+        hideBattlePreview();
+      }
     }
-  );
-
-
-  /* =========================================================
-     JOIN BUTTON
-     ========================================================= */
-
-  joinBattleBtn?.addEventListener(
-    "click",
-    joinBattle
   );
 
 
@@ -583,9 +894,22 @@ document.addEventListener("DOMContentLoaded", () => {
         event.preventDefault();
 
         joinBattle();
-
       }
+    }
+  );
 
+
+  /* =========================================================
+     JOIN BUTTON
+     ========================================================= */
+
+  joinBattleBtn?.addEventListener(
+    "click",
+    event => {
+
+      event.preventDefault();
+
+      joinBattle();
     }
   );
 
@@ -598,19 +922,18 @@ document.addEventListener("DOMContentLoaded", () => {
     "click",
     () => {
 
-      if (!foundBattle) {
+      if (!currentBattle) {
 
         showToast(
-          "Please join a battle first."
+          "Please join a battle first.",
+          "error"
         );
 
         return;
-
       }
 
       window.location.href =
         "game.html";
-
     }
   );
 
@@ -623,22 +946,14 @@ document.addEventListener("DOMContentLoaded", () => {
     "click",
     () => {
 
-      if (battlePreview) {
-
-        battlePreview.classList.add(
-          "hidden"
-        );
-
-      }
-
-      foundBattle = null;
-
+      window.location.href =
+        "index.html";
     }
   );
 
 
   /* =========================================================
-     FIREBASE AUTH CHECK
+     AUTH STATE
      ========================================================= */
 
   onAuthStateChanged(
@@ -651,24 +966,24 @@ document.addEventListener("DOMContentLoaded", () => {
           "login.html";
 
         return;
-
       }
 
-      currentUser = user;
-
-      console.log(
-        "Join Room User:",
-        user.email
-      );
+      currentUser =
+        user;
 
       await loadWallet();
-
     }
   );
 
 
+  /* =========================================================
+     INITIALIZE
+     ========================================================= */
+
+  updateWalletDisplay();
+
   console.log(
-    "🎮 LUDOVERSE Firebase Join Room Ready!"
+    "🎲 LUDOVERSE Firebase Join Room System Ready!"
   );
 
 });
