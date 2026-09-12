@@ -3,230 +3,4016 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
-<title>LUDOVERSE — Professional Ludo vs AI</title>
+
+<title>LUDOVERSE — Professional Multiplayer Ludo</title>
+
 <style>
 :root{
-  --bg:#08111f;--panel:#172137;--panel2:#26344f;--line:#41506c;
-  --red:#ef2929;--green:#159447;--blue:#2996d6;--yellow:#ffd91a;
-  --text:#f7f9ff;--muted:#b8c3d5;--purple:#a98cff;
+  --bg:#08111f;
+  --panel:#172137;
+  --panel2:#26344f;
+  --line:#41506c;
+
+  --red:#ef2929;
+  --green:#159447;
+  --blue:#2996d6;
+  --yellow:#ffd91a;
+
+  --text:#f7f9ff;
+  --muted:#b8c3d5;
+  --purple:#a98cff;
+
+  --shadow:0 20px 45px #0008;
 }
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html{scroll-behavior:smooth}
-body{margin:0;min-height:100vh;font-family:Arial,Helvetica,sans-serif;color:var(--text);
-background:radial-gradient(circle at top,#172a4c 0,#08111f 50%,#050a12 100%)}
-button{font:inherit}
-header{height:72px;padding:0 clamp(14px,5vw,80px);display:flex;align-items:center;justify-content:space-between;
-background:rgba(25,37,61,.94);border-bottom:1px solid #344563;position:sticky;top:0;z-index:500;backdrop-filter:blur(12px)}
-.logo{font-size:clamp(21px,3vw,30px);font-weight:900;letter-spacing:.5px}.purple{color:#cbbcff}
-.homeBtn,.restart,.roll{border:0;color:#fff;font-weight:800;cursor:pointer;border-radius:13px;transition:.2s}
-.homeBtn{padding:11px 18px;background:#35435f}.homeBtn:hover{transform:translateY(-2px);background:#455575}
-main{max-width:1420px;margin:auto;padding:26px 14px 45px}
-.heading{text-align:center;margin-bottom:22px}.heading h1{font-size:clamp(28px,4vw,42px);margin:0}.heading p{margin:8px 0;color:var(--muted)}
-.layout{display:grid;grid-template-columns:minmax(540px,760px) 360px;justify-content:center;gap:30px;align-items:start}
-.board-wrap{display:flex;justify-content:center}
-#board{width:min(94vw,760px);aspect-ratio:1;position:relative;display:grid;grid-template:repeat(15,1fr)/repeat(15,1fr);
-background:#f8f8f8;border:7px solid #0c0c0e;overflow:hidden;box-shadow:0 0 0 4px #30415e,0 25px 60px #0009}
-.cell{position:relative;background:#f8f8f8;border:1px solid #3b3b3b;min-width:0;min-height:0}
-.base{position:absolute;width:40%;height:40%;z-index:10;display:grid;place-items:center}
-.base.red{left:0;top:0;background:var(--red)}.base.green{right:0;top:0;background:var(--green)}
-.base.blue{left:0;bottom:0;background:var(--blue)}.base.yellow{right:0;bottom:0;background:var(--yellow)}
-.home-inner{width:67%;height:67%;background:#f6f6f6;border:2px solid #222;display:grid;grid-template:1fr 1fr/1fr 1fr;place-items:center;box-shadow:0 3px 10px #0006}
-.home-slot{width:58%;aspect-ratio:1;border-radius:50%;position:relative;border:2px solid #2228;box-shadow:inset 0 2px 3px #fff8,0 2px 4px #0006}
-.home-slot.red{background:var(--red)}.home-slot.green{background:var(--green)}.home-slot.blue{background:var(--blue)}.home-slot.yellow{background:var(--yellow)}
-.lane-red,.start-red{background:var(--red)!important}.lane-green,.start-green{background:var(--green)!important}
-.lane-blue,.start-blue{background:var(--blue)!important}.lane-yellow,.start-yellow{background:var(--yellow)!important}
-.star,.arrow{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:15;pointer-events:none;line-height:1;text-shadow:0 2px 2px #0005}
-.star{font-size:clamp(16px,3vw,34px)}.arrow{font-size:clamp(18px,3.4vw,42px);font-weight:900}
-.center-piece{position:absolute;left:40%;top:40%;width:20%;height:20%;z-index:20;pointer-events:none}
-.center-triangle{position:absolute;inset:0}.center-triangle.red{background:var(--red);clip-path:polygon(0 0,0 100%,50% 50%)}
-.center-triangle.green{background:var(--green);clip-path:polygon(0 0,100% 0,50% 50%)}
-.center-triangle.yellow{background:var(--yellow);clip-path:polygon(100% 0,100% 100%,50% 50%)}
-.center-triangle.blue{background:var(--blue);clip-path:polygon(0 100%,100% 100%,50% 50%)}
-.center-trophy{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:clamp(25px,4vw,52px);z-index:25;filter:drop-shadow(0 3px 2px #0008)}
-.token{position:absolute;width:68%;aspect-ratio:1;border-radius:50%;z-index:100;border:3px solid rgba(255,255,255,.95);box-shadow:0 6px 12px #0009,inset 4px 4px 7px #fff8,inset -5px -5px 9px #0006,0 0 0 2px rgba(0,0,0,.18);
-transition:left .13s linear,top .13s linear,transform .18s;touch-action:manipulation}
-.token.red{background:radial-gradient(circle at 28% 22%,#ffd1d1 0,#ff7777 18%,#ef2929 48%,#a50909 78%,#620303 100%)}
-.token.yellow{background:radial-gradient(circle at 28% 22%,#fffbd0 0,#fff08a 18%,#ffd91a 48%,#bd9900 78%,#725b00 100%)}
-.token::after{content:"";position:absolute;width:28%;height:18%;left:17%;top:14%;border-radius:50%;background:#fff9;filter:blur(1px)}
-.token.selectable{cursor:pointer;animation:glow .72s infinite alternate}
-@keyframes glow{to{transform:scale(1.14);box-shadow:0 4px 10px #0009,0 0 10px #fff,0 0 24px #fff,0 0 38px #fff9}}
-.token.moving{animation:movePulse .22s infinite alternate}@keyframes movePulse{to{filter:brightness(1.15);transform:scale(1.07)}}
-.token.capture-pop{animation:capturePop .65s ease-out}@keyframes capturePop{0%{transform:scale(1)}50%{transform:scale(1.5);filter:brightness(1.8)}100%{transform:scale(1)}}
-.token.finish-pop{animation:finishPop .9s ease-out}@keyframes finishPop{0%{transform:scale(.6);opacity:.3}55%{transform:scale(1.35)}100%{transform:scale(1);opacity:1}}
-.home-slot .token{width:78%;left:11%;top:11%;border-width:2px}
-.panel{background:linear-gradient(180deg,#202d47,#121c2e);border:1px solid #344766;border-radius:24px;padding:22px;box-shadow:0 20px 45px #0008}
-.turn{text-align:center;background:linear-gradient(135deg,#44516b,#303c57);border-radius:16px;padding:15px;font-size:21px;font-weight:900}
-.turn small{display:block;font-size:13px;margin-top:5px;color:#d8ceff}
-.dice{width:118px;height:118px;margin:18px auto;display:grid;place-items:center;background:#f7f7f7;color:#111;border-radius:26px;font-size:66px;font-weight:900;
-box-shadow:0 8px 20px #0006;transform:rotate(0)}.dice.rolling{animation:diceRoll .55s ease-in-out}@keyframes diceRoll{0%{transform:rotate(0) scale(1)}25%{transform:rotate(100deg) scale(.85)}60%{transform:rotate(270deg) scale(1.12)}100%{transform:rotate(360deg) scale(1)}}
-.roll,.restart{width:100%;padding:16px;font-size:16px}.roll{background:linear-gradient(90deg,#6d49dd,#347fd1);box-shadow:0 7px 18px #0005}.roll:hover:not(:disabled){transform:translateY(-2px);filter:brightness(1.12)}
-.roll:disabled{opacity:.48;cursor:not-allowed}.status{min-height:64px;display:flex;align-items:center;justify-content:center;text-align:center;padding:12px 3px;color:#dce5f3;border-bottom:1px solid #ffffff1a;font-size:14px}
-.scores{display:grid;grid-template-columns:1fr 1fr;gap:11px;padding-top:14px}.score{background:#2d3a55;border-radius:14px;padding:12px;text-align:center;font-size:11px;color:#cdd7e6}.score strong{display:block;font-size:22px;color:#fff;margin-top:5px}
-.restart{margin-top:13px;background:#3a4966}.restart:hover{background:#4b5d7e}.rules{margin-top:15px;padding-top:13px;border-top:1px solid #ffffff18;color:#c6d0df;font-size:13px;line-height:1.7}
-.soundToggle{margin-top:12px;width:100%;border:1px solid #536582;background:#273650;color:white;border-radius:12px;padding:11px;font-weight:700;cursor:pointer}
-#celebration{position:fixed;inset:0;background:#050914e8;z-index:2000;display:none;place-items:center;padding:20px;backdrop-filter:blur(8px)}
-.win-card{width:min(92vw,430px);text-align:center;padding:34px 25px;border-radius:28px;background:linear-gradient(160deg,#293b61,#121b30);border:1px solid #61749b;box-shadow:0 25px 80px #000;animation:cardIn .55s cubic-bezier(.2,.9,.2,1)}
-@keyframes cardIn{from{opacity:0;transform:translateY(30px) scale(.8)}to{opacity:1;transform:none}}
-.win-crown{font-size:72px;animation:bounce 1s infinite alternate}@keyframes bounce{to{transform:translateY(-8px) rotate(5deg)}}.win-card h2{font-size:32px;margin:10px 0}.win-card p{color:#c8d3e7}.playAgain{margin-top:15px;border:0;border-radius:14px;padding:15px 28px;background:linear-gradient(90deg,#7754e8,#3d8be0);color:#fff;font-weight:900;font-size:16px;cursor:pointer}
-.confetti{position:fixed;width:10px;height:16px;z-index:2100;pointer-events:none;animation:fall 2.8s linear forwards}@keyframes fall{to{transform:translate(var(--x),110vh) rotate(720deg);opacity:0}}
-@media(max-width:1080px){.layout{grid-template-columns:1fr}.panel{width:min(94vw,760px);margin:auto}}
-@media(max-width:620px){header{height:62px;padding:0 12px}.homeBtn{padding:9px 13px}.layout{gap:18px}main{padding:15px 4px 30px}#board{border-width:4px}.panel{padding:16px;border-radius:18px}.dice{width:98px;height:98px;font-size:55px}.roll,.restart{padding:15px}}
+
+*{
+  box-sizing:border-box;
+  -webkit-tap-highlight-color:transparent;
+}
+
+html{
+  scroll-behavior:smooth;
+}
+
+body{
+  margin:0;
+  min-height:100vh;
+  font-family:Arial,Helvetica,sans-serif;
+  color:var(--text);
+
+  background:
+    radial-gradient(circle at top,#172a4c 0,#08111f 50%,#050a12 100%);
+}
+
+button{
+  font:inherit;
+}
+
+button:focus-visible{
+  outline:3px solid #fff;
+  outline-offset:3px;
+}
+
+header{
+  height:72px;
+  padding:0 clamp(14px,5vw,80px);
+
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+
+  background:rgba(25,37,61,.94);
+  border-bottom:1px solid #344563;
+
+  position:sticky;
+  top:0;
+  z-index:500;
+
+  backdrop-filter:blur(12px);
+}
+
+.logo{
+  font-size:clamp(21px,3vw,30px);
+  font-weight:900;
+  letter-spacing:.5px;
+}
+
+.purple{
+  color:#cbbcff;
+}
+
+.homeBtn,
+.restart,
+.roll{
+  border:0;
+  color:#fff;
+  font-weight:800;
+  cursor:pointer;
+  border-radius:13px;
+  transition:.2s;
+}
+
+.homeBtn{
+  padding:11px 18px;
+  background:#35435f;
+}
+
+.homeBtn:hover{
+  transform:translateY(-2px);
+  background:#455575;
+}
+
+main{
+  max-width:1420px;
+  margin:auto;
+  padding:26px 14px 45px;
+}
+
+.heading{
+  text-align:center;
+  margin-bottom:22px;
+}
+
+.heading h1{
+  font-size:clamp(28px,4vw,42px);
+  margin:0;
+}
+
+.heading p{
+  margin:8px 0;
+  color:var(--muted);
+}
+
+.room-badge{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+
+  margin-top:12px;
+  padding:8px 14px;
+
+  border:1px solid #536582;
+  border-radius:999px;
+
+  background:#17243a;
+  color:#dfe7f5;
+
+  font-size:13px;
+  font-weight:800;
+}
+
+.room-badge strong{
+  color:#fff;
+  letter-spacing:2px;
+}
+
+.layout{
+  display:grid;
+  grid-template-columns:minmax(540px,760px) 360px;
+  justify-content:center;
+  gap:30px;
+  align-items:start;
+}
+
+.board-wrap{
+  display:flex;
+  justify-content:center;
+}
+
+#board{
+  width:min(94vw,760px);
+  aspect-ratio:1;
+
+  position:relative;
+  display:grid;
+
+  grid-template:repeat(15,1fr)/repeat(15,1fr);
+
+  background:#f8f8f8;
+  border:7px solid #0c0c0e;
+  overflow:hidden;
+
+  box-shadow:
+    0 0 0 4px #30415e,
+    0 25px 60px #0009;
+}
+
+.cell{
+  position:relative;
+  background:#f8f8f8;
+  border:1px solid #3b3b3b;
+
+  min-width:0;
+  min-height:0;
+}
+
+.base{
+  position:absolute;
+  width:40%;
+  height:40%;
+  z-index:10;
+
+  display:grid;
+  place-items:center;
+}
+
+.base.red{
+  left:0;
+  top:0;
+  background:var(--red);
+}
+
+.base.green{
+  right:0;
+  top:0;
+  background:var(--green);
+}
+
+.base.blue{
+  left:0;
+  bottom:0;
+  background:var(--blue);
+}
+
+.base.yellow{
+  right:0;
+  bottom:0;
+  background:var(--yellow);
+}
+
+.home-inner{
+  width:67%;
+  height:67%;
+
+  background:#f6f6f6;
+  border:2px solid #222;
+
+  display:grid;
+  grid-template:1fr 1fr/1fr 1fr;
+  place-items:center;
+
+  box-shadow:0 3px 10px #0006;
+}
+
+.home-slot{
+  width:58%;
+  aspect-ratio:1;
+
+  border-radius:50%;
+  position:relative;
+
+  border:2px solid #2228;
+
+  box-shadow:
+    inset 0 2px 3px #fff8,
+    0 2px 4px #0006;
+}
+
+.home-slot.red{
+  background:var(--red);
+}
+
+.home-slot.green{
+  background:var(--green);
+}
+
+.home-slot.blue{
+  background:var(--blue);
+}
+
+.home-slot.yellow{
+  background:var(--yellow);
+}
+
+.lane-red,
+.start-red{
+  background:var(--red)!important;
+}
+
+.lane-green,
+.start-green{
+  background:var(--green)!important;
+}
+
+.lane-blue,
+.start-blue{
+  background:var(--blue)!important;
+}
+
+.lane-yellow,
+.start-yellow{
+  background:var(--yellow)!important;
+}
+
+.star,
+.arrow{
+  position:absolute;
+
+  left:50%;
+  top:50%;
+
+  transform:translate(-50%,-50%);
+
+  z-index:15;
+  pointer-events:none;
+
+  line-height:1;
+
+  text-shadow:0 2px 2px #0005;
+}
+
+.star{
+  font-size:clamp(16px,3vw,34px);
+}
+
+.arrow{
+  font-size:clamp(18px,3.4vw,42px);
+  font-weight:900;
+}
+
+.center-piece{
+  position:absolute;
+
+  left:40%;
+  top:40%;
+
+  width:20%;
+  height:20%;
+
+  z-index:20;
+  pointer-events:none;
+}
+
+.center-triangle{
+  position:absolute;
+  inset:0;
+}
+
+.center-triangle.red{
+  background:var(--red);
+  clip-path:polygon(0 0,0 100%,50% 50%);
+}
+
+.center-triangle.green{
+  background:var(--green);
+  clip-path:polygon(0 0,100% 0,50% 50%);
+}
+
+.center-triangle.yellow{
+  background:var(--yellow);
+  clip-path:polygon(100% 0,100% 100%,50% 50%);
+}
+
+.center-triangle.blue{
+  background:var(--blue);
+  clip-path:polygon(0 100%,100% 100%,50% 50%);
+}
+
+.center-trophy{
+  position:absolute;
+
+  left:50%;
+  top:50%;
+
+  transform:translate(-50%,-50%);
+
+  font-size:clamp(25px,4vw,52px);
+
+  z-index:25;
+
+  filter:drop-shadow(0 3px 2px #0008);
+}
+
+.token{
+  position:absolute;
+
+  width:68%;
+  aspect-ratio:1;
+
+  border-radius:50%;
+
+  z-index:100;
+
+  border:3px solid rgba(255,255,255,.95);
+
+  box-shadow:
+    0 6px 12px #0009,
+    inset 4px 4px 7px #fff8,
+    inset -5px -5px 9px #0006,
+    0 0 0 2px rgba(0,0,0,.18);
+
+  transition:
+    left .13s linear,
+    top .13s linear,
+    transform .18s;
+
+  touch-action:manipulation;
+}
+
+.token.red{
+  background:
+    radial-gradient(
+      circle at 28% 22%,
+      #ffd1d1 0,
+      #ff7777 18%,
+      #ef2929 48%,
+      #a50909 78%,
+      #620303 100%
+    );
+}
+
+.token.yellow{
+  background:
+    radial-gradient(
+      circle at 28% 22%,
+      #fffbd0 0,
+      #fff08a 18%,
+      #ffd91a 48%,
+      #bd9900 78%,
+      #725b00 100%
+    );
+}
+
+.token::after{
+  content:"";
+
+  position:absolute;
+
+  width:28%;
+  height:18%;
+
+  left:17%;
+  top:14%;
+
+  border-radius:50%;
+
+  background:#fff9;
+
+  filter:blur(1px);
+}
+
+.token.selectable{
+  cursor:pointer;
+  animation:glow .72s infinite alternate;
+}
+
+@keyframes glow{
+  to{
+    transform:scale(1.14);
+
+    box-shadow:
+      0 4px 10px #0009,
+      0 0 10px #fff,
+      0 0 24px #fff,
+      0 0 38px #fff9;
+  }
+}
+
+.token.moving{
+  animation:movePulse .22s infinite alternate;
+}
+
+@keyframes movePulse{
+  to{
+    filter:brightness(1.15);
+    transform:scale(1.07);
+  }
+}
+
+.token.capture-pop{
+  animation:capturePop .65s ease-out;
+}
+
+@keyframes capturePop{
+  0%{
+    transform:scale(1);
+  }
+
+  50%{
+    transform:scale(1.5);
+    filter:brightness(1.8);
+  }
+
+  100%{
+    transform:scale(1);
+  }
+}
+
+.token.finish-pop{
+  animation:finishPop .9s ease-out;
+}
+
+@keyframes finishPop{
+  0%{
+    transform:scale(.6);
+    opacity:.3;
+  }
+
+  55%{
+    transform:scale(1.35);
+  }
+
+  100%{
+    transform:scale(1);
+    opacity:1;
+  }
+}
+
+.home-slot .token{
+  width:78%;
+  left:11%;
+  top:11%;
+  border-width:2px;
+}
+
+.panel{
+  background:
+    linear-gradient(
+      180deg,
+      #202d47,
+      #121c2e
+    );
+
+  border:1px solid #344766;
+  border-radius:24px;
+
+  padding:22px;
+
+  box-shadow:var(--shadow);
+}
+
+.connection{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+
+  margin-bottom:12px;
+
+  font-size:12px;
+  font-weight:800;
+  color:#cdd8e9;
+}
+
+.connection-dot{
+  width:9px;
+  height:9px;
+
+  border-radius:50%;
+
+  background:#777;
+}
+
+.connection.online .connection-dot{
+  background:#32e875;
+  box-shadow:0 0 10px #32e875;
+}
+
+.connection.waiting .connection-dot{
+  background:#ffd91a;
+  box-shadow:0 0 10px #ffd91a;
+}
+
+.connection.error .connection-dot{
+  background:#ef2929;
+  box-shadow:0 0 10px #ef2929;
+}
+
+.turn{
+  text-align:center;
+
+  background:
+    linear-gradient(
+      135deg,
+      #44516b,
+      #303c57
+    );
+
+  border-radius:16px;
+
+  padding:15px;
+
+  font-size:21px;
+  font-weight:900;
+}
+
+.turn small{
+  display:block;
+
+  font-size:13px;
+  margin-top:5px;
+
+  color:#d8ceff;
+}
+
+.dice{
+  width:118px;
+  height:118px;
+
+  margin:18px auto;
+
+  display:grid;
+  place-items:center;
+
+  background:#f7f7f7;
+  color:#111;
+
+  border-radius:26px;
+
+  font-size:66px;
+  font-weight:900;
+
+  box-shadow:0 8px 20px #0006;
+
+  transform:rotate(0);
+}
+
+.dice.rolling{
+  animation:diceRoll .55s ease-in-out;
+}
+
+@keyframes diceRoll{
+  0%{
+    transform:rotate(0) scale(1);
+  }
+
+  25%{
+    transform:rotate(100deg) scale(.85);
+  }
+
+  60%{
+    transform:rotate(270deg) scale(1.12);
+  }
+
+  100%{
+    transform:rotate(360deg) scale(1);
+  }
+}
+
+.roll,
+.restart{
+  width:100%;
+  padding:16px;
+  font-size:16px;
+}
+
+.roll{
+  background:
+    linear-gradient(
+      90deg,
+      #6d49dd,
+      #347fd1
+    );
+
+  box-shadow:0 7px 18px #0005;
+}
+
+.roll:hover:not(:disabled){
+  transform:translateY(-2px);
+  filter:brightness(1.12);
+}
+
+.roll:disabled{
+  opacity:.48;
+  cursor:not-allowed;
+}
+
+.status{
+  min-height:64px;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  text-align:center;
+
+  padding:12px 3px;
+
+  color:#dce5f3;
+
+  border-bottom:1px solid #ffffff1a;
+
+  font-size:14px;
+}
+
+.scores{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+
+  gap:11px;
+
+  padding-top:14px;
+}
+
+.score{
+  background:#2d3a55;
+
+  border-radius:14px;
+
+  padding:12px;
+
+  text-align:center;
+
+  font-size:11px;
+
+  color:#cdd7e6;
+}
+
+.score strong{
+  display:block;
+
+  font-size:22px;
+
+  color:#fff;
+
+  margin-top:5px;
+}
+
+.restart{
+  margin-top:13px;
+  background:#3a4966;
+}
+
+.restart:hover{
+  background:#4b5d7e;
+}
+
+.soundToggle{
+  margin-top:12px;
+
+  width:100%;
+
+  border:1px solid #536582;
+
+  background:#273650;
+
+  color:white;
+
+  border-radius:12px;
+
+  padding:11px;
+
+  font-weight:700;
+
+  cursor:pointer;
+}
+
+.rules{
+  margin-top:15px;
+
+  padding-top:13px;
+
+  border-top:1px solid #ffffff18;
+
+  color:#c6d0df;
+
+  font-size:13px;
+
+  line-height:1.7;
+}
+
+#celebration{
+  position:fixed;
+  inset:0;
+
+  background:#050914e8;
+
+  z-index:2000;
+
+  display:none;
+  place-items:center;
+
+  padding:20px;
+
+  backdrop-filter:blur(8px);
+}
+
+.win-card{
+  width:min(92vw,430px);
+
+  text-align:center;
+
+  padding:34px 25px;
+
+  border-radius:28px;
+
+  background:
+    linear-gradient(
+      160deg,
+      #293b61,
+      #121b30
+    );
+
+  border:1px solid #61749b;
+
+  box-shadow:0 25px 80px #000;
+
+  animation:cardIn .55s cubic-bezier(.2,.9,.2,1);
+}
+
+@keyframes cardIn{
+  from{
+    opacity:0;
+    transform:translateY(30px) scale(.8);
+  }
+
+  to{
+    opacity:1;
+    transform:none;
+  }
+}
+
+.win-crown{
+  font-size:72px;
+  animation:bounce 1s infinite alternate;
+}
+
+@keyframes bounce{
+  to{
+    transform:translateY(-8px) rotate(5deg);
+  }
+}
+
+.win-card h2{
+  font-size:32px;
+  margin:10px 0;
+}
+
+.win-card p{
+  color:#c8d3e7;
+}
+
+.playAgain{
+  margin-top:15px;
+
+  border:0;
+  border-radius:14px;
+
+  padding:15px 28px;
+
+  background:
+    linear-gradient(
+      90deg,
+      #7754e8,
+      #3d8be0
+    );
+
+  color:#fff;
+
+  font-weight:900;
+  font-size:16px;
+
+  cursor:pointer;
+}
+
+.confetti{
+  position:fixed;
+
+  width:10px;
+  height:16px;
+
+  z-index:2100;
+
+  pointer-events:none;
+
+  animation:fall 2.8s linear forwards;
+}
+
+@keyframes fall{
+  to{
+    transform:
+      translate(var(--x),110vh)
+      rotate(720deg);
+
+    opacity:0;
+  }
+}
+
+@media(max-width:1080px){
+
+  .layout{
+    grid-template-columns:1fr;
+  }
+
+  .panel{
+    width:min(94vw,760px);
+    margin:auto;
+  }
+}
+
+@media(max-width:620px){
+
+  header{
+    height:62px;
+    padding:0 12px;
+  }
+
+  .homeBtn{
+    padding:9px 13px;
+  }
+
+  .layout{
+    gap:18px;
+  }
+
+  main{
+    padding:15px 4px 30px;
+  }
+
+  #board{
+    border-width:4px;
+  }
+
+  .panel{
+    padding:16px;
+    border-radius:18px;
+  }
+
+  .dice{
+    width:98px;
+    height:98px;
+    font-size:55px;
+  }
+
+  .roll,
+  .restart{
+    padding:15px;
+  }
+}
 </style>
 </head>
+
 <body>
-<header><div class="logo">🎲 LUDO<span class="purple">VERSE</span></div><button class="homeBtn" onclick="location.href='index.html'">← Home</button></header>
+
+<header>
+  <div class="logo">
+    🎲 LUDO<span class="purple">VERSE</span>
+  </div>
+
+  <button
+    class="homeBtn"
+    id="homeBtn"
+    type="button"
+  >
+    ← Home
+  </button>
+</header>
+
 <main>
-<div class="heading"><h1>🎲 Play vs AI</h1><p>Bring all 4 tokens home before the AI!</p></div>
-<div class="layout"><div class="board-wrap"><div id="board"></div></div>
-<aside class="panel">
-<div class="turn" id="turnBox">🔴 You<small>Your Turn</small></div>
-<div class="dice" id="dice">🎲</div>
-<button class="roll" id="rollBtn">🎲 Roll Dice</button>
-<div class="status" id="status">🎲 Your turn! Roll the dice.</div>
-<div class="scores"><div class="score">🔴 YOU FINISHED<strong id="userScore">0 / 4</strong></div><div class="score">🟡 AI FINISHED<strong id="aiScore">0 / 4</strong></div></div>
-<button class="soundToggle" id="soundBtn">🔊 Sound: ON</button>
-<button class="restart" id="restartBtn">↻ Restart Game</button>
-<div class="rules">🎲 Roll a <b>6</b> to unlock a token.<br>👉 Every valid red token glows.<br>🔥 A 6 gives an extra turn; three consecutive 6s lose the turn.<br>💥 Capture opponents except on ⭐ safe cells — a capture gives an extra roll.<br>🏆 Move all 4 tokens to the center to win.</div>
-</aside></div></main>
-<div id="celebration"><div class="win-card"><div class="win-crown">🏆</div><h2 id="winTitle">You Won!</h2><p id="winText"></p><button class="playAgain" onclick="resetGame();hideCelebration()">🎮 Play Again</button></div></div>
 
-<script>
+  <div class="heading">
+
+    <h1>
+      🎲 Multiplayer Ludo
+    </h1>
+
+    <p>
+      Play with another player in real time.
+    </p>
+
+    <div
+      class="room-badge"
+      id="roomBadge"
+    >
+      🔐 Room:
+      <strong id="roomCodeDisplay">------</strong>
+    </div>
+
+  </div>
+
+  <div class="layout">
+
+    <div class="board-wrap">
+      <div id="board"></div>
+    </div>
+
+    <aside class="panel">
+
+      <div
+        class="connection waiting"
+        id="connectionStatus"
+      >
+        <span class="connection-dot"></span>
+        <span id="connectionText">
+          Connecting to game...
+        </span>
+      </div>
+
+      <div
+        class="turn"
+        id="turnBox"
+      >
+        🔴 You
+        <small>
+          Waiting...
+        </small>
+      </div>
+
+      <div
+        class="dice"
+        id="dice"
+      >
+        🎲
+      </div>
+
+      <button
+        class="roll"
+        id="rollBtn"
+        type="button"
+      >
+        🎲 Roll Dice
+      </button>
+
+      <div
+        class="status"
+        id="status"
+      >
+        🔐 Connecting to multiplayer game...
+      </div>
+
+      <div class="scores">
+
+        <div class="score">
+          🔴 PLAYER 1
+          <strong id="userScore">
+            0 / 4
+          </strong>
+        </div>
+
+        <div class="score">
+          🟡 PLAYER 2
+          <strong id="aiScore">
+            0 / 4
+          </strong>
+        </div>
+
+      </div>
+
+      <button
+        class="soundToggle"
+        id="soundBtn"
+        type="button"
+      >
+        🔊 Sound: ON
+      </button>
+
+      <button
+        class="restart"
+        id="restartBtn"
+        type="button"
+      >
+        ↻ Restart Game
+      </button>
+
+      <div class="rules">
+
+        🎲 Roll a <b>6</b> to unlock a token.<br>
+
+        👉 Your valid tokens glow when they can move.<br>
+
+        🔥 A <b>6</b> gives an extra turn.<br>
+
+        ⚠️ Three consecutive 6s lose the turn.<br>
+
+        💥 Capture opponents except on
+        ⭐ safe cells.<br>
+
+        🎯 Capturing gives an extra roll.<br>
+
+        🏆 Move all 4 tokens to the center to win.<br>
+
+        🌐 Both players see the same game in real time.
+
+      </div>
+
+    </aside>
+
+  </div>
+
+</main>
+
+<div id="celebration">
+
+  <div class="win-card">
+
+    <div class="win-crown">
+      🏆
+    </div>
+
+    <h2 id="winTitle">
+      You Won!
+    </h2>
+
+    <p id="winText">
+      Congratulations!
+    </p>
+
+    <button
+      class="playAgain"
+      id="playAgainBtn"
+      type="button"
+    >
+      🎮 Play Again
+    </button>
+
+  </div>
+
+</div>
+
+<script type="module">
+
 "use strict";
-const board=document.getElementById("board"), cells={}, homeSlots={red:[],green:[],blue:[],yellow:[]};
-const key=(r,c)=>`${r},${c}`;
-for(let r=0;r<15;r++)for(let c=0;c<15;c++){const x=document.createElement("div");x.className="cell";x.dataset.row=r;x.dataset.col=c;board.appendChild(x);cells[key(r,c)]=x}
-for(let c=1;c<=6;c++)cells[key(7,c)].classList.add("lane-red");
-for(let r=1;r<=6;r++)cells[key(r,7)].classList.add("lane-green");
-for(let c=8;c<=13;c++)cells[key(7,c)].classList.add("lane-yellow");
-for(let r=8;r<=13;r++)cells[key(r,7)].classList.add("lane-blue");
-[[6,1,"start-red"],[1,8,"start-green"],[8,13,"start-yellow"],[13,6,"start-blue"]].forEach(([r,c,n])=>cells[key(r,c)].classList.add(n));
-function addBase(color){const b=document.createElement("div");b.className=`base ${color}`;const inn=document.createElement("div");inn.className="home-inner";for(let i=0;i<4;i++){const s=document.createElement("div");s.className=`home-slot ${color}`;inn.appendChild(s);homeSlots[color].push(s)}b.appendChild(inn);board.appendChild(b)}
-["red","green","blue","yellow"].forEach(addBase);
-function marker(r,c,text,cls,color){const m=document.createElement("span");m.className=cls;m.textContent=text;if(color)m.style.color=color;cells[key(r,c)].appendChild(m)}
-marker(2,6,"★","star","var(--red)");marker(6,12,"★","star","var(--green)");marker(8,2,"★","star","var(--blue)");marker(12,8,"★","star","#d0a900");
-marker(7,0,"→","arrow","var(--red)");marker(0,7,"↓","arrow","var(--green)");marker(7,14,"←","arrow","#c99d00");marker(14,7,"↑","arrow","var(--blue)");
-const center=document.createElement("div");center.className="center-piece";["red","green","yellow","blue"].forEach(c=>{let d=document.createElement("div");d.className=`center-triangle ${c}`;center.appendChild(d)});let tr=document.createElement("div");tr.className="center-trophy";tr.textContent="🏆";center.appendChild(tr);board.appendChild(center);
 
-const TRACK=[[6,1],[6,2],[6,3],[6,4],[6,5],[5,6],[4,6],[3,6],[2,6],[1,6],[0,6],[0,7],[0,8],[1,8],[2,8],[3,8],[4,8],[5,8],[6,9],[6,10],[6,11],[6,12],[6,13],[6,14],[7,14],[8,14],[8,13],[8,12],[8,11],[8,10],[8,9],[9,8],[10,8],[11,8],[12,8],[13,8],[14,8],[14,7],[14,6],[13,6],[12,6],[11,6],[10,6],[9,6],[8,5],[8,4],[8,3],[8,2],[8,1],[8,0],[7,0],[6,0]];
-const START={red:0,yellow:26};
-const HOME={red:[[7,2],[7,3],[7,4],[7,5],[7,6]],yellow:[[7,12],[7,11],[7,10],[7,9],[7,8]]};
-const SAFE=new Set([key(2,6),key(6,12),key(8,2),key(12,8),key(6,1),key(8,13)]);
-const dice=document.getElementById("dice"),rollBtn=document.getElementById("rollBtn"),status=document.getElementById("status"),turnBox=document.getElementById("turnBox"),userScore=document.getElementById("userScore"),aiScore=document.getElementById("aiScore");
-let tokens,turn,rolledNumber,isAnimating,gameOver,sixCount={red:0,yellow:0},soundOn=true,audioCtx=null;
+/* =========================================================
+   FIREBASE IMPORTS
+   ========================================================= */
+
+import {
+  auth,
+  database,
+  ref,
+  get,
+  set,
+  update,
+  onValue,
+  onAuthStateChanged
+} from "./firebase.js";
+
+
+/* =========================================================
+   DOM
+   ========================================================= */
+
+const board =
+  document.getElementById("board");
+
+const dice =
+  document.getElementById("dice");
+
+const rollBtn =
+  document.getElementById("rollBtn");
+
+const status =
+  document.getElementById("status");
+
+const turnBox =
+  document.getElementById("turnBox");
+
+const userScore =
+  document.getElementById("userScore");
+
+const aiScore =
+  document.getElementById("aiScore");
+
+const soundBtn =
+  document.getElementById("soundBtn");
+
+const restartBtn =
+  document.getElementById("restartBtn");
+
+const playAgainBtn =
+  document.getElementById("playAgainBtn");
+
+const celebration =
+  document.getElementById("celebration");
+
+const winTitle =
+  document.getElementById("winTitle");
+
+const winText =
+  document.getElementById("winText");
+
+const roomCodeDisplay =
+  document.getElementById("roomCodeDisplay");
+
+const connectionStatus =
+  document.getElementById("connectionStatus");
+
+const connectionText =
+  document.getElementById("connectionText");
+
+const homeBtn =
+  document.getElementById("homeBtn");
+
+
+/* =========================================================
+   BOARD
+   ========================================================= */
+
+const cells = {};
+
+const homeSlots = {
+  red:[],
+  green:[],
+  blue:[],
+  yellow:[]
+};
+
+const key = (r,c) =>
+  `${r},${c}`;
+
+
+/* =========================================================
+   CREATE 15x15 BOARD
+   ========================================================= */
+
+for(let r=0;r<15;r++){
+
+  for(let c=0;c<15;c++){
+
+    const cell =
+      document.createElement("div");
+
+    cell.className =
+      "cell";
+
+    cell.dataset.row =
+      r;
+
+    cell.dataset.col =
+      c;
+
+    board.appendChild(cell);
+
+    cells[key(r,c)] =
+      cell;
+  }
+}
+
+
+/* =========================================================
+   LANES
+   ========================================================= */
+
+for(let c=1;c<=6;c++){
+  cells[key(7,c)]
+    .classList.add("lane-red");
+}
+
+for(let r=1;r<=6;r++){
+  cells[key(r,7)]
+    .classList.add("lane-green");
+}
+
+for(let c=8;c<=13;c++){
+  cells[key(7,c)]
+    .classList.add("lane-yellow");
+}
+
+for(let r=8;r<=13;r++){
+  cells[key(r,7)]
+    .classList.add("lane-blue");
+}
+
+
+/* =========================================================
+   START CELLS
+   ========================================================= */
+
+[
+  [6,1,"start-red"],
+  [1,8,"start-green"],
+  [8,13,"start-yellow"],
+  [13,6,"start-blue"]
+].forEach(([r,c,className]) => {
+
+  cells[key(r,c)]
+    .classList.add(className);
+
+});
+
+
+/* =========================================================
+   HOME BASES
+   ========================================================= */
+
+function addBase(color){
+
+  const base =
+    document.createElement("div");
+
+  base.className =
+    `base ${color}`;
+
+  const inner =
+    document.createElement("div");
+
+  inner.className =
+    "home-inner";
+
+  for(let i=0;i<4;i++){
+
+    const slot =
+      document.createElement("div");
+
+    slot.className =
+      `home-slot ${color}`;
+
+    inner.appendChild(slot);
+
+    homeSlots[color].push(slot);
+  }
+
+  base.appendChild(inner);
+
+  board.appendChild(base);
+}
+
+[
+  "red",
+  "green",
+  "blue",
+  "yellow"
+].forEach(addBase);
+
+
+/* =========================================================
+   BOARD MARKERS
+   ========================================================= */
+
+function marker(
+  r,
+  c,
+  text,
+  className,
+  color
+){
+
+  const marker =
+    document.createElement("span");
+
+  marker.className =
+    className;
+
+  marker.textContent =
+    text;
+
+  if(color){
+    marker.style.color =
+      color;
+  }
+
+  cells[key(r,c)]
+    .appendChild(marker);
+}
+
+marker(
+  2,
+  6,
+  "★",
+  "star",
+  "var(--red)"
+);
+
+marker(
+  6,
+  12,
+  "★",
+  "star",
+  "var(--green)"
+);
+
+marker(
+  8,
+  2,
+  "★",
+  "star",
+  "var(--blue)"
+);
+
+marker(
+  12,
+  8,
+  "★",
+  "star",
+  "#d0a900"
+);
+
+marker(
+  7,
+  0,
+  "→",
+  "arrow",
+  "var(--red)"
+);
+
+marker(
+  0,
+  7,
+  "↓",
+  "arrow",
+  "var(--green)"
+);
+
+marker(
+  7,
+  14,
+  "←",
+  "arrow",
+  "#c99d00"
+);
+
+marker(
+  14,
+  7,
+  "↑",
+  "arrow",
+  "var(--blue)"
+);
+
+
+/* =========================================================
+   CENTER
+   ========================================================= */
+
+const center =
+  document.createElement("div");
+
+center.className =
+  "center-piece";
+
+[
+  "red",
+  "green",
+  "yellow",
+  "blue"
+].forEach(color => {
+
+  const triangle =
+    document.createElement("div");
+
+  triangle.className =
+    `center-triangle ${color}`;
+
+  center.appendChild(triangle);
+});
+
+const trophy =
+  document.createElement("div");
+
+trophy.className =
+  "center-trophy";
+
+trophy.textContent =
+  "🏆";
+
+center.appendChild(trophy);
+
+board.appendChild(center);
+
+
+/* =========================================================
+   LUDO TRACK
+   ========================================================= */
+
+const TRACK = [
+
+  [6,1],
+  [6,2],
+  [6,3],
+  [6,4],
+  [6,5],
+
+  [5,6],
+  [4,6],
+  [3,6],
+  [2,6],
+  [1,6],
+  [0,6],
+
+  [0,7],
+
+  [0,8],
+  [1,8],
+  [2,8],
+  [3,8],
+  [4,8],
+  [5,8],
+
+  [6,9],
+  [6,10],
+  [6,11],
+  [6,12],
+  [6,13],
+  [6,14],
+
+  [7,14],
+
+  [8,14],
+  [8,13],
+  [8,12],
+  [8,11],
+  [8,10],
+  [8,9],
+
+  [9,8],
+  [10,8],
+  [11,8],
+  [12,8],
+  [13,8],
+  [14,8],
+
+  [14,7],
+
+  [14,6],
+  [13,6],
+  [12,6],
+  [11,6],
+  [10,6],
+  [9,6],
+
+  [8,5],
+  [8,4],
+  [8,3],
+  [8,2],
+  [8,1],
+  [8,0],
+
+  [7,0],
+
+  [6,0]
+
+];
+
+
+/* =========================================================
+   PLAYER START POSITIONS
+   ========================================================= */
+
+const START = {
+  red:0,
+  yellow:26
+};
+
+
+/* =========================================================
+   HOME LANES
+   ========================================================= */
+
+const HOME = {
+
+  red:[
+    [7,2],
+    [7,3],
+    [7,4],
+    [7,5],
+    [7,6]
+  ],
+
+  yellow:[
+    [7,12],
+    [7,11],
+    [7,10],
+    [7,9],
+    [7,8]
+  ]
+
+};
+
+
+/* =========================================================
+   SAFE CELLS
+   ========================================================= */
+
+const SAFE =
+  new Set([
+
+    key(2,6),
+    key(6,12),
+    key(8,2),
+    key(12,8),
+    key(6,1),
+    key(8,13)
+
+  ]);
+
+
+/* =========================================================
+   GAME CONSTANTS
+   ========================================================= */
+
+const HOME_POSITION =
+  -1;
+
+const FINISHED_POSITION =
+  56;
+
+
+/* =========================================================
+   APPLICATION STATE
+   ========================================================= */
+
+let currentUser =
+  null;
+
+let roomCode =
+  null;
+
+let role =
+  null;
+
+let battleData =
+  null;
+
+let gameRef =
+  null;
+
+let battleRef =
+  null;
+
+let gameState =
+  null;
+
+let gameListener =
+  null;
+
+let battleListener =
+  null;
+
+let isAnimating =
+  false;
+
+let soundOn =
+  true;
+
+let audioCtx =
+  null;
+
+
+/* =========================================================
+   ROOM CODE
+   ========================================================= */
+
+function getRoomCode(){
+
+  const params =
+    new URLSearchParams(
+      window.location.search
+    );
+
+  const urlRoom =
+    params.get("room");
+
+  if(urlRoom){
+    return String(urlRoom);
+  }
+
+
+  try{
+
+    const saved =
+      localStorage.getItem(
+        "ludoverseCurrentBattle"
+      );
+
+    if(saved){
+
+      const battle =
+        JSON.parse(saved);
+
+      if(battle?.roomCode){
+        return String(
+          battle.roomCode
+        );
+      }
+    }
+
+  }catch(error){
+
+    console.warn(
+      "Could not read saved battle.",
+      error
+    );
+  }
+
+  return null;
+}
+
+
+/* =========================================================
+   UI CONNECTION STATUS
+   ========================================================= */
+
+function setConnection(
+  type,
+  text
+){
+
+  connectionStatus.className =
+    `connection ${type}`;
+
+  connectionText.textContent =
+    text;
+}
+
+
+/* =========================================================
+   SOUND
+   ========================================================= */
 
 function sound(type){
- if(!soundOn)return;
- try{audioCtx=audioCtx||new (window.AudioContext||window.webkitAudioContext)();let o=audioCtx.createOscillator(),g=audioCtx.createGain();o.connect(g);g.connect(audioCtx.destination);
- let f=type==="roll"?180:type==="move"?420:type==="capture"?95:type==="win"?700:300;
- o.frequency.setValueAtTime(f,audioCtx.currentTime);if(type==="win")o.frequency.exponentialRampToValueAtTime(1100,audioCtx.currentTime+.5);
- g.gain.setValueAtTime(.20,audioCtx.currentTime);g.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+(type==="win"?.75:.15));o.start();o.stop(audioCtx.currentTime+(type==="win"?.65:.13));
- }catch(e){}
+
+  if(!soundOn){
+    return;
+  }
+
+  try{
+
+    audioCtx =
+      audioCtx ||
+      new (
+        window.AudioContext ||
+        window.webkitAudioContext
+      )();
+
+    const oscillator =
+      audioCtx.createOscillator();
+
+    const gain =
+      audioCtx.createGain();
+
+    oscillator.connect(gain);
+
+    gain.connect(
+      audioCtx.destination
+    );
+
+    let frequency =
+      300;
+
+    if(type === "roll"){
+      frequency = 180;
+    }
+
+    if(type === "move"){
+      frequency = 420;
+    }
+
+    if(type === "capture"){
+      frequency = 95;
+    }
+
+    if(type === "win"){
+      frequency = 700;
+    }
+
+    oscillator.frequency.setValueAtTime(
+      frequency,
+      audioCtx.currentTime
+    );
+
+    if(type === "win"){
+
+      oscillator.frequency
+        .exponentialRampToValueAtTime(
+          1100,
+          audioCtx.currentTime + .5
+        );
+    }
+
+    gain.gain.setValueAtTime(
+      .20,
+      audioCtx.currentTime
+    );
+
+    gain.gain.exponentialRampToValueAtTime(
+      .001,
+      audioCtx.currentTime +
+      (type === "win" ? .75 : .15)
+    );
+
+    oscillator.start();
+
+    oscillator.stop(
+      audioCtx.currentTime +
+      (type === "win" ? .65 : .13)
+    );
+
+  }catch(error){
+
+    console.warn(
+      "Audio unavailable.",
+      error
+    );
+  }
 }
-const sleep=ms=>new Promise(r=>setTimeout(r,ms));
-function createTokens(color){return Array.from({length:4},(_,id)=>({id,color,position:-1,finished:false,flash:""}))}
-function finishedCount(color){return tokens[color].filter(t=>t.finished).length}
-function coord(t){if(t.position<0||t.finished)return null;if(t.position<52)return TRACK[(START[t.color]+t.position)%52];let i=t.position-52;return HOME[t.color][i]||null}
-function valid(t,n){if(t.finished)return false;if(t.position===-1)return n===6;return t.position+n<=56}
-function tokenEl(t){let e=document.createElement("button");e.type="button";e.className=`token ${t.color}`;e.setAttribute("aria-label",`${t.color} token ${t.id+1}`);if(t.flash)e.classList.add(t.flash);return e}
-function removeTokens(){document.querySelectorAll(".token").forEach(e=>e.remove())}
+
+
+function sleep(ms){
+
+  return new Promise(
+    resolve =>
+      setTimeout(resolve,ms)
+  );
+}
+
+
+/* =========================================================
+   TOKEN HELPERS
+   ========================================================= */
+
+function createTokens(color){
+
+  return Array.from(
+    {length:4},
+    (_,id) => ({
+
+      id,
+
+      color,
+
+      position:
+        HOME_POSITION,
+
+      finished:false
+
+    })
+  );
+}
+
+
+function createInitialGame(){
+
+  return {
+
+    roomCode,
+
+    players:{
+      red:null,
+      yellow:null
+    },
+
+    tokens:{
+      red:createTokens("red"),
+      yellow:createTokens("yellow")
+    },
+
+    finished:{
+      red:0,
+      yellow:0
+    },
+
+    turn:"red",
+
+    dice:0,
+
+    phase:"roll",
+
+    winner:null,
+
+    sixCount:{
+      red:0,
+      yellow:0
+    },
+
+    version:1,
+
+    updatedAt:
+      Date.now()
+
+  };
+}
+
+
+function normalizeTokens(
+  color,
+  tokenArray
+){
+
+  const list =
+    Array.isArray(tokenArray)
+      ? tokenArray
+      : [];
+
+  return Array.from(
+    {length:4},
+    (_,index) => {
+
+      const old =
+        list[index] || {};
+
+      const position =
+        Number.isFinite(
+          Number(old.position)
+        )
+          ? Number(old.position)
+          : HOME_POSITION;
+
+      return {
+
+        id:index,
+
+        color,
+
+        position,
+
+        finished:
+          position === FINISHED_POSITION
+
+      };
+    }
+  );
+}
+
+
+function normalizeGame(
+  data
+){
+
+  const source =
+    data || createInitialGame();
+
+  return {
+
+    roomCode:
+      source.roomCode ||
+      roomCode,
+
+    players:{
+      red:
+        source.players?.red ||
+        null,
+
+      yellow:
+        source.players?.yellow ||
+        null
+    },
+
+    tokens:{
+
+      red:
+        normalizeTokens(
+          "red",
+          source.tokens?.red
+        ),
+
+      yellow:
+        normalizeTokens(
+          "yellow",
+          source.tokens?.yellow
+        )
+
+    },
+
+    finished:{
+
+      red:
+        Number(
+          source.finished?.red
+        ) || 0,
+
+      yellow:
+        Number(
+          source.finished?.yellow
+        ) || 0
+
+    },
+
+    turn:
+      source.turn === "yellow"
+        ? "yellow"
+        : "red",
+
+    dice:
+      Number(source.dice) || 0,
+
+    phase:
+      source.phase || "roll",
+
+    winner:
+      source.winner || null,
+
+    sixCount:{
+
+      red:
+        Number(
+          source.sixCount?.red
+        ) || 0,
+
+      yellow:
+        Number(
+          source.sixCount?.yellow
+        ) || 0
+
+    },
+
+    version:
+      Number(source.version) || 1,
+
+    updatedAt:
+      source.updatedAt ||
+      Date.now()
+
+  };
+}
+
+
+/* =========================================================
+   FINISHED COUNT
+   ========================================================= */
+
+function finishedCount(color){
+
+  return gameState?.tokens?.[color]
+    ? gameState.tokens[color]
+        .filter(token =>
+          token.position === FINISHED_POSITION
+        ).length
+    : 0;
+}
+
+
+/* =========================================================
+   TOKEN COORDINATE
+   ========================================================= */
+
+function coord(token){
+
+  if(!token){
+    return null;
+  }
+
+  if(
+    token.position === HOME_POSITION ||
+    token.position >= FINISHED_POSITION
+  ){
+    return null;
+  }
+
+  if(token.position < 52){
+
+    return TRACK[
+      (
+        START[token.color] +
+        token.position
+      ) % 52
+    ];
+  }
+
+  const index =
+    token.position - 52;
+
+  return HOME[token.color][index]
+    || null;
+}
+
+
+/* =========================================================
+   VALID MOVE
+   ========================================================= */
+
+function valid(
+  token,
+  number
+){
+
+  if(!token){
+    return false;
+  }
+
+  if(
+    token.position === FINISHED_POSITION
+  ){
+    return false;
+  }
+
+  if(
+    token.position === HOME_POSITION
+  ){
+    return number === 6;
+  }
+
+  return (
+    token.position + number
+    <= FINISHED_POSITION
+  );
+}
+
+
+/* =========================================================
+   TOKEN ELEMENT
+   ========================================================= */
+
+function tokenElement(
+  token
+){
+
+  const element =
+    document.createElement("button");
+
+  element.type =
+    "button";
+
+  element.className =
+    `token ${token.color}`;
+
+  element.setAttribute(
+    "aria-label",
+    `${token.color} token ${token.id + 1}`
+  );
+
+  return element;
+}
+
+
+/* =========================================================
+   REMOVE TOKENS
+   ========================================================= */
+
+function removeTokens(){
+
+  document
+    .querySelectorAll(".token")
+    .forEach(element =>
+      element.remove()
+    );
+}
+
+
+/* =========================================================
+   STACK TOKEN LAYOUT
+   ========================================================= */
+
 function placeGroup(items){
- const layouts={
-  1:{size:"68%",p:[["16%","16%"]]},
-  2:{size:"47%",p:[["4%","26%"],["49%","26%"]]},
-  3:{size:"43%",p:[["28%","3%"],["4%","51%"],["53%","51%"]]},
-  4:{size:"42%",p:[["5%","5%"],["53%","5%"],["5%","53%"],["53%","53%"]]}
- };
- const layout=layouts[Math.min(items.length,4)];
- items.forEach((x,i)=>{
-   const q=layout.p[i]||["29%","29%"];
-   x.element.style.width=layout.size;
-   x.element.style.left=q[0];
-   x.element.style.top=q[1];
-   x.element.style.zIndex=String(100+i);
- });
+
+  const layouts = {
+
+    1:{
+      size:"68%",
+      positions:[
+        ["16%","16%"]
+      ]
+    },
+
+    2:{
+      size:"47%",
+      positions:[
+        ["4%","26%"],
+        ["49%","26%"]
+      ]
+    },
+
+    3:{
+      size:"43%",
+      positions:[
+        ["28%","3%"],
+        ["4%","51%"],
+        ["53%","51%"]
+      ]
+    },
+
+    4:{
+      size:"42%",
+      positions:[
+        ["5%","5%"],
+        ["53%","5%"],
+        ["5%","53%"],
+        ["53%","53%"]
+      ]
+    }
+
+  };
+
+  const layout =
+    layouts[
+      Math.min(
+        items.length,
+        4
+      )
+    ];
+
+  items.forEach(
+    (item,index) => {
+
+      const position =
+        layout.positions[index]
+        || ["29%","29%"];
+
+      item.element.style.width =
+        layout.size;
+
+      item.element.style.left =
+        position[0];
+
+      item.element.style.top =
+        position[1];
+
+      item.element.style.zIndex =
+        String(100 + index);
+
+    }
+  );
 }
+
+
+/* =========================================================
+   RENDER GAME
+   ========================================================= */
+
 function renderGame(){
- removeTokens();userScore.textContent=`${finishedCount("red")} / 4`;aiScore.textContent=`${finishedCount("yellow")} / 4`;
- turnBox.innerHTML=turn==="red"?"🔴 You<small>Your Turn</small>":"🟡 AI<small>AI Thinking…</small>";
- rollBtn.disabled=gameOver||isAnimating||turn!=="red"||rolledNumber!==null;
- ["red","yellow"].forEach(color=>{let i=0;tokens[color].forEach(t=>{if(t.position!==-1||t.finished)return;let e=tokenEl(t);let can=color==="red"&&turn==="red"&&rolledNumber!==null&&valid(t,rolledNumber)&&!isAnimating;if(can){e.classList.add("selectable");e.onclick=()=>userMove(t)}homeSlots[color][i++]?.appendChild(e)})});
- let groups={};["red","yellow"].forEach(color=>tokens[color].forEach(t=>{let co=coord(t);if(!co)return;let k=key(...co);groups[k]??=[];let e=tokenEl(t);let can=t.color==="red"&&turn==="red"&&rolledNumber!==null&&valid(t,rolledNumber)&&!isAnimating;if(can){e.classList.add("selectable");e.onclick=()=>userMove(t)}groups[k].push({t,element:e})}));
- Object.entries(groups).forEach(([k,a])=>{a.forEach(x=>cells[k].appendChild(x.element));placeGroup(a)})
+
+  if(!gameState){
+    return;
+  }
+
+  removeTokens();
+
+
+  /* SCORE */
+
+  userScore.textContent =
+    `${finishedCount("red")} / 4`;
+
+  aiScore.textContent =
+    `${finishedCount("yellow")} / 4`;
+
+
+  /* TURN */
+
+  const myTurn =
+    gameState.turn === role;
+
+
+  if(role === "red"){
+
+    if(gameState.turn === "red"){
+
+      turnBox.innerHTML =
+        `🔴 You<small>Your Turn</small>`;
+
+    }else{
+
+      turnBox.innerHTML =
+        `🟡 Player 2<small>Opponent's Turn</small>`;
+    }
+
+  }else{
+
+    if(gameState.turn === "yellow"){
+
+      turnBox.innerHTML =
+        `🟡 You<small>Your Turn</small>`;
+
+    }else{
+
+      turnBox.innerHTML =
+        `🔴 Player 1<small>Opponent's Turn</small>`;
+    }
+  }
+
+
+  /* DICE */
+
+  dice.textContent =
+    gameState.dice
+      ? gameState.dice
+      : "🎲";
+
+
+  /* ROLL BUTTON */
+
+  const roomReady =
+    Boolean(
+      gameState.players.red &&
+      gameState.players.yellow
+    );
+
+  rollBtn.disabled =
+    !roomReady ||
+    gameState.winner !== null ||
+    isAnimating ||
+    gameState.phase !== "roll" ||
+    !myTurn;
+
+
+  /* HOME TOKENS */
+
+  ["red","yellow"].forEach(
+    color => {
+
+      let homeIndex = 0;
+
+      gameState.tokens[color]
+        .forEach(token => {
+
+          if(
+            token.position !== HOME_POSITION
+          ){
+            return;
+          }
+
+          if(
+            token.finished
+          ){
+            return;
+          }
+
+          const slot =
+            homeSlots[color][homeIndex++];
+
+          if(!slot){
+            return;
+          }
+
+          const element =
+            tokenElement(token);
+
+          const selectable =
+            color === role &&
+            gameState.turn === role &&
+            gameState.phase === "move" &&
+            !isAnimating &&
+            valid(
+              token,
+              gameState.dice
+            );
+
+          if(selectable){
+
+            element.classList.add(
+              "selectable"
+            );
+
+            element.addEventListener(
+              "click",
+              () => moveMyToken(token.id)
+            );
+          }
+
+          slot.appendChild(element);
+
+        });
+
+    }
+  );
+
+
+  /* BOARD TOKENS */
+
+  const groups = {};
+
+
+  ["red","yellow"].forEach(
+    color => {
+
+      gameState.tokens[color]
+        .forEach(token => {
+
+          const coordinate =
+            coord(token);
+
+          if(!coordinate){
+            return;
+          }
+
+          const cellKey =
+            key(
+              coordinate[0],
+              coordinate[1]
+            );
+
+          if(!groups[cellKey]){
+            groups[cellKey] = [];
+          }
+
+          const element =
+            tokenElement(token);
+
+          const selectable =
+            color === role &&
+            gameState.turn === role &&
+            gameState.phase === "move" &&
+            !isAnimating &&
+            valid(
+              token,
+              gameState.dice
+            );
+
+          if(selectable){
+
+            element.classList.add(
+              "selectable"
+            );
+
+            element.addEventListener(
+              "click",
+              () => moveMyToken(token.id)
+            );
+          }
+
+          groups[cellKey].push({
+
+            token,
+
+            element
+
+          });
+
+        });
+
+    }
+  );
+
+
+  Object.entries(groups)
+    .forEach(
+      ([cellKey,items]) => {
+
+        const cell =
+          cells[cellKey];
+
+        if(!cell){
+          return;
+        }
+
+        items.forEach(
+          item =>
+            cell.appendChild(
+              item.element
+            )
+        );
+
+        placeGroup(items);
+
+      }
+    );
+
 }
+
+
+/* =========================================================
+   ROOM / PLAYER INFORMATION
+   ========================================================= */
+
+function updatePlayerInformation(){
+
+  if(!gameState){
+    return;
+  }
+
+  const bothPlayers =
+    Boolean(
+      gameState.players.red &&
+      gameState.players.yellow
+    );
+
+
+  if(!bothPlayers){
+
+    setConnection(
+      "waiting",
+      "Waiting for Player 2..."
+    );
+
+    rollBtn.disabled =
+      true;
+
+    status.textContent =
+      role === "red"
+        ? "👤 Waiting for Player 2 to join this room..."
+        : "🔐 Waiting for Player 1 to start the game.";
+
+    return;
+  }
+
+
+  setConnection(
+    "online",
+    "2 Players Connected"
+  );
+
+
+  if(gameState.winner){
+    return;
+  }
+
+
+  if(gameState.turn === role){
+
+    if(gameState.phase === "roll"){
+
+      status.textContent =
+        "🎲 Your turn! Roll the dice.";
+
+    }else{
+
+      status.textContent =
+        `🎯 You rolled ${gameState.dice}. Select a glowing token.`;
+    }
+
+  }else{
+
+    const opponent =
+      role === "red"
+        ? "Player 2"
+        : "Player 1";
+
+    status.textContent =
+      `⏳ ${opponent}'s turn...`;
+  }
+
+}
+
+
+/* =========================================================
+   DICE ANIMATION
+   ========================================================= */
+
 async function rollAnimation(){
- dice.classList.add("rolling");for(let i=0;i<11;i++){dice.textContent=Math.floor(Math.random()*6)+1;sound("roll");await sleep(48)}dice.classList.remove("rolling");let n=Math.floor(Math.random()*6)+1;dice.textContent=n;return n
+
+  dice.classList.add(
+    "rolling"
+  );
+
+  for(let i=0;i<11;i++){
+
+    dice.textContent =
+      String(
+        Math.floor(
+          Math.random() * 6
+        ) + 1
+      );
+
+    sound("roll");
+
+    await sleep(48);
+  }
+
+  dice.classList.remove(
+    "rolling"
+  );
 }
-async function animateMove(t,n){
- if(t.position===-1){t.position=0;sound("move");renderGame();await sleep(360);return}
- for(let i=0;i<n;i++){t.position++;t.flash="moving";sound("move");renderGame();await sleep(190)}
- t.flash=""
+
+
+/* =========================================================
+   ANIMATE TOKEN
+   ========================================================= */
+
+async function animateToken(
+  color,
+  tokenId,
+  number
+){
+
+  const localToken =
+    gameState.tokens[color][tokenId];
+
+  if(!localToken){
+    return;
+  }
+
+
+  if(
+    localToken.position ===
+    HOME_POSITION
+  ){
+
+    return;
+  }
+
+
+  for(let step=0;step<number;step++){
+
+    localToken.position++;
+
+    sound("move");
+
+    renderGame();
+
+    await sleep(170);
+  }
+
 }
-function capture(m){
- if(m.position<0||m.position>=52)return false;let c=coord(m),k=key(...c);if(SAFE.has(k))return false;
- let other=m.color==="red"?"yellow":"red",hit=false;
- tokens[other].forEach(t=>{let oc=coord(t);if(t.position>=0&&t.position<52&&!t.finished&&oc&&key(...oc)===k){t.position=-1;t.finished=false;hit=true}});
- if(hit){sound("capture");status.textContent="💥 Opponent captured!";return true}return false
+
+
+/* =========================================================
+   GET TRACK POSITION
+   ========================================================= */
+
+function getFutureCoordinate(
+  token,
+  number
+){
+
+  if(
+    token.position ===
+    HOME_POSITION
+  ){
+
+    if(number !== 6){
+      return null;
+    }
+
+    return TRACK[
+      START[token.color]
+    ];
+  }
+
+
+  const future =
+    token.position + number;
+
+
+  if(future >= 52){
+
+    return null;
+  }
+
+
+  return TRACK[
+    (
+      START[token.color] +
+      future
+    ) % 52
+  ];
 }
-function finish(t){if(t.position>=56){t.position=56;t.finished=true;t.flash="finish-pop";sound("win")}}
-function celebrate(color){
- gameOver=true;renderGame();sound("win");document.getElementById("winTitle").textContent=color==="red"?"🎉 Congratulations!":"🤖 AI Won!";
- document.getElementById("winText").textContent=color==="red"?"You brought all four tokens home!":"The AI brought all four tokens home first.";
- document.getElementById("celebration").style.display="grid";
- for(let i=0;i<70;i++){let c=document.createElement("i");c.className="confetti";c.style.left=Math.random()*100+"vw";c.style.top=(-Math.random()*30)+"vh";c.style.setProperty("--x",(Math.random()*180-90)+"px");c.style.background=["#ef2929","#ffd91a","#2996d6","#a98cff","#fff"][i%5];c.style.animationDelay=Math.random()*.7+"s";document.body.appendChild(c);setTimeout(()=>c.remove(),3500)}
+
+
+/* =========================================================
+   CAPTURE
+   ========================================================= */
+
+function getCaptures(
+  movingColor,
+  movingToken
+){
+
+  if(
+    movingToken.position < 0 ||
+    movingToken.position >= 52
+  ){
+    return [];
+  }
+
+
+  const coordinate =
+    coord(movingToken);
+
+  if(!coordinate){
+    return [];
+  }
+
+
+  const cellKey =
+    key(
+      coordinate[0],
+      coordinate[1]
+    );
+
+
+  if(
+    SAFE.has(cellKey)
+  ){
+    return [];
+  }
+
+
+  const opponent =
+    movingColor === "red"
+      ? "yellow"
+      : "red";
+
+
+  const captures = [];
+
+
+  gameState.tokens[opponent]
+    .forEach(
+      token => {
+
+        if(
+          token.position >= 0 &&
+          token.position < 52 &&
+          !token.finished
+        ){
+
+          const opponentCoordinate =
+            coord(token);
+
+          if(
+            opponentCoordinate &&
+            key(
+              opponentCoordinate[0],
+              opponentCoordinate[1]
+            ) === cellKey
+          ){
+
+            captures.push(
+              token.id
+            );
+          }
+
+        }
+
+      }
+    );
+
+
+  return captures;
 }
-function hideCelebration(){document.getElementById("celebration").style.display="none"}
-function checkWinner(color){if(finishedCount(color)===4){celebrate(color);return true}return false}
-async function userMove(t){
- if(gameOver||isAnimating||turn!=="red"||rolledNumber===null||!valid(t,rolledNumber))return;
- isAnimating=true;let n=rolledNumber;rolledNumber=null;await animateMove(t,n);finish(t);const captured=capture(t);renderGame();
- if(checkWinner("red"))return;
- isAnimating=false;if(n===6||captured){
-   status.textContent=captured&&n===6?"🔥 You rolled 6 and captured a token! Roll again.":"💥 Capture bonus! You get another roll.";
-   renderGame();return
- }
- sixCount.red=0;turn="yellow";status.textContent="🤖 AI is thinking…";renderGame();setTimeout(aiTurn,650)
+
+
+/* =========================================================
+   WIN CHECK
+   ========================================================= */
+
+function hasWon(color){
+
+  return (
+    finishedCount(color) === 4
+  );
 }
-function futureKey(t,n){
- if(t.position===-1){if(n!==6)return null;return key(...TRACK[START[t.color]])}
- let p=t.position+n;if(p>=52)return null;return key(...TRACK[(START[t.color]+p)%52])
+
+
+/* =========================================================
+   CELEBRATION
+   ========================================================= */
+
+function showWinner(
+  color
+){
+
+  if(
+    gameState?.winner
+    !== color
+  ){
+    return;
+  }
+
+
+  gameState.winner =
+    color;
+
+
+  renderGame();
+
+
+  const iWon =
+    role === color;
+
+
+  winTitle.textContent =
+    iWon
+      ? "🎉 Congratulations!"
+      : "🏆 Game Over";
+
+
+  winText.textContent =
+    iWon
+      ? "You brought all four tokens home!"
+      : "Your opponent brought all four tokens home first.";
+
+
+  celebration.style.display =
+    "grid";
+
+
+  sound("win");
+
+
+  for(let i=0;i<70;i++){
+
+    const piece =
+      document.createElement("i");
+
+    piece.className =
+      "confetti";
+
+    piece.style.left =
+      Math.random() * 100 +
+      "vw";
+
+    piece.style.top =
+      (-Math.random() * 30) +
+      "vh";
+
+    piece.style.setProperty(
+      "--x",
+      (
+        Math.random() * 180 -
+        90
+      ) + "px"
+    );
+
+
+    const colors = [
+      "#ef2929",
+      "#ffd91a",
+      "#2996d6",
+      "#a98cff",
+      "#ffffff"
+    ];
+
+    piece.style.background =
+      colors[i % colors.length];
+
+    piece.style.animationDelay =
+      Math.random() * .7 +
+      "s";
+
+
+    document.body.appendChild(
+      piece
+    );
+
+
+    setTimeout(
+      () => piece.remove(),
+      3500
+    );
+  }
+
 }
-function aiScoreMove(t,n){
- let s=Math.random()*3,fp=t.position===-1?0:t.position+n;
- if(t.position>=0&&fp===56)s+=10000;
- let k=futureKey(t,n);
- if(k&&!SAFE.has(k))tokens.red.forEach(r=>{let rc=coord(r);if(rc&&r.position>=0&&r.position<52&&key(...rc)===k)s+=2500});
- if(t.position===-1&&n===6)s+=250;
- if(t.position>=0)s+=fp*9;
- if(k&&SAFE.has(k))s+=80;
- // Prefer moving endangered tokens: opponent close behind on track
- if(t.position>=0&&t.position<52)s+=20;
- return s
+
+
+/* =========================================================
+   HIDE CELEBRATION
+   ========================================================= */
+
+function hideCelebration(){
+
+  celebration.style.display =
+    "none";
 }
-async function aiTurn(){
- if(turn!=="yellow"||gameOver)return;isAnimating=true;renderGame();await sleep(450);let n=await rollAnimation();
- sixCount.yellow=n===6?sixCount.yellow+1:0;
- if(sixCount.yellow===3){sixCount.yellow=0;isAnimating=false;turn="red";status.textContent="⚠️ AI rolled three consecutive 6s — turn lost.";renderGame();return}
- let validTokens=tokens.yellow.filter(t=>valid(t,n));
- if(!validTokens.length){isAnimating=false;sixCount.yellow=0;turn="red";status.textContent="🎲 Your turn! Roll the dice.";renderGame();return}
- validTokens.sort((a,b)=>aiScoreMove(b,n)-aiScoreMove(a,n));let t=validTokens[0];status.textContent=`🤖 AI rolled ${n} and is moving…`;renderGame();await sleep(300);
- await animateMove(t,n);finish(t);const captured=capture(t);renderGame();if(checkWinner("yellow"))return;
- isAnimating=false;if(n===6||captured){
-   status.textContent=captured&&n===6?"🔥 AI rolled 6 and captured a token! Extra turn.":"💥 AI captured a token! AI gets another roll.";
-   renderGame();setTimeout(aiTurn,650);return
- }
- sixCount.yellow=0;turn="red";status.textContent="🎲 Your turn! Roll the dice.";renderGame()
+
+
+/* =========================================================
+   ROLL DICE
+   ========================================================= */
+
+async function rollDice(){
+
+  if(!gameState){
+    return;
+  }
+
+  if(!currentUser){
+    return;
+  }
+
+  if(!roomCode){
+    return;
+  }
+
+  if(role !== gameState.turn){
+    return;
+  }
+
+  if(
+    gameState.phase !== "roll"
+  ){
+    return;
+  }
+
+  if(gameState.winner){
+    return;
+  }
+
+  if(
+    !gameState.players.red ||
+    !gameState.players.yellow
+  ){
+    status.textContent =
+      "⏳ Waiting for both players.";
+
+    return;
+  }
+
+
+  isAnimating =
+    true;
+
+  rollBtn.disabled =
+    true;
+
+  renderGame();
+
+
+  await rollAnimation();
+
+
+  const number =
+    Math.floor(
+      Math.random() * 6
+    ) + 1;
+
+
+  const currentSixCount =
+    gameState.sixCount[role] || 0;
+
+
+  const newSixCount =
+    number === 6
+      ? currentSixCount + 1
+      : 0;
+
+
+  /*
+    Three consecutive 6s:
+    lose turn.
+  */
+
+  if(newSixCount >= 3){
+
+    const nextTurn =
+      role === "red"
+        ? "yellow"
+        : "red";
+
+
+    await update(
+      gameRef,
+      {
+
+        dice:number,
+
+        phase:"roll",
+
+        turn:nextTurn,
+
+        sixCount:{
+          ...gameState.sixCount,
+          [role]:0,
+          [nextTurn]:0
+        },
+
+        updatedAt:
+          Date.now()
+
+      }
+    );
+
+
+    isAnimating =
+      false;
+
+    status.textContent =
+      "⚠️ Three consecutive 6s — your turn is lost.";
+
+    return;
+  }
+
+
+  const tokens =
+    gameState.tokens[role];
+
+
+  const validTokens =
+    tokens.filter(
+      token =>
+        valid(
+          token,
+          number
+        )
+    );
+
+
+  /*
+    No valid move.
+  */
+
+  if(validTokens.length === 0){
+
+    const nextTurn =
+      number === 6
+        ? role
+        : (
+            role === "red"
+              ? "yellow"
+              : "red"
+          );
+
+
+    await update(
+      gameRef,
+      {
+
+        dice:number,
+
+        phase:"roll",
+
+        turn:nextTurn,
+
+        sixCount:{
+          ...gameState.sixCount,
+          [role]:
+            number === 6
+              ? newSixCount
+              : 0,
+
+          [nextTurn]:
+            nextTurn === role
+              ? newSixCount
+              : 0
+        },
+
+        updatedAt:
+          Date.now()
+
+      }
+    );
+
+
+    isAnimating =
+      false;
+
+    return;
+  }
+
+
+  /*
+    Valid move exists.
+  */
+
+  await update(
+    gameRef,
+    {
+
+      dice:number,
+
+      phase:"move",
+
+      sixCount:{
+        ...gameState.sixCount,
+        [role]:newSixCount
+      },
+
+      updatedAt:
+        Date.now()
+
+    }
+  );
+
+
+  isAnimating =
+    false;
+
 }
-rollBtn.onclick=async()=>{
- if(gameOver||isAnimating||turn!=="red"||rolledNumber!==null)return;
- isAnimating=true;renderGame();let n=await rollAnimation();sixCount.red=n===6?sixCount.red+1:0;
- if(sixCount.red===3){sixCount.red=0;isAnimating=false;turn="yellow";status.textContent="⚠️ Three consecutive 6s — your turn is lost.";renderGame();setTimeout(aiTurn,650);return}
- let v=tokens.red.filter(t=>valid(t,n));if(!v.length){isAnimating=false;sixCount.red=0;turn="yellow";status.textContent="No valid move — AI's turn.";renderGame();setTimeout(aiTurn,650);return}
- rolledNumber=n;isAnimating=false;status.textContent=n===6?"🔥 You rolled 6! Select any glowing valid token.":`🎲 You rolled ${n}. Select a glowing token.`;renderGame()
-};
-document.getElementById("restartBtn").onclick=()=>{hideCelebration();resetGame()};
-document.getElementById("soundBtn").onclick=function(){soundOn=!soundOn;this.textContent=soundOn?"🔊 Sound: ON":"🔇 Sound: OFF";if(soundOn)sound("move")};
-function resetGame(){tokens={red:createTokens("red"),yellow:createTokens("yellow")};turn="red";rolledNumber=null;isAnimating=false;gameOver=false;sixCount={red:0,yellow:0};dice.textContent="🎲";status.textContent="🎲 Your turn! Roll the dice.";renderGame()}
-resetGame();
+
+
+/* =========================================================
+   MOVE TOKEN
+   ========================================================= */
+
+async function moveMyToken(
+  tokenId
+){
+
+  if(!gameState){
+    return;
+  }
+
+  if(isAnimating){
+    return;
+  }
+
+  if(
+    gameState.turn !== role
+  ){
+    return;
+  }
+
+  if(
+    gameState.phase !== "move"
+  ){
+    return;
+  }
+
+  const number =
+    Number(
+      gameState.dice
+    );
+
+
+  if(!number){
+    return;
+  }
+
+
+  const token =
+    gameState.tokens[role][tokenId];
+
+
+  if(
+    !token ||
+    !valid(token,number)
+  ){
+    return;
+  }
+
+
+  isAnimating =
+    true;
+
+
+  /*
+    Clone tokens locally.
+  */
+
+  const updatedTokens = {
+
+    red:
+      gameState.tokens.red.map(
+        item => ({...item})
+      ),
+
+    yellow:
+      gameState.tokens.yellow.map(
+        item => ({...item})
+      )
+
+  };
+
+
+  const movingToken =
+    updatedTokens[role][tokenId];
+
+
+  /*
+    Unlock token from home.
+  */
+
+  if(
+    movingToken.position ===
+    HOME_POSITION
+  ){
+
+    movingToken.position =
+      0;
+
+  }else{
+
+    /*
+      Animate locally.
+    */
+
+    for(
+      let step=0;
+      step<number;
+      step++
+    ){
+
+      movingToken.position++;
+
+      gameState.tokens =
+        updatedTokens;
+
+      renderGame();
+
+      sound("move");
+
+      await sleep(150);
+    }
+
+  }
+
+
+  /*
+    Finish token.
+  */
+
+  if(
+    movingToken.position >=
+    FINISHED_POSITION
+  ){
+
+    movingToken.position =
+      FINISHED_POSITION;
+
+    sound("win");
+  }
+
+
+  /*
+    Capture opponent.
+  */
+
+  const coordinate =
+    coord(movingToken);
+
+
+  let captured = false;
+
+
+  if(
+    coordinate &&
+    movingToken.position < 52
+  ){
+
+    const cellKey =
+      key(
+        coordinate[0],
+        coordinate[1]
+      );
+
+
+    if(
+      !SAFE.has(cellKey)
+    ){
+
+      const opponent =
+        role === "red"
+          ? "yellow"
+          : "red";
+
+
+      updatedTokens[opponent]
+        .forEach(
+          opponentToken => {
+
+            const opponentCoordinate =
+              coord(opponentToken);
+
+
+            if(
+              opponentToken.position >= 0 &&
+              opponentToken.position < 52 &&
+              opponentCoordinate &&
+              key(
+                opponentCoordinate[0],
+                opponentCoordinate[1]
+              ) === cellKey
+            ){
+
+              opponentToken.position =
+                HOME_POSITION;
+
+              captured =
+                true;
+
+            }
+
+          }
+        );
+
+    }
+
+  }
+
+
+  if(captured){
+
+    sound("capture");
+
+  }
+
+
+  /*
+    Calculate finished count.
+  */
+
+  const redFinished =
+    updatedTokens.red.filter(
+      item =>
+        item.position ===
+        FINISHED_POSITION
+    ).length;
+
+
+  const yellowFinished =
+    updatedTokens.yellow.filter(
+      item =>
+        item.position ===
+        FINISHED_POSITION
+    ).length;
+
+
+  /*
+    Winner.
+  */
+
+  let winner =
+    null;
+
+
+  if(redFinished === 4){
+
+    winner =
+      "red";
+
+  }else if(
+    yellowFinished === 4
+  ){
+
+    winner =
+      "yellow";
+
+  }
+
+
+  /*
+    Determine next turn.
+  */
+
+  let nextTurn =
+    role === "red"
+      ? "yellow"
+      : "red";
+
+
+  if(
+    number === 6 ||
+    captured
+  ){
+
+    nextTurn =
+      role;
+
+  }
+
+
+  /*
+    If token finished on final move,
+    still keep extra turn on 6/capture.
+  */
+
+  if(winner){
+
+    nextTurn =
+      role;
+
+  }
+
+
+  const newSixCount =
+    (
+      number === 6
+    )
+      ? (
+          gameState.sixCount[role] || 0
+        )
+      : 0;
+
+
+  /*
+    Save complete shared state.
+  */
+
+  await set(
+    gameRef,
+    {
+
+      ...gameState,
+
+      tokens:
+        updatedTokens,
+
+      finished:{
+        red:redFinished,
+        yellow:yellowFinished
+      },
+
+      dice:0,
+
+      phase:
+        winner
+          ? "finished"
+          : "roll",
+
+      turn:
+        winner
+          ? role
+          : nextTurn,
+
+      winner,
+
+      sixCount:{
+        ...gameState.sixCount,
+        [role]:
+          (
+            number === 6 ||
+            captured
+          )
+            ? newSixCount
+            : 0
+      },
+
+      updatedAt:
+        Date.now()
+
+    }
+  );
+
+
+  isAnimating =
+    false;
+
+
+  if(captured){
+
+    status.textContent =
+      "💥 Opponent captured! Extra turn.";
+
+  }
+
+
+  if(number === 6){
+
+    status.textContent =
+      "🔥 You rolled 6! Extra turn.";
+
+  }
+
+}
+
+
+/* =========================================================
+   CREATE / LOAD GAME
+   ========================================================= */
+
+async function loadGame(){
+
+  if(
+    !roomCode ||
+    !currentUser
+  ){
+    return;
+  }
+
+
+  gameRef =
+    ref(
+      database,
+      `games/${roomCode}`
+    );
+
+
+  battleRef =
+    ref(
+      database,
+      `battles/${roomCode}`
+    );
+
+
+  setConnection(
+    "waiting",
+    "Loading room..."
+  );
+
+
+  /*
+    Load battle first.
+  */
+
+  const battleSnapshot =
+    await get(battleRef);
+
+
+  if(
+    !battleSnapshot.exists()
+  ){
+
+    setConnection(
+      "error",
+      "Room not found"
+    );
+
+    status.textContent =
+      "❌ This room does not exist.";
+
+    rollBtn.disabled =
+      true;
+
+    return;
+  }
+
+
+  battleData =
+    battleSnapshot.val();
+
+
+  /*
+    Determine role.
+  */
+
+  if(
+    String(
+      battleData.creatorUid
+    ) ===
+    String(
+      currentUser.uid
+    )
+  ){
+
+    role =
+      "red";
+
+  }else if(
+    battleData.players &&
+    battleData.players[
+      currentUser.uid
+    ]
+  ){
+
+    role =
+      "yellow";
+
+  }else{
+
+    setConnection(
+      "error",
+      "Not a room player"
+    );
+
+    status.textContent =
+      "❌ You are not a player in this room.";
+
+    rollBtn.disabled =
+      true;
+
+    return;
+  }
+
+
+  roomCodeDisplay.textContent =
+    roomCode;
+
+
+  /*
+    Build player map from Firebase battle.
+  */
+
+  const players =
+    battleData.players || {};
+
+
+  let redPlayer =
+    battleData.creatorUid ||
+    null;
+
+
+  let yellowPlayer =
+    null;
+
+
+  Object.keys(players)
+    .forEach(uid => {
+
+      if(
+        String(uid) !==
+        String(redPlayer)
+      ){
+
+        yellowPlayer =
+          uid;
+
+      }
+
+    });
+
+
+  /*
+    Check existing game.
+  */
+
+  const gameSnapshot =
+    await get(gameRef);
+
+
+  if(
+    !gameSnapshot.exists()
+  ){
+
+    /*
+      Only Player 1 creates the initial
+      shared game state.
+    */
+
+    if(role !== "red"){
+
+      setConnection(
+        "waiting",
+        "Waiting for Player 1"
+      );
+
+      status.textContent =
+        "⏳ Waiting for Player 1 to open the game.";
+
+    }else{
+
+      const initial =
+        createInitialGame();
+
+
+      initial.players.red =
+        redPlayer;
+
+      initial.players.yellow =
+        yellowPlayer;
+
+
+      await set(
+        gameRef,
+        initial
+      );
+
+    }
+
+  }
+
+
+  /*
+    Start listeners.
+  */
+
+  startListeners();
+
+}
+
+
+/* =========================================================
+   REAL-TIME LISTENERS
+   ========================================================= */
+
+function startListeners(){
+
+  if(
+    gameListener ||
+    battleListener
+  ){
+    return;
+  }
+
+
+  /*
+    Battle listener:
+    detects Player 2 joining.
+  */
+
+  battleListener =
+    onValue(
+      battleRef,
+      snapshot => {
+
+        if(!snapshot.exists()){
+          return;
+        }
+
+
+        battleData =
+          snapshot.val();
+
+
+        const players =
+          battleData.players || {};
+
+
+        const redPlayer =
+          battleData.creatorUid ||
+          null;
+
+
+        let yellowPlayer =
+          null;
+
+
+        Object.keys(players)
+          .forEach(uid => {
+
+            if(
+              String(uid) !==
+              String(redPlayer)
+            ){
+
+              yellowPlayer =
+                uid;
+
+            }
+
+          });
+
+
+        /*
+          Update player slots without
+          changing the game itself.
+        */
+
+        if(gameState){
+
+          if(
+            gameState.players.red !==
+            redPlayer ||
+            gameState.players.yellow !==
+            yellowPlayer
+          ){
+
+            gameState.players.red =
+              redPlayer;
+
+            gameState.players.yellow =
+              yellowPlayer;
+
+            gameState.updatedAt =
+              Date.now();
+
+            renderGame();
+
+            updatePlayerInformation();
+
+          }
+
+        }
+
+      }
+    );
+
+
+  /*
+    Main game listener.
+  */
+
+  gameListener =
+    onValue(
+      gameRef,
+      snapshot => {
+
+        if(
+          !snapshot.exists()
+        ){
+
+          return;
+        }
+
+
+        gameState =
+          normalizeGame(
+            snapshot.val()
+          );
+
+
+        /*
+          Keep players synchronized
+          with battle room.
+        */
+
+        if(battleData){
+
+          const players =
+            battleData.players || {};
+
+
+          const redPlayer =
+            battleData.creatorUid ||
+            null;
+
+
+          let yellowPlayer =
+            null;
+
+
+          Object.keys(players)
+            .forEach(uid => {
+
+              if(
+                String(uid) !==
+                String(redPlayer)
+              ){
+
+                yellowPlayer =
+                  uid;
+
+              }
+
+            });
+
+
+          gameState.players.red =
+            redPlayer;
+
+          gameState.players.yellow =
+            yellowPlayer;
+
+        }
+
+
+        renderGame();
+
+        updatePlayerInformation();
+
+
+        /*
+          Winner handling.
+        */
+
+        if(gameState.winner){
+
+          showWinner(
+            gameState.winner
+          );
+
+        }
+
+      }
+    );
+
+
+  setConnection(
+    "online",
+    "Connected to Firebase"
+  );
+
+}
+
+
+/* =========================================================
+   RESTART GAME
+   ========================================================= */
+
+async function restartGame(){
+
+  if(!currentUser){
+    return;
+  }
+
+  if(!gameRef){
+    return;
+  }
+
+
+  /*
+    Only Player 1 can reset
+    the shared match.
+  */
+
+  if(role !== "red"){
+
+    status.textContent =
+      "🔒 Only Player 1 can restart the game.";
+
+    return;
+  }
+
+
+  const players =
+    gameState?.players || {
+
+      red:
+        battleData?.creatorUid ||
+        currentUser.uid,
+
+      yellow:null
+
+    };
+
+
+  const fresh =
+    createInitialGame();
+
+
+  fresh.players =
+    players;
+
+
+  fresh.updatedAt =
+    Date.now();
+
+
+  await set(
+    gameRef,
+    fresh
+  );
+
+
+  hideCelebration();
+
+
+  status.textContent =
+    "🎲 New game started.";
+
+}
+
+
+/* =========================================================
+   BUTTONS
+   ========================================================= */
+
+rollBtn.addEventListener(
+  "click",
+  rollDice
+);
+
+
+restartBtn.addEventListener(
+  "click",
+  restartGame
+);
+
+
+playAgainBtn.addEventListener(
+  "click",
+  async () => {
+
+    hideCelebration();
+
+    if(role === "red"){
+
+      await restartGame();
+
+    }else{
+
+      status.textContent =
+        "⏳ Waiting for Player 1 to restart the game.";
+
+    }
+
+  }
+);
+
+
+soundBtn.addEventListener(
+  "click",
+  () => {
+
+    soundOn =
+      !soundOn;
+
+    soundBtn.textContent =
+      soundOn
+        ? "🔊 Sound: ON"
+        : "🔇 Sound: OFF";
+
+    if(soundOn){
+      sound("move");
+    }
+
+  }
+);
+
+
+homeBtn.addEventListener(
+  "click",
+  () => {
+
+    window.location.href =
+      "index.html";
+
+  }
+);
+
+
+/* =========================================================
+   AUTH
+   ========================================================= */
+
+onAuthStateChanged(
+  auth,
+  async user => {
+
+    if(!user){
+
+      setConnection(
+        "error",
+        "Login required"
+      );
+
+      status.textContent =
+        "🔐 Please login first.";
+
+      rollBtn.disabled =
+        true;
+
+      return;
+    }
+
+
+    currentUser =
+      user;
+
+
+    roomCode =
+      getRoomCode();
+
+
+    if(!roomCode){
+
+      setConnection(
+        "error",
+        "No room selected"
+      );
+
+      status.textContent =
+        "❌ No room code found.";
+
+      rollBtn.disabled =
+        true;
+
+      return;
+    }
+
+
+    roomCodeDisplay.textContent =
+      roomCode;
+
+
+    try{
+
+      await loadGame();
+
+    }catch(error){
+
+      console.error(
+        "LUDOVERSE multiplayer error:",
+        error
+      );
+
+
+      setConnection(
+        "error",
+        "Connection failed"
+      );
+
+      status.textContent =
+        "❌ Could not load multiplayer game.";
+
+      rollBtn.disabled =
+        true;
+
+    }
+
+  }
+);
+
 </script>
+
 </body>
 </html>
