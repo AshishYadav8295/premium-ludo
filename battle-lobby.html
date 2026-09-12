@@ -2,317 +2,304 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
-  >
+  <meta name="theme-color" content="#070b18">
+  <meta name="description" content="LUDOVERSE Multiplayer Lobby — Find players, create private rooms and play Ludo online.">
 
   <title>Battle Lobby | LUDOVERSE</title>
 
-  <link
-    rel="stylesheet"
-    href="battle-lobby.css"
-  >
+  <link rel="stylesheet" href="battle-lobby.css">
 </head>
 
 <body>
 
-  <div class="background-glow glow-one"></div>
-  <div class="background-glow glow-two"></div>
-
+  <!-- BACKGROUND -->
+  <div class="ambient ambient-one"></div>
+  <div class="ambient ambient-two"></div>
+  <div class="ambient ambient-three"></div>
 
   <!-- HEADER -->
-
   <header class="topbar">
+    <div class="topbar-inner">
 
-    <div class="topbar-container">
-
-      <a
-        href="index.html"
-        class="brand"
-      >
-
-        <span class="brand-icon">🎲</span>
-
-        <span class="brand-text">
+      <a href="index.html" class="brand" aria-label="LUDOVERSE Home">
+        <span class="brand-mark">🎲</span>
+        <span class="brand-name">
           LUDO<span>VERSE</span>
         </span>
-
       </a>
 
-
-      <nav class="top-navigation">
-
-        <a href="index.html">
-          Home
-        </a>
-
-        <a
-          href="battle-lobby.html"
-          class="active"
-        >
-          Battle Lobby
-        </a>
-
+      <nav class="main-nav">
+        <a href="index.html">Home</a>
+        <a href="battle-lobby.html" class="active">Lobby</a>
       </nav>
 
+      <div class="header-right">
 
-      <div class="header-actions">
-
-        <div class="wallet-box">
-
-          <span class="wallet-icon">🪙</span>
-
-          <div class="wallet-info">
-
-            <span class="wallet-label">
-              Demo Coins
-            </span>
-
-            <strong id="walletBalance">
-              2,510
-            </strong>
-
+        <div class="coin-display">
+          <span class="coin-icon">🪙</span>
+          <div>
+            <small>LudoCoins</small>
+            <strong id="walletBalance">0</strong>
           </div>
-
         </div>
 
+        <div class="profile-wrap">
+          <button
+            type="button"
+            class="profile-button"
+            id="profileBtn"
+            aria-expanded="false"
+          >
+            <span class="profile-avatar" id="profileAvatar">P</span>
+            <span class="profile-label">Profile</span>
+            <span class="profile-chevron">⌄</span>
+          </button>
 
-        <button
-          class="profile-button"
-          id="profileBtn"
-        >
-          👤
-          <span>Profile</span>
-        </button>
+          <div class="profile-menu" id="profileMenu">
+
+            <div class="profile-menu-head">
+              <span class="profile-avatar large" id="menuAvatar">P</span>
+
+              <div>
+                <strong id="headerName">LUDOVERSE Player</strong>
+                <span id="headerEmail">Loading...</span>
+              </div>
+            </div>
+
+            <div class="profile-menu-divider"></div>
+
+            <a href="wallet.html" class="profile-menu-item">
+              <span>🪙</span>
+              <span>My LudoCoins</span>
+            </a>
+
+            <a href="index.html#games" class="profile-menu-item">
+              <span>🎮</span>
+              <span>Game Modes</span>
+            </a>
+
+            <button
+              type="button"
+              class="profile-menu-item logout-item"
+              id="logoutBtn"
+            >
+              <span>↪</span>
+              <span>Logout</span>
+            </button>
+
+          </div>
+        </div>
 
       </div>
-
     </div>
-
   </header>
 
 
-
   <!-- MAIN -->
+  <main class="page">
 
-  <main class="main-content">
+    <!-- PREMIUM HERO -->
+    <section class="hero">
 
+      <div class="hero-content">
 
-    <!-- HERO -->
-
-    <section class="lobby-hero">
-
-      <div class="hero-badge">
-
-        <span class="live-dot"></span>
-
-        LIVE BATTLE LOBBY
-
-      </div>
-
-
-      <h1>
-
-        Find Your
-
-        <span>
-          Next Battle
-        </span>
-
-      </h1>
-
-
-      <p>
-
-        Join an available Ludo battle or create your own
-        match and challenge another player.
-
-      </p>
-
-
-      <!-- STATS -->
-
-      <div class="lobby-stats">
-
-
-        <div class="stat-card">
-
-          <span class="stat-icon">
-            🎮
-          </span>
-
-          <div>
-
-            <strong id="availableBattleCount">
-              0
-            </strong>
-
-            <span>
-              Available Battles
-            </span>
-
-          </div>
-
+        <div class="eyebrow">
+          <span class="live-dot"></span>
+          LUDOVERSE MATCHMAKING
         </div>
 
-
-
-        <div class="stat-card">
-
-          <span class="stat-icon">
-            👥
-          </span>
-
-          <div>
-
-            <strong>
-              2
-            </strong>
-
-            <span>
-              Players Per Battle
-            </span>
-
-          </div>
-
-        </div>
-
-
-
-        <div class="stat-card">
-
-          <span class="stat-icon">
-            🏆
-          </span>
-
-          <div>
-
-            <strong>
-              10%
-            </strong>
-
-            <span>
-              Platform Fee
-            </span>
-
-          </div>
-
-        </div>
-
-
-      </div>
-
-
-
-      <!-- HERO BUTTONS -->
-
-      <div class="hero-actions">
-
-
-        <button
-          class="primary-button"
-          id="refreshBattlesBtn"
-        >
-
-          <span>↻</span>
-
-          Refresh Battles
-
-        </button>
-
-
-
-        <button
-          class="secondary-button"
-          id="createBattleBtn"
-        >
-
-          <span>＋</span>
-
-          Create Battle
-
-        </button>
-
-
-      </div>
-
-    </section>
-
-
-
-    <!-- AVAILABLE BATTLES -->
-
-    <section class="battle-section">
-
-
-      <div class="section-header">
-
-        <div>
-
-          <span class="section-tag">
-            🎮 LIVE MATCHES
-          </span>
-
-          <h2>
-            Available Battles
-          </h2>
-
-          <p>
-            Join a battle that is waiting for an opponent.
-          </p>
-
-        </div>
-
-
-        <div class="live-indicator">
-
-          <span></span>
-
-          LIVE
-
-        </div>
-
-      </div>
-
-
-
-      <div
-        class="battle-list"
-        id="battleList"
-      >
-
-      </div>
-
-
-
-      <div
-        class="empty-state hidden"
-        id="emptyState"
-      >
-
-        <div class="empty-icon">
-          🎮
-        </div>
-
-        <h3>
-          No Battles Available
-        </h3>
-
-        <p>
-          There are currently no battles waiting for an opponent.
-          Create a new battle to get started.
+        <h1>
+          Find your next
+          <span>perfect match.</span>
+        </h1>
+
+        <p class="hero-description">
+          Jump into a live Ludo room, create a private room for a friend,
+          or let Quick Match find an available opponent for you.
         </p>
 
+        <div class="hero-actions">
+
+          <button
+            type="button"
+            class="btn btn-primary"
+            id="quickMatchBtn"
+          >
+            <span class="btn-icon">⚡</span>
+            <span>
+              <strong>Quick Match</strong>
+              <small>Find an opponent instantly</small>
+            </span>
+          </button>
+
+          <button
+            type="button"
+            class="btn btn-secondary"
+            id="createBattleBtn"
+          >
+            <span class="btn-icon">＋</span>
+            <span>
+              <strong>Create Private Room</strong>
+              <small>Invite a friend with a code</small>
+            </span>
+          </button>
+
+        </div>
+
+        <div class="hero-note">
+          <span>✓</span>
+          Free-to-play multiplayer · No entry required
+        </div>
+
+      </div>
+
+
+      <!-- HERO VISUAL -->
+      <div class="hero-visual">
+
+        <div class="visual-glow"></div>
+
+        <div class="match-card">
+
+          <div class="match-card-top">
+            <span class="match-live">
+              <i></i>
+              LIVE
+            </span>
+
+            <span class="match-label">
+              LUDO MATCH
+            </span>
+          </div>
+
+          <div class="match-players">
+
+            <div class="match-player">
+              <div class="player-orb red-orb">YOU</div>
+              <span>Player</span>
+            </div>
+
+            <div class="versus">
+              <span>VS</span>
+              <i></i>
+            </div>
+
+            <div class="match-player">
+              <div class="player-orb blue-orb">?</div>
+              <span>Opponent</span>
+            </div>
+
+          </div>
+
+          <div class="match-status">
+            <span class="status-spinner"></span>
+            Waiting for match...
+          </div>
+
+        </div>
+
+        <div class="floating-token token-one">●</div>
+        <div class="floating-token token-two">●</div>
+        <div class="floating-token token-three">●</div>
+
+      </div>
+
+    </section>
+
+
+    <!-- QUICK STATS -->
+    <section class="stats-grid">
+
+      <div class="stat-card">
+        <div class="stat-icon purple">⌁</div>
+        <div>
+          <strong id="availableBattleCount">0</strong>
+          <span>Open Rooms</span>
+        </div>
+        <div class="stat-live">LIVE</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon blue">♟</div>
+        <div>
+          <strong id="onlinePlayerCount">0</strong>
+          <span>Players Waiting</span>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon green">✓</div>
+        <div>
+          <strong>FREE</strong>
+          <span>Play System</span>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon gold">⚡</div>
+        <div>
+          <strong>2</strong>
+          <span>Players / Room</span>
+        </div>
+      </div>
+
+    </section>
+
+
+    <!-- AVAILABLE ROOMS -->
+    <section class="section">
+
+      <div class="section-heading">
+
+        <div>
+          <div class="section-eyebrow">
+            <span></span>
+            LIVE ROOMS
+          </div>
+
+          <h2>Available Rooms</h2>
+
+          <p>
+            Choose an open room and join the match.
+          </p>
+        </div>
 
         <button
-          class="primary-button"
-          id="emptyCreateBattleBtn"
+          type="button"
+          class="refresh-button"
+          id="refreshBtn"
         >
+          <span>↻</span>
+          Refresh
+        </button>
 
-          ＋ Create Battle
+      </div>
 
+
+      <div class="room-list" id="roomsList"></div>
+
+
+      <div class="empty-room" id="emptyState">
+
+        <div class="empty-illustration">
+          <span>🎲</span>
+        </div>
+
+        <h3>No open rooms right now</h3>
+
+        <p>
+          Be the first player to create a room and wait for an opponent.
+        </p>
+
+        <button
+          type="button"
+          class="btn btn-primary small-btn"
+          id="emptyCreateBtn"
+        >
+          <span>＋</span>
+          Create Private Room
         </button>
 
       </div>
@@ -320,584 +307,342 @@
     </section>
 
 
+    <!-- ACTIVE ROOM -->
+    <section class="section active-section" id="activeRoomSection">
 
-    <!-- ACTIVE BATTLE -->
-
-    <section class="active-battle-section">
-
-
-      <div class="section-header">
+      <div class="section-heading">
 
         <div>
+          <div class="section-eyebrow purple-text">
+            <span></span>
+            YOUR ROOM
+          </div>
 
-          <span class="section-tag purple">
-            🎯 YOUR GAME
-          </span>
-
-          <h2>
-            My Active Battle
-          </h2>
+          <h2>Active Room</h2>
 
           <p>
-            Track your currently active battle here.
+            Your current multiplayer room is ready here.
           </p>
-
         </div>
 
       </div>
 
 
+      <div class="active-room-card">
 
-      <div
-        class="active-battle-container"
-        id="activeBattleContainer"
-      >
+        <div class="active-room-main">
 
+          <div class="room-code-icon">#</div>
 
-        <div
-          class="no-active-battle"
-          id="noActiveBattle"
-        >
-
-          <div class="empty-icon">
-            🎯
+          <div>
+            <span>ROOM CODE</span>
+            <strong id="activeRoomCode">------</strong>
           </div>
-
-          <h3>
-            No Active Battle
-          </h3>
-
-          <p>
-            Create or join a battle to start playing.
-          </p>
 
         </div>
 
+        <div class="active-room-status">
+          <i></i>
+          <span id="activeRoomStatus">
+            Waiting for another player...
+          </span>
+        </div>
+
+        <div class="active-room-actions">
+
+          <button
+            type="button"
+            class="outline-button"
+            id="copyRoomBtn"
+          >
+            Copy Code
+          </button>
+
+          <button
+            type="button"
+            class="primary-mini-button"
+            id="openRoomBtn"
+          >
+            Open Room →
+          </button>
+
+        </div>
 
       </div>
 
     </section>
-
 
 
     <!-- HOW IT WORKS -->
+    <section class="section how-section">
 
-    <section class="how-it-works">
+      <div class="center-heading">
 
+        <div class="section-eyebrow">
+          <span></span>
+          SIMPLE & FAST
+          <span></span>
+        </div>
 
-      <div class="how-header">
-
-        <span class="section-tag">
-          SIMPLE PROCESS
-        </span>
-
-        <h2>
-          How Battle Lobby Works
-        </h2>
+        <h2>How multiplayer works</h2>
 
         <p>
-          Create, join and play in three simple steps.
+          Everything you need to start a Ludo match in a few simple steps.
         </p>
 
       </div>
 
 
-
-      <div class="steps-container">
-
+      <div class="steps">
 
         <div class="step-card">
 
-          <div class="step-number">
-            01
+          <div class="step-top">
+            <span>01</span>
+            <div>⚡</div>
           </div>
 
-          <div class="step-icon">
-            ＋
-          </div>
-
-          <h3>
-            Create
-          </h3>
+          <h3>Find or Create</h3>
 
           <p>
-            Create a Ludo battle using your demo coins.
+            Use Quick Match to find an open room or create your own private room.
           </p>
 
         </div>
 
 
-
-        <div class="step-line"></div>
-
+        <div class="step-connector"></div>
 
 
         <div class="step-card">
 
-          <div class="step-number">
-            02
+          <div class="step-top">
+            <span>02</span>
+            <div>🤝</div>
           </div>
 
-          <div class="step-icon">
-            🤝
-          </div>
-
-          <h3>
-            Join
-          </h3>
+          <h3>Connect</h3>
 
           <p>
-            Another player joins your available battle.
+            Share the six-digit room code with your friend or join an open room.
           </p>
 
         </div>
 
 
-
-        <div class="step-line"></div>
-
+        <div class="step-connector"></div>
 
 
         <div class="step-card">
 
-          <div class="step-number">
-            03
+          <div class="step-top">
+            <span>03</span>
+            <div>🎲</div>
           </div>
 
-          <div class="step-icon">
-            🎲
-          </div>
-
-          <h3>
-            Play
-          </h3>
+          <h3>Play</h3>
 
           <p>
-            Play the match and compete for the demo prize.
+            Both players get ready, the room starts, and the Ludo match begins.
           </p>
 
         </div>
-
 
       </div>
 
     </section>
 
+
+    <!-- FREE PLAY SYSTEM -->
+    <section class="free-play-card">
+
+      <div class="free-play-icon">🎮</div>
+
+      <div class="free-play-content">
+
+        <span>FREE PLAY SYSTEM</span>
+
+        <h2>Play. Improve. Climb.</h2>
+
+        <p>
+          LudoCoins and XP are progression points used for your profile,
+          activity and game achievements.
+        </p>
+
+      </div>
+
+      <div class="free-play-points">
+        <div>
+          <strong>🪙</strong>
+          <span>LudoCoins</span>
+        </div>
+
+        <div>
+          <strong>⭐</strong>
+          <span>XP Progress</span>
+        </div>
+
+        <div>
+          <strong>🏆</strong>
+          <span>Achievements</span>
+        </div>
+      </div>
+
+    </section>
 
   </main>
 
 
+  <!-- CREATE ROOM MODAL -->
+  <div class="modal" id="createModal">
 
-  <!-- CREATE BATTLE MODAL -->
-
-  <div
-    class="modal-overlay"
-    id="createBattleModal"
-  >
-
-    <div class="battle-modal">
-
-
-      <div class="modal-header">
-
-        <div>
-
-          <span class="section-tag purple">
-            NEW BATTLE
-          </span>
-
-          <h2>
-            Create Battle
-          </h2>
-
-        </div>
-
-
-        <button
-          class="close-modal"
-          id="closeCreateModal"
-        >
-          ×
-        </button>
-
-      </div>
-
-
-
-      <div class="battle-form">
-
-
-        <div class="form-group">
-
-          <label>
-            Entry Amount
-          </label>
-
-
-          <div class="amount-input">
-
-            <span>🪙</span>
-
-            <input
-              type="number"
-              id="entryAmountInput"
-              placeholder="Enter demo coins"
-              min="1"
-              value="50"
-            >
-
-          </div>
-
-
-          <small>
-
-            Your demo balance:
-
-            <strong id="modalWalletBalance">
-              0
-            </strong>
-
-          </small>
-
-        </div>
-
-
-
-        <!-- QUICK AMOUNTS -->
-
-        <div class="quick-amounts">
-
-          <button
-            type="button"
-            class="amount-option"
-            data-amount="10"
-          >
-            10
-          </button>
-
-
-          <button
-            type="button"
-            class="amount-option"
-            data-amount="20"
-          >
-            20
-          </button>
-
-
-          <button
-            type="button"
-            class="amount-option active-amount"
-            data-amount="50"
-          >
-            50
-          </button>
-
-
-          <button
-            type="button"
-            class="amount-option"
-            data-amount="100"
-          >
-            100
-          </button>
-
-        </div>
-
-
-
-        <!-- BATTLE SUMMARY -->
-
-        <div class="battle-summary">
-
-
-          <div class="summary-row">
-
-            <span>
-              Entry Per Player
-            </span>
-
-            <strong>
-              🪙
-              <span id="summaryEntry">
-                50
-              </span>
-            </strong>
-
-          </div>
-
-
-
-          <div class="summary-row">
-
-            <span>
-              Total Players
-            </span>
-
-            <strong>
-              2
-            </strong>
-
-          </div>
-
-
-
-          <div class="summary-row">
-
-            <span>
-              Total Battle Pool
-            </span>
-
-            <strong>
-              🪙
-              <span id="summaryTotalPool">
-                100
-              </span>
-            </strong>
-
-          </div>
-
-
-
-          <div class="summary-row commission-row">
-
-            <span>
-              Platform Commission (10%)
-            </span>
-
-            <strong>
-              🛡️
-              <span id="summaryCommission">
-                10
-              </span>
-            </strong>
-
-          </div>
-
-
-
-          <div class="summary-row total">
-
-            <span>
-              🏆 Winner Prize
-            </span>
-
-            <strong>
-              🪙
-              <span id="summaryPrize">
-                90
-              </span>
-            </strong>
-
-          </div>
-
-
-        </div>
-
-
-
-        <button
-          class="primary-button full-button"
-          id="confirmCreateBattleBtn"
-        >
-
-          🎮 Create Battle
-
-        </button>
-
-
-      </div>
-
-    </div>
-
-  </div>
-
-
-
-  <!-- JOIN MODAL -->
-
-  <div
-    class="modal-overlay"
-    id="joinBattleModal"
-  >
-
-    <div class="battle-modal small-modal">
-
-
-      <div class="modal-header">
-
-        <div>
-
-          <span class="section-tag">
-            JOIN BATTLE
-          </span>
-
-          <h2>
-            Ready to Join?
-          </h2>
-
-        </div>
-
-
-        <button
-          class="close-modal"
-          id="closeJoinModal"
-        >
-          ×
-        </button>
-
-      </div>
-
-
-
-      <div class="join-summary">
-
-
-        <div class="join-info-row">
-
-          <span>
-            Room Code
-          </span>
-
-          <strong id="joinRoomCode">
-            ------
-          </strong>
-
-        </div>
-
-
-
-        <div class="join-info-row">
-
-          <span>
-            Entry Per Player
-          </span>
-
-          <strong>
-            🪙
-            <span id="joinEntryAmount">
-              0
-            </span>
-          </strong>
-
-        </div>
-
-
-
-        <div class="join-info-row">
-
-          <span>
-            Total Battle Pool
-          </span>
-
-          <strong>
-            🪙
-            <span id="joinTotalPool">
-              0
-            </span>
-          </strong>
-
-        </div>
-
-
-
-        <div class="join-info-row commission-row">
-
-          <span>
-            Platform Fee (10%)
-          </span>
-
-          <strong>
-            🛡️
-            <span id="joinCommission">
-              0
-            </span>
-          </strong>
-
-        </div>
-
-
-
-        <div class="join-info-row prize-row">
-
-          <span>
-            🏆 Winner Prize
-          </span>
-
-          <strong>
-            🪙
-            <span id="joinPrizeAmount">
-              0
-            </span>
-          </strong>
-
-        </div>
-
-
-      </div>
-
-
+    <div class="modal-card">
 
       <button
-        class="primary-button full-button"
-        id="confirmJoinBattleBtn"
+        type="button"
+        class="modal-close"
+        id="closeCreateModal"
+        aria-label="Close"
       >
-
-        🎮 Join Battle
-
+        ×
       </button>
 
+      <div class="modal-icon purple-modal">＋</div>
+
+      <div class="modal-eyebrow">PRIVATE MULTIPLAYER</div>
+
+      <h2>Create a room</h2>
+
+      <p>
+        Create a free two-player Ludo room and share the six-digit code
+        with your friend.
+      </p>
+
+      <div class="modal-info-grid">
+
+        <div>
+          <span>PLAYERS</span>
+          <strong>2</strong>
+        </div>
+
+        <div>
+          <span>ENTRY</span>
+          <strong>FREE</strong>
+        </div>
+
+        <div>
+          <span>ROOM</span>
+          <strong>PRIVATE</strong>
+        </div>
+
+      </div>
+
+      <button
+        type="button"
+        class="modal-primary"
+        id="confirmCreateBtn"
+      >
+        Create Room →
+      </button>
+
+      <button
+        type="button"
+        class="modal-cancel"
+        id="cancelCreateBtn"
+      >
+        Cancel
+      </button>
 
     </div>
 
   </div>
 
+
+  <!-- JOIN ROOM MODAL -->
+  <div class="modal" id="joinModal">
+
+    <div class="modal-card">
+
+      <button
+        type="button"
+        class="modal-close"
+        id="closeJoinModal"
+        aria-label="Close"
+      >
+        ×
+      </button>
+
+      <div class="modal-icon blue-modal">#</div>
+
+      <div class="modal-eyebrow">JOIN MULTIPLAYER</div>
+
+      <h2>Enter room code</h2>
+
+      <p>
+        Enter the six-digit code shared by the room creator.
+      </p>
+
+      <label class="code-label" for="roomCodeInput">
+        ROOM CODE
+      </label>
+
+      <input
+        id="roomCodeInput"
+        class="room-code-input"
+        type="text"
+        inputmode="numeric"
+        autocomplete="off"
+        maxlength="6"
+        placeholder="000000"
+      >
+
+      <button
+        type="button"
+        class="modal-primary"
+        id="confirmJoinBtn"
+      >
+        Join Room →
+      </button>
+
+      <button
+        type="button"
+        class="modal-cancel"
+        id="cancelJoinBtn"
+      >
+        Cancel
+      </button>
+
+    </div>
+
+  </div>
 
 
   <!-- TOAST -->
+  <div class="toast" id="toast">
 
-  <div
-    class="toast"
-    id="toast"
-  >
+    <div class="toast-icon" id="toastIcon">✓</div>
 
-    <div
-      class="toast-icon"
-      id="toastIcon"
-    >
-      ✓
+    <div>
+      <strong id="toastTitle">LUDOVERSE</strong>
+      <span id="toastMessage">Message</span>
     </div>
-
-
-    <span id="toastMessage">
-      Message
-    </span>
 
   </div>
 
 
-
   <!-- FOOTER -->
-
   <footer class="footer">
 
-    <div class="footer-logo">
-
+    <div class="footer-brand">
       🎲
-
-      <strong>
-        LUDO<span>VERSE</span>
-      </strong>
-
+      <strong>LUDO<span>VERSE</span></strong>
     </div>
 
-
     <p>
-      © 2026 LUDOVERSE. Play for fun.
+      © 2026 LUDOVERSE · Play for fun
     </p>
 
   </footer>
-
 
 
   <script type="module" src="battle-lobby.js"></script>

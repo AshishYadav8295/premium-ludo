@@ -1,1732 +1,1546 @@
 "use strict";
 
 import {
+  auth,
   database,
   ref,
-  set,
   get,
+  set,
   update,
-  onValue
+  onValue,
+  runTransaction,
+  onAuthStateChanged,
+  signOut
 } from "./firebase.js";
 
-/* =========================================================
-   LUDOVERSE BATTLE LOBBY
-   PROFESSIONAL DEMO SYSTEM
-========================================================= */
+
+/*
+=========================================================
+ LUDOVERSE — PROFESSIONAL MULTIPLAYER LOBBY
+=========================================================
+
+ FEATURES
+ - Firebase Realtime Database
+ - Authentication protected
+ - Live room list
+ - Quick Match
+ - Private 6-digit rooms
+ - Atomic room creation
+ - Atomic player joining
+ - Realtime LudoCoin display
+ - Active room persistence
+ - Profile menu
+ - Logout
+ - Mobile responsive UI
+
+ FREE PLAY
+ - No entry amount
+ - No prize pool
+ - No withdrawals
+ - No cash rewards
+ - LudoCoins are progression points only
+=========================================================
+*/
+
 
 document.addEventListener("DOMContentLoaded", () => {
 
-  /* =======================================================
-     CONFIG
-  ======================================================= */
+  /* =========================
+     DOM
+  ========================= */
 
-  const COMMISSION_PERCENT = 10;
-  const TOTAL_PLAYERS = 2;
+  const walletBalance =
+    document.getElementById("walletBalance");
 
-  const STORAGE = {
-  balance: "ludoverseBalance",
-  battles: "ludoverseBattles",
-  currentBattle: "ludoverseCurrentBattle",
-  transactions: "ludoverseTransactions"
-};
+  const headerName =
+    document.getElementById("headerName");
 
-const firebaseTestRef = ref(
-  database,
-  "connectionTest"
-);
+  const headerEmail =
+    document.getElementById("headerEmail");
 
-set(firebaseTestRef, {
-  status: "connected",
-  message: "LUDOVERSE Firebase is working",
-  timestamp: Date.now()
-})
-.then(() => {
-  console.log("Firebase connected successfully!");
-})
-.catch((error) => {
-  console.error("Firebase connection error:", error);
-});
+  const profileBtn =
+    document.getElementById("profileBtn");
 
-/* =========================================================
-   FIREBASE REALTIME BATTLE SYSTEM
-========================================================= */
+  const profileMenu =
+    document.getElementById("profileMenu");
 
-const FIREBASE_BATTLES_PATH = "battles";
+  const profileAvatar =
+    document.getElementById("profileAvatar");
 
-/* ---------------------------------------------------------
-   SAVE A BATTLE TO FIREBASE
---------------------------------------------------------- */
+  const menuAvatar =
+    document.getElementById("menuAvatar");
 
-async function saveBattleToFirebase(battle) {
-  if (!battle || !battle.roomCode) {
-    throw new Error("Invalid battle data.");
+  const logoutBtn =
+    document.getElementById("logoutBtn");
+
+  const availableBattleCount =
+    document.getElementById("availableBattleCount");
+
+  const onlinePlayerCount =
+    document.getElementById("onlinePlayerCount");
+
+  const roomsList =
+    document.getElementById("roomsList");
+
+  const emptyState =
+    document.getElementById("emptyState");
+
+  const quickMatchBtn =
+    document.getElementById("quickMatchBtn");
+
+  const createBattleBtn =
+    document.getElementById("createBattleBtn");
+
+  const emptyCreateBtn =
+    document.getElementById("emptyCreateBtn");
+
+  const refreshBtn =
+    document.getElementById("refreshBtn");
+
+  const activeRoomSection =
+    document.getElementById("activeRoomSection");
+
+  const activeRoomCode =
+    document.getElementById("activeRoomCode");
+
+  const activeRoomStatus =
+    document.getElementById("activeRoomStatus");
+
+  const copyRoomBtn =
+    document.getElementById("copyRoomBtn");
+
+  const openRoomBtn =
+    document.getElementById("openRoomBtn");
+
+  const createModal =
+    document.getElementById("createModal");
+
+  const closeCreateModal =
+    document.getElementById("closeCreateModal");
+
+  const cancelCreateBtn =
+    document.getElementById("cancelCreateBtn");
+
+  const confirmCreateBtn =
+    document.getElementById("confirmCreateBtn");
+
+  const joinModal =
+    document.getElementById("joinModal");
+
+  const closeJoinModal =
+    document.getElementById("closeJoinModal");
+
+  const cancelJoinBtn =
+    document.getElementById("cancelJoinBtn");
+
+  const confirmJoinBtn =
+    document.getElementById("confirmJoinBtn");
+
+  const roomCodeInput =
+    document.getElementById("roomCodeInput");
+
+  const toast =
+    document.getElementById("toast");
+
+  const toastIcon =
+    document.getElementById("toastIcon");
+
+  const toastTitle =
+    document.getElementById("toastTitle");
+
+  const toastMessage =
+    document.getElementById("toastMessage");
+
+
+  /* =========================
+     STATE
+  ========================= */
+
+  let currentUser = null;
+
+  let rooms = {};
+
+  let currentRoomCode =
+    localStorage.getItem("ludoverseCurrentRoom") || "";
+
+  let roomsUnsubscribe = null;
+
+  let economyUnsubscribe = null;
+
+  let busy = false;
+
+
+  /* =========================
+     CONSTANTS
+  ========================= */
+
+  const ROOMS_PATH = "battles";
+
+  const MAX_PLAYERS = 2;
+
+  const ROOM_CODE_LENGTH = 6;
+
+  const STARTER_COINS = 1000;
+
+
+  /* =========================
+     HELPERS
+  ========================= */
+
+  function getRoomsRef() {
+    return ref(database, ROOMS_PATH);
   }
 
-  const battleReference = ref(
-    database,
-    `${FIREBASE_BATTLES_PATH}/${battle.roomCode}`
-  );
 
-  await set(
-    battleReference,
-    battle
-  );
-
-  console.log(
-    "Firebase battle saved:",
-    battle.roomCode
-  );
-}
-
-/* ---------------------------------------------------------
-   GET ONE BATTLE FROM FIREBASE
---------------------------------------------------------- */
-
-async function getBattleFromFirebase(roomCode) {
-  if (!roomCode) {
-    return null;
+  function getRoomRef(roomCode) {
+    return ref(
+      database,
+      `${ROOMS_PATH}/${roomCode}`
+    );
   }
 
-  const battleReference = ref(
-    database,
-    `${FIREBASE_BATTLES_PATH}/${roomCode}`
-  );
 
-  const snapshot = await get(
-    battleReference
-  );
-
-  if (!snapshot.exists()) {
-    return null;
+  function getEconomyRef(uid) {
+    return ref(
+      database,
+      `users/${uid}/economy`
+    );
   }
 
-  return snapshot.val();
-}
 
-/* ---------------------------------------------------------
-   UPDATE BATTLE IN FIREBASE
---------------------------------------------------------- */
+  function playerName(user) {
 
-async function updateBattleInFirebase(
-  roomCode,
-  updates
-) {
-  if (!roomCode) {
-    throw new Error("Room code is missing.");
-  }
-
-  const battleReference = ref(
-    database,
-    `${FIREBASE_BATTLES_PATH}/${roomCode}`
-  );
-
-  await update(
-    battleReference,
-    updates
-  );
-
-  console.log(
-    "Firebase battle updated:",
-    roomCode
-  );
-}
-
-/* ---------------------------------------------------------
-   LISTEN FOR ALL BATTLES LIVE
---------------------------------------------------------- */
-
-function listenToFirebaseBattles(callback) {
-  const battlesReference = ref(
-    database,
-    FIREBASE_BATTLES_PATH
-  );
-
-  return onValue(
-    battlesReference,
-    snapshot => {
-      const data = snapshot.val();
-
-      if (!data) {
-        callback([]);
-        return;
-      }
-
-      const battles = Object.values(data);
-
-      callback(battles);
-    },
-    error => {
-      console.error(
-        "Firebase battle listener error:",
-        error
-      );
+    if (!user) {
+      return "LUDOVERSE Player";
     }
-  );
-}
 
-/* =======================================================
-   HELPERS
-======================================================= */
+    return (
+      user.displayName ||
+      user.email?.split("@")[0] ||
+      user.phoneNumber ||
+      "LUDOVERSE Player"
+    );
+  }
 
-  const $ = (id) => document.getElementById(id);
+
+  function initials(name) {
+
+    const value =
+      String(name || "Player")
+        .trim()
+        .split(/\s+/)
+        .slice(0, 2)
+        .map(part => part.charAt(0))
+        .join("")
+        .toUpperCase();
+
+    return value || "P";
+  }
 
 
-  function formatAmount(value) {
+  function normalizeNumber(value, fallback = 0) {
 
     const number = Number(value);
 
-    if (!Number.isFinite(number)) {
-      return "0";
-    }
+    return Number.isFinite(number)
+      ? number
+      : fallback;
+  }
 
-    return number.toLocaleString("en-IN");
 
+  function normalizeEconomy(data) {
+
+    return {
+      ludoCoins: Math.max(
+        0,
+        normalizeNumber(data?.ludoCoins)
+      ),
+
+      xp: Math.max(
+        0,
+        normalizeNumber(data?.xp)
+      ),
+
+      gamesPlayed: Math.max(
+        0,
+        normalizeNumber(data?.gamesPlayed)
+      ),
+
+      gamesWon: Math.max(
+        0,
+        normalizeNumber(data?.gamesWon)
+      ),
+
+      activityPoints: Math.max(
+        0,
+        normalizeNumber(data?.activityPoints)
+      ),
+
+      platformPoints: Math.max(
+        0,
+        normalizeNumber(data?.platformPoints)
+      )
+    };
   }
 
 
   function escapeHTML(value) {
 
     return String(value ?? "")
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#039;");
-
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
   }
 
+
+  function showToast(
+    message,
+    title = "LUDOVERSE",
+    type = "success"
+  ) {
+
+    if (!toast || !toastMessage) {
+      alert(message);
+      return;
+    }
+
+    if (toastTitle) {
+      toastTitle.textContent = title;
+    }
+
+    toastMessage.textContent = message;
+
+    if (toastIcon) {
+
+      if (type === "error") {
+        toastIcon.textContent = "!";
+        toastIcon.style.color = "#fca5a5";
+        toastIcon.style.background =
+          "rgba(239,68,68,.11)";
+      }
+
+      else if (type === "info") {
+        toastIcon.textContent = "i";
+        toastIcon.style.color = "#93c5fd";
+        toastIcon.style.background =
+          "rgba(59,130,246,.11)";
+      }
+
+      else {
+        toastIcon.textContent = "✓";
+        toastIcon.style.color = "#86efac";
+        toastIcon.style.background =
+          "rgba(34,197,94,.11)";
+      }
+    }
+
+    toast.classList.add("show");
+
+    clearTimeout(showToast.timer);
+
+    showToast.timer = setTimeout(() => {
+      toast.classList.remove("show");
+    }, 3000);
+  }
+
+
+  function setBusy(value) {
+
+    busy = value;
+
+    if (quickMatchBtn) {
+      quickMatchBtn.disabled = value;
+
+      if (value) {
+        quickMatchBtn.dataset.originalHTML =
+          quickMatchBtn.innerHTML;
+
+        quickMatchBtn.innerHTML = `
+          <span class="btn-icon">◌</span>
+          <span>
+            <strong>Finding Match...</strong>
+            <small>Please wait</small>
+          </span>
+        `;
+      }
+
+      else if (quickMatchBtn.dataset.originalHTML) {
+        quickMatchBtn.innerHTML =
+          quickMatchBtn.dataset.originalHTML;
+      }
+    }
+
+    if (createBattleBtn) {
+      createBattleBtn.disabled = value;
+    }
+
+    if (confirmCreateBtn) {
+      confirmCreateBtn.disabled = value;
+      confirmCreateBtn.textContent =
+        value ? "Creating Room..." : "Create Room →";
+    }
+
+    if (confirmJoinBtn) {
+      confirmJoinBtn.disabled = value;
+      confirmJoinBtn.textContent =
+        value ? "Joining Room..." : "Join Room →";
+    }
+  }
+
+
+  /* =========================
+     PROFILE
+  ========================= */
+
+  function renderProfile(user) {
+
+    const name = playerName(user);
+
+    if (headerName) {
+      headerName.textContent = name;
+    }
+
+    if (headerEmail) {
+      headerEmail.textContent =
+        user.email ||
+        user.phoneNumber ||
+        "Authenticated player";
+    }
+
+    const letters = initials(name);
+
+    if (profileAvatar) {
+      profileAvatar.textContent = letters;
+    }
+
+    if (menuAvatar) {
+      menuAvatar.textContent = letters;
+    }
+  }
+
+
+  function toggleProfileMenu() {
+
+    if (!profileMenu || !profileBtn) {
+      return;
+    }
+
+    const isOpen =
+      profileMenu.classList.toggle("show");
+
+    profileBtn.classList.toggle(
+      "open",
+      isOpen
+    );
+
+    profileBtn.setAttribute(
+      "aria-expanded",
+      String(isOpen)
+    );
+  }
+
+
+  function closeProfileMenu() {
+
+    if (!profileMenu || !profileBtn) {
+      return;
+    }
+
+    profileMenu.classList.remove("show");
+    profileBtn.classList.remove("open");
+
+    profileBtn.setAttribute(
+      "aria-expanded",
+      "false"
+    );
+  }
+
+
+  /* =========================
+     ECONOMY
+  ========================= */
+
+  async function ensureEconomy(user) {
+
+    const economyRef =
+      getEconomyRef(user.uid);
+
+    const snapshot =
+      await get(economyRef);
+
+    if (!snapshot.exists()) {
+
+      const starterEconomy = {
+        ludoCoins: STARTER_COINS,
+        xp: 0,
+        gamesPlayed: 0,
+        gamesWon: 0,
+        activityPoints: 0,
+        platformPoints: 0,
+        updatedAt: Date.now()
+      };
+
+      await set(
+        economyRef,
+        starterEconomy
+      );
+
+      return starterEconomy;
+    }
+
+    return normalizeEconomy(
+      snapshot.val()
+    );
+  }
+
+
+  function listenToEconomy(user) {
+
+    if (economyUnsubscribe) {
+      economyUnsubscribe();
+      economyUnsubscribe = null;
+    }
+
+    economyUnsubscribe =
+      onValue(
+        getEconomyRef(user.uid),
+
+        snapshot => {
+
+          const economy =
+            snapshot.exists()
+              ? normalizeEconomy(snapshot.val())
+              : {
+                  ludoCoins: 0,
+                  xp: 0,
+                  gamesPlayed: 0,
+                  gamesWon: 0,
+                  activityPoints: 0,
+                  platformPoints: 0
+                };
+
+          if (walletBalance) {
+            walletBalance.textContent =
+              economy.ludoCoins.toLocaleString();
+          }
+        },
+
+        error => {
+
+          console.error(
+            "Economy listener error:",
+            error
+          );
+
+          if (walletBalance) {
+            walletBalance.textContent = "0";
+          }
+        }
+      );
+  }
+
+
+  /* =========================
+     ROOM NORMALIZATION
+  ========================= */
+
+  function normalizeRoom(
+    roomCode,
+    data
+  ) {
+
+    if (
+      !data ||
+      typeof data !== "object"
+    ) {
+      return null;
+    }
+
+    const players =
+      data.players &&
+      typeof data.players === "object"
+        ? data.players
+        : {};
+
+    const playerList =
+      Object.values(players);
+
+    return {
+
+      roomCode: String(roomCode),
+
+      battleId:
+        data.battleId ||
+        String(roomCode),
+
+      game:
+        data.game ||
+        "ludo",
+
+      mode:
+        data.mode ||
+        "private",
+
+      creatorUid:
+        data.creatorUid ||
+        "",
+
+      creatorName:
+        data.creatorName ||
+        "LUDOVERSE Player",
+
+      creatorPhoto:
+        data.creatorPhoto ||
+        "",
+
+      players,
+
+      playerCount:
+        playerList.length,
+
+      maxPlayers:
+        Math.max(
+          2,
+          normalizeNumber(
+            data.maxPlayers,
+            MAX_PLAYERS
+          )
+        ),
+
+      status:
+        data.status ||
+        "waiting",
+
+      createdAt:
+        normalizeNumber(
+          data.createdAt,
+          0
+        ),
+
+      updatedAt:
+        normalizeNumber(
+          data.updatedAt,
+          0
+        )
+    };
+  }
+
+
+  /* =========================
+     ROOM CODE
+  ========================= */
 
   function generateRoomCode() {
 
-    const letters = "ABCDEFGHJKLMNPQRSTUVWXYZ";
-    const numbers = Math.floor(
-      100000 + Math.random() * 900000
+    return String(
+      Math.floor(
+        100000 +
+        Math.random() * 900000
+      )
     );
-
-    const letter1 =
-      letters[Math.floor(Math.random() * letters.length)];
-
-    const letter2 =
-      letters[Math.floor(Math.random() * letters.length)];
-
-    return `${letter1}${letter2}-${numbers}`;
-
   }
 
 
-  function getQueryRoomCode() {
+  async function generateUniqueRoomCode() {
 
-    const params =
-      new URLSearchParams(window.location.search);
+    for (
+      let attempt = 0;
+      attempt < 15;
+      attempt++
+    ) {
 
-    return params.get("room");
+      const code =
+        generateRoomCode();
 
+      const snapshot =
+        await get(
+          getRoomRef(code)
+        );
+
+      if (!snapshot.exists()) {
+        return code;
+      }
+    }
+
+    throw new Error(
+      "Could not generate a unique room code."
+    );
   }
 
 
-  /* =======================================================
-     DOM ELEMENTS
-  ======================================================= */
+  /* =========================
+     CURRENT ROOM
+  ========================= */
 
-  const walletBalanceElement =
-    $("walletBalance");
+  function saveCurrentRoom(code) {
 
-  const modalWalletBalance =
-    $("modalWalletBalance");
+    currentRoomCode =
+      String(code || "");
 
-  const availableBattleCount =
-    $("availableBattleCount");
-
-  const battleList =
-    $("battleList");
-
-  const emptyState =
-    $("emptyState");
-
-  const activeBattleContainer =
-    $("activeBattleContainer");
-
-
-  /* BUTTONS */
-
-  const refreshBattlesBtn =
-    $("refreshBattlesBtn");
-
-  const createBattleBtn =
-    $("createBattleBtn");
-
-  const emptyCreateBattleBtn =
-    $("emptyCreateBattleBtn");
-
-  const profileBtn =
-    $("profileBtn");
-
-
-  /* CREATE MODAL */
-
-  const createBattleModal =
-    $("createBattleModal");
-
-  const closeCreateModal =
-    $("closeCreateModal");
-
-  const entryAmountInput =
-    $("entryAmountInput");
-
-  const confirmCreateBattleBtn =
-    $("confirmCreateBattleBtn");
-
-  const amountOptions =
-    document.querySelectorAll(".amount-option");
-
-
-  /* CREATE SUMMARY */
-
-  const summaryEntry =
-    $("summaryEntry");
-
-  const summaryTotalPool =
-    $("summaryTotalPool");
-
-  const summaryCommission =
-    $("summaryCommission");
-
-  const summaryPrize =
-    $("summaryPrize");
-
-
-  /* JOIN MODAL */
-
-  const joinBattleModal =
-    $("joinBattleModal");
-
-  const closeJoinModal =
-    $("closeJoinModal");
-
-  const joinRoomCode =
-    $("joinRoomCode");
-
-  const joinEntryAmount =
-    $("joinEntryAmount");
-
-  const joinTotalPool =
-    $("joinTotalPool");
-
-  const joinCommission =
-    $("joinCommission");
-
-  const joinPrizeAmount =
-    $("joinPrizeAmount");
-
-  const confirmJoinBattleBtn =
-    $("confirmJoinBattleBtn");
-
-
-  /* TOAST */
-
-  const toast =
-    $("toast");
-
-  const toastMessage =
-    $("toastMessage");
-
-  const toastIcon =
-    $("toastIcon");
-
-
-  /* =======================================================
-     STATE
-  ======================================================= */
-
-  let selectedBattleToJoin = null;
-
-/*
-=======================================================
-FIREBASE LIVE BATTLE STATE
-=======================================================
-*/
-
-let firebaseBattles = [];
-let firebaseBattlesLoaded = false;
-
-  /* =======================================================
-     WALLET
-  ======================================================= */
-
-  function getBalance() {
-
-    const saved =
-      Number(localStorage.getItem(STORAGE.balance));
-
-    if (!Number.isFinite(saved) || saved < 0) {
-
-      /* Default demo balance */
-
-      const defaultBalance = 2500;
+    if (currentRoomCode) {
 
       localStorage.setItem(
-        STORAGE.balance,
-        String(defaultBalance)
+        "ludoverseCurrentRoom",
+        currentRoomCode
       );
 
-      return defaultBalance;
+    } else {
 
+      localStorage.removeItem(
+        "ludoverseCurrentRoom"
+      );
     }
 
-    return saved;
-
+    renderActiveRoom();
   }
 
 
-  function setBalance(value) {
+  function clearCurrentRoom() {
 
-    const balance =
-      Math.max(
-        0,
-        Number(value) || 0
-      );
+    currentRoomCode = "";
 
-    localStorage.setItem(
-      STORAGE.balance,
-      String(balance)
+    localStorage.removeItem(
+      "ludoverseCurrentRoom"
     );
 
-    renderWallet();
-
+    renderActiveRoom();
   }
 
 
-  function renderWallet() {
+  function getCurrentRoom() {
 
-    const balance =
-      getBalance();
-
-    if (walletBalanceElement) {
-
-      walletBalanceElement.textContent =
-        formatAmount(balance);
-
+    if (!currentRoomCode) {
+      return null;
     }
 
-    if (modalWalletBalance) {
-
-      modalWalletBalance.textContent =
-        formatAmount(balance);
-
-    }
-
+    return (
+      rooms[currentRoomCode] ||
+      null
+    );
   }
 
 
-  /* =======================================================
-     BATTLE STORAGE
-  ======================================================= */
+  /* =========================
+     ROOM MODALS
+  ========================= */
 
-  function getRawBattles() {
+  function openCreateModal() {
+
+    if (!currentUser) {
+
+      showToast(
+        "Please login before creating a room.",
+        "Login Required",
+        "error"
+      );
+
+      return;
+    }
+
+    createModal?.classList.add("show");
+  }
+
+
+  function closeCreate() {
+
+    createModal?.classList.remove("show");
+  }
+
+
+  function openJoinModal(code = "") {
+
+    if (!currentUser) {
+
+      showToast(
+        "Please login before joining a room.",
+        "Login Required",
+        "error"
+      );
+
+      return;
+    }
+
+    if (roomCodeInput) {
+
+      roomCodeInput.value =
+        String(code)
+          .replace(/\D/g, "")
+          .slice(
+            0,
+            ROOM_CODE_LENGTH
+          );
+    }
+
+    joinModal?.classList.add("show");
+
+    setTimeout(() => {
+      roomCodeInput?.focus();
+    }, 120);
+  }
+
+
+  function closeJoin() {
+
+    joinModal?.classList.remove("show");
+  }
+
+
+  /* =========================
+     CREATE ROOM
+  ========================= */
+
+  async function createRoom() {
+
+    if (busy) {
+      return;
+    }
+
+    if (!currentUser) {
+
+      showToast(
+        "Please login first.",
+        "Login Required",
+        "error"
+      );
+
+      return;
+    }
+
+    setBusy(true);
 
     try {
 
-      const data =
-        JSON.parse(
-          localStorage.getItem(STORAGE.battles)
+      const roomCode =
+        await generateUniqueRoomCode();
+
+      const now = Date.now();
+
+      const player = {
+        uid: currentUser.uid,
+        name: playerName(currentUser),
+        photo: currentUser.photoURL || "",
+        joinedAt: now,
+        ready: false
+      };
+
+      const roomData = {
+
+        battleId: roomCode,
+
+        roomCode: roomCode,
+
+        game: "ludo",
+
+        mode: "private",
+
+        creatorUid:
+          currentUser.uid,
+
+        creatorName:
+          playerName(currentUser),
+
+        creatorPhoto:
+          currentUser.photoURL || "",
+
+        players: {
+          [currentUser.uid]: player
+        },
+
+        maxPlayers:
+          MAX_PLAYERS,
+
+        status: "waiting",
+
+        createdAt: now,
+
+        updatedAt: now
+      };
+
+
+      const roomRef =
+        getRoomRef(roomCode);
+
+
+      const transaction =
+        await runTransaction(
+          roomRef,
+          current => {
+
+            if (current !== null) {
+              return;
+            }
+
+            return roomData;
+          }
         );
 
-      return Array.isArray(data)
-        ? data
-        : [];
+
+      if (!transaction.committed) {
+
+        throw new Error(
+          "Room creation was cancelled."
+        );
+      }
+
+
+      saveCurrentRoom(roomCode);
+
+      closeCreate();
+
+      showToast(
+        `Room ${roomCode} created successfully.`,
+        "Room Created"
+      );
+
+
+      setTimeout(() => {
+
+        window.location.href =
+          `battle-room.html?room=${encodeURIComponent(roomCode)}`;
+
+      }, 450);
 
     }
 
     catch (error) {
 
       console.error(
-        "Battle storage error:",
+        "Create room error:",
         error
       );
 
-      return [];
+      showToast(
+        "Could not create the room. Please try again.",
+        "Room Error",
+        "error"
+      );
 
     }
 
+    finally {
+
+      setBusy(false);
+
+    }
   }
 
 
-  /*
-     IMPORTANT:
-     Old battle data may have different property names.
-     This function fixes old data automatically.
-  */
+  /* =========================
+     JOIN ROOM INTERNAL
+  ========================= */
 
-  function normalizeBattle(battle) {
+  async function joinRoomInternal(
+    roomCode
+  ) {
 
-    if (!battle || typeof battle !== "object") {
-      return null;
+    if (!currentUser) {
+      throw new Error(
+        "Authentication required."
+      );
+    }
+
+    const normalizedCode =
+      String(roomCode || "")
+        .replace(/\D/g, "")
+        .slice(
+          0,
+          ROOM_CODE_LENGTH
+        );
+
+
+    if (
+      !/^\d{6}$/.test(
+        normalizedCode
+      )
+    ) {
+
+      throw new Error(
+        "Enter a valid 6-digit room code."
+      );
     }
 
 
-    const entryAmount =
-      Number(
-        battle.entryAmount ??
-        battle.entry ??
-        0
-      );
+    const roomRef =
+      getRoomRef(normalizedCode);
 
 
-    const safeEntry =
-      Number.isFinite(entryAmount)
-        ? entryAmount
-        : 0;
+    const now = Date.now();
 
 
-    const playersJoined =
-      Number(
-        battle.playersJoined ??
-        battle.players ??
-        1
-      );
+    const player = {
+
+      uid:
+        currentUser.uid,
+
+      name:
+        playerName(currentUser),
+
+      photo:
+        currentUser.photoURL || "",
+
+      joinedAt:
+        now,
+
+      ready:
+        false
+    };
 
 
-    const safePlayersJoined =
-      Math.min(
-        TOTAL_PLAYERS,
-        Math.max(
-          1,
-          Number.isFinite(playersJoined)
-            ? playersJoined
-            : 1
-        )
-      );
+    let joinResult;
 
 
-    const totalPool =
-      safeEntry * TOTAL_PLAYERS;
+    joinResult =
+      await runTransaction(
+        roomRef,
+        current => {
+
+          if (!current) {
+            return;
+          }
 
 
-    const commission =
-      Math.round(
-        totalPool *
-        COMMISSION_PERCENT / 100
-      );
+          const players =
+            current.players &&
+            typeof current.players === "object"
+              ? {
+                  ...current.players
+                }
+              : {};
 
 
-    const prizeAmount =
-      totalPool - commission;
+          const existingPlayer =
+            players[
+              currentUser.uid
+            ];
 
 
-    const roomCode =
-      String(
-        battle.roomCode ??
-        battle.code ??
-        generateRoomCode()
-      );
+          if (
+            existingPlayer
+          ) {
+
+            return current;
+          }
 
 
-    let status =
-      String(
-        battle.status ??
-        "waiting"
+          const playerCount =
+            Object.keys(players)
+              .length;
+
+
+          const maxPlayers =
+            Math.max(
+              2,
+              normalizeNumber(
+                current.maxPlayers,
+                MAX_PLAYERS
+              )
+            );
+
+
+          if (
+            current.status !==
+            "waiting"
+          ) {
+            return;
+          }
+
+
+          if (
+            playerCount >=
+            maxPlayers
+          ) {
+            return;
+          }
+
+
+          players[
+            currentUser.uid
+          ] = player;
+
+
+          return {
+
+            ...current,
+
+            players,
+
+            updatedAt:
+              now
+          };
+
+        }
       );
 
 
     if (
-      safePlayersJoined >= TOTAL_PLAYERS &&
-      status === "waiting"
+      !joinResult.committed
     ) {
 
-      status = "joined";
+      const latest =
+        await get(roomRef);
 
+
+      if (!latest.exists()) {
+
+        throw new Error(
+          "This room does not exist."
+        );
+      }
+
+
+      const latestRoom =
+        normalizeRoom(
+          normalizedCode,
+          latest.val()
+        );
+
+
+      if (
+        latestRoom?.players?.[
+          currentUser.uid
+        ]
+      ) {
+
+        return {
+          roomCode:
+            normalizedCode,
+          alreadyJoined:
+            true
+        };
+      }
+
+
+      throw new Error(
+        "This room is already full or unavailable."
+      );
     }
 
 
     return {
+      roomCode:
+        normalizedCode,
 
-      id:
-        battle.id ??
-        `battle_${Date.now()}_${Math.random()}`,
-
-      roomCode,
-
-      entryAmount: safeEntry,
-
-      totalPool,
-
-      commission,
-
-      prizeAmount,
-
-      winnerPrize: prizeAmount,
-
-      players: TOTAL_PLAYERS,
-
-      playersJoined: safePlayersJoined,
-
-      status,
-
-      creator:
-        battle.creator ??
-        "You",
-
-      opponent:
-        battle.opponent ??
-        null,
-
-      creatorReady:
-        battle.creatorReady === true,
-
-      opponentReady:
-        battle.opponentReady === true,
-
-      createdAt:
-        battle.createdAt ??
-        new Date().toISOString(),
-
-      joinedAt:
-        battle.joinedAt ??
-        null,
-
-      winner:
-        battle.winner ??
-        null
-
+      alreadyJoined:
+        false
     };
-
   }
 
 
-  function getBattles() {
+  /* =========================
+     JOIN ROOM
+  ========================= */
 
-    const rawBattles =
-      getRawBattles();
+  async function joinRoom(
+    roomCode
+  ) {
 
-    const cleanBattles =
-      rawBattles
-        .map(normalizeBattle)
-        .filter(Boolean);
+    if (busy) {
+      return;
+    }
 
-    /*
-       Automatically save cleaned data
-    */
+    if (!currentUser) {
 
-    localStorage.setItem(
-      STORAGE.battles,
-      JSON.stringify(cleanBattles)
-    );
+      showToast(
+        "Please login first.",
+        "Login Required",
+        "error"
+      );
 
-    return cleanBattles;
+      return;
+    }
 
-  }
-
-
-  function saveBattles(battles) {
-
-    const cleanBattles =
-      battles
-        .map(normalizeBattle)
-        .filter(Boolean);
-
-    localStorage.setItem(
-      STORAGE.battles,
-      JSON.stringify(cleanBattles)
-    );
-
-  }
-
-
-  /* =======================================================
-     CURRENT BATTLE
-  ======================================================= */
-
-  function getCurrentBattle() {
+    setBusy(true);
 
     try {
 
-      const battle =
-        JSON.parse(
-          localStorage.getItem(
-            STORAGE.currentBattle
-          )
+      const result =
+        await joinRoomInternal(
+          roomCode
         );
 
-      return normalizeBattle(battle);
+
+      saveCurrentRoom(
+        result.roomCode
+      );
+
+      closeJoin();
+
+      showToast(
+        result.alreadyJoined
+          ? "Opening your room..."
+          : "You joined the room successfully.",
+        result.alreadyJoined
+          ? "Room"
+          : "Room Joined"
+      );
+
+
+      setTimeout(() => {
+
+        window.location.href =
+          `battle-room.html?room=${encodeURIComponent(result.roomCode)}`;
+
+      }, 400);
 
     }
 
     catch (error) {
 
-      return null;
+      console.error(
+        "Join room error:",
+        error
+      );
+
+      showToast(
+        error.message ||
+        "Could not join the room.",
+        "Join Error",
+        "error"
+      );
 
     }
 
+    finally {
+
+      setBusy(false);
+
+    }
   }
 
 
-  function setCurrentBattle(battle) {
+  /* =========================
+     QUICK MATCH
+  ========================= */
 
-    const cleanBattle =
-      normalizeBattle(battle);
+  async function quickMatch() {
 
-    if (!cleanBattle) {
+    if (busy) {
       return;
     }
 
-    localStorage.setItem(
-      STORAGE.currentBattle,
-      JSON.stringify(cleanBattle)
-    );
+    if (!currentUser) {
 
-  }
+      showToast(
+        "Please login first.",
+        "Login Required",
+        "error"
+      );
 
+      return;
+    }
 
-  function clearCurrentBattle() {
-
-    localStorage.removeItem(
-      STORAGE.currentBattle
-    );
-
-  }
-
-
-  /* =======================================================
-     TRANSACTIONS
-  ======================================================= */
-
-  function getTransactions() {
+    setBusy(true);
 
     try {
 
+      const snapshot =
+        await get(
+          getRoomsRef()
+        );
+
+
       const data =
-        JSON.parse(
-          localStorage.getItem(
-            STORAGE.transactions
-          )
+        snapshot.exists()
+          ? snapshot.val()
+          : {};
+
+
+      const candidates = [];
+
+
+      Object.entries(data)
+        .forEach(
+          ([code, rawRoom]) => {
+
+            const room =
+              normalizeRoom(
+                code,
+                rawRoom
+              );
+
+            if (!room) {
+              return;
+            }
+
+
+            if (
+              room.status ===
+              "waiting" &&
+
+              room.playerCount <
+              room.maxPlayers &&
+
+              !room.players?.[
+                currentUser.uid
+              ]
+            ) {
+
+              candidates.push(room);
+            }
+
+          }
         );
 
-      return Array.isArray(data)
-        ? data
-        : [];
 
-    }
-
-    catch {
-
-      return [];
-
-    }
-
-  }
-
-
-  function addTransaction(
-    type,
-    amount,
-    description
-  ) {
-
-    const transactions =
-      getTransactions();
-
-    transactions.unshift({
-
-      id:
-        `${Date.now()}-${Math.random()}`,
-
-      type,
-
-      amount:
-        Number(amount) || 0,
-
-      description,
-
-      date:
-        new Date().toLocaleString("en-IN")
-
-    });
-
-
-    localStorage.setItem(
-      STORAGE.transactions,
-      JSON.stringify(transactions)
-    );
-
-  }
-
-
-  /* =======================================================
-     TOAST
-  ======================================================= */
-
-  let toastTimer = null;
-
-
-  function showToast(
-    message,
-    type = "success"
-  ) {
-
-    if (!toast) {
-      return;
-    }
-
-
-    const icons = {
-
-      success: "✓",
-      error: "⚠",
-      info: "ℹ"
-
-    };
-
-
-    if (toastMessage) {
-
-      toastMessage.textContent =
-        message;
-
-    }
-
-
-    if (toastIcon) {
-
-      toastIcon.textContent =
-        icons[type] || "✓";
-
-    }
-
-
-    toast.classList.add("show");
-
-
-    clearTimeout(toastTimer);
-
-
-    toastTimer =
-      setTimeout(() => {
-
-        toast.classList.remove("show");
-
-      }, 3500);
-
-  }
-
-
-  /* =======================================================
-     CALCULATE BATTLE
-  ======================================================= */
-
-  function calculateBattle(entryAmount) {
-
-    const entry =
-      Math.max(
-        0,
-        Number(entryAmount) || 0
+      candidates.sort(
+        (a, b) =>
+          Number(a.createdAt) -
+          Number(b.createdAt)
       );
 
 
-    const totalPool =
-      entry * TOTAL_PLAYERS;
+      if (
+        candidates.length > 0
+      ) {
 
+        try {
 
-    const commission =
-      Math.round(
-        totalPool *
-        COMMISSION_PERCENT / 100
-      );
+          const result =
+            await joinRoomInternal(
+              candidates[0].roomCode
+            );
 
 
-    const prize =
-      totalPool - commission;
+          saveCurrentRoom(
+            result.roomCode
+          );
 
 
-    return {
+          showToast(
+            "Opponent found. Opening your room...",
+            "Match Found"
+          );
 
-      entry,
-      totalPool,
-      commission,
-      prize
 
-    };
+          setTimeout(() => {
 
-  }
+            window.location.href =
+              `battle-room.html?room=${encodeURIComponent(result.roomCode)}`;
 
+          }, 450);
 
-  /* =======================================================
-     CREATE SUMMARY
-  ======================================================= */
 
-  function updateCreateSummary() {
+          return;
 
-    const amount =
-      Number(
-        entryAmountInput?.value
-      ) || 0;
+        }
 
+        catch (joinError) {
 
-    const values =
-      calculateBattle(amount);
+          console.warn(
+            "Selected Quick Match room became unavailable:",
+            joinError
+          );
 
+        }
+      }
 
-    if (summaryEntry) {
 
-      summaryEntry.textContent =
-        formatAmount(values.entry);
+      /*
+       * No available room.
+       * Create a new free matchmaking room.
+       */
 
-    }
+      const roomCode =
+        await generateUniqueRoomCode();
 
+      const now = Date.now();
 
-    if (summaryTotalPool) {
+      const player = {
 
-      summaryTotalPool.textContent =
-        formatAmount(values.totalPool);
+        uid:
+          currentUser.uid,
 
-    }
+        name:
+          playerName(currentUser),
 
+        photo:
+          currentUser.photoURL || "",
 
-    if (summaryCommission) {
+        joinedAt:
+          now,
 
-      summaryCommission.textContent =
-        formatAmount(values.commission);
+        ready:
+          false
+      };
 
-    }
 
+      const roomData = {
 
-    if (summaryPrize) {
+        battleId:
+          roomCode,
 
-      summaryPrize.textContent =
-        formatAmount(values.prize);
+        roomCode:
+          roomCode,
 
-    }
+        game:
+          "ludo",
 
-  }
+        mode:
+          "quick",
 
+        creatorUid:
+          currentUser.uid,
 
-  /* =======================================================
-     CREATE MODAL
-  ======================================================= */
+        creatorName:
+          playerName(currentUser),
 
-  function openCreateModal() {
+        creatorPhoto:
+          currentUser.photoURL || "",
 
-    if (!createBattleModal) {
-      return;
-    }
+        players: {
+          [currentUser.uid]:
+            player
+        },
 
+        maxPlayers:
+          MAX_PLAYERS,
 
-    renderWallet();
+        status:
+          "waiting",
 
-    updateCreateSummary();
+        createdAt:
+          now,
 
+        updatedAt:
+          now
+      };
 
-    createBattleModal.classList.add(
-      "show"
-    );
 
+      const result =
+        await runTransaction(
+          getRoomRef(roomCode),
+          current => {
 
-    document.body.style.overflow =
-      "hidden";
+            if (current !== null) {
+              return;
+            }
 
-
-    setTimeout(() => {
-
-      entryAmountInput?.focus();
-
-    }, 100);
-
-  }
-
-
-  function closeCreateBattleModal() {
-
-    if (!createBattleModal) {
-      return;
-    }
-
-
-    createBattleModal.classList.remove(
-      "show"
-    );
-
-
-    document.body.style.overflow =
-      "";
-
-  }
-
-
-  /* =======================================================
-     JOIN MODAL
-  ======================================================= */
-
-  function openJoinBattleModal(roomCode) {
-
-    const battles =
-      getBattles();
-
-
-    const battle =
-      battles.find(
-        item =>
-          String(item.roomCode) ===
-          String(roomCode)
-      );
-
-
-    if (!battle) {
-
-      showToast(
-        "This battle no longer exists.",
-        "error"
-      );
-
-      renderBattles();
-
-      return;
-
-    }
-
-
-    if (
-      battle.status !== "waiting" ||
-      battle.playersJoined >= TOTAL_PLAYERS
-    ) {
-
-      showToast(
-        "This battle is no longer available.",
-        "error"
-      );
-
-      renderBattles();
-
-      return;
-
-    }
-
-
-    const currentBattle =
-      getCurrentBattle();
-
-
-    if (
-      currentBattle &&
-      currentBattle.status !== "completed" &&
-      currentBattle.status !== "cancelled"
-    ) {
-
-      showToast(
-        "You already have an active battle.",
-        "error"
-      );
-
-      return;
-
-    }
-
-
-    selectedBattleToJoin =
-      battle;
-
-
-    if (joinRoomCode) {
-
-      joinRoomCode.textContent =
-        battle.roomCode;
-
-    }
-
-
-    if (joinEntryAmount) {
-
-      joinEntryAmount.textContent =
-        formatAmount(
-          battle.entryAmount
+            return roomData;
+          }
         );
 
-    }
 
+      if (!result.committed) {
 
-    if (joinTotalPool) {
-
-      joinTotalPool.textContent =
-        formatAmount(
-          battle.totalPool
+        throw new Error(
+          "Could not create a Quick Match room."
         );
+      }
 
-    }
 
-
-    if (joinCommission) {
-
-      joinCommission.textContent =
-        formatAmount(
-          battle.commission
-        );
-
-    }
-
-
-    if (joinPrizeAmount) {
-
-      joinPrizeAmount.textContent =
-        formatAmount(
-          battle.prizeAmount
-        );
-
-    }
-
-
-    joinBattleModal?.classList.add(
-      "show"
-    );
-
-
-    document.body.style.overflow =
-      "hidden";
-
-  }
-
-
-  function closeJoinBattleModal() {
-
-    joinBattleModal?.classList.remove(
-      "show"
-    );
-
-
-    document.body.style.overflow =
-      "";
-
-
-    selectedBattleToJoin =
-      null;
-
-  }
-
-/* =======================================================
-   CREATE BATTLE
-======================================================= */
-
-async function createBattle() {
-  const currentBattle = getCurrentBattle();
-
-  /*
-     Prevent creating another battle
-     while one is already active
-  */
-  if (
-    currentBattle &&
-    ![
-      "completed",
-      "cancelled"
-    ].includes(currentBattle.status)
-  ) {
-    showToast(
-      "You already have an active battle.",
-      "error"
-    );
-    return;
-  }
-
-  const entryAmount = Number(
-    entryAmountInput?.value
-  );
-
-  /*
-     Validate entry amount
-  */
-  if (
-    !Number.isFinite(entryAmount) ||
-    entryAmount < 10
-  ) {
-    showToast(
-      "Minimum battle entry is 10 demo coins.",
-      "error"
-    );
-    return;
-  }
-
-  const balance = getBalance();
-
-  /*
-     Check wallet balance
-  */
-  if (entryAmount > balance) {
-    showToast(
-      `Insufficient balance. You have ${formatAmount(
-        balance
-      )} demo coins.`,
-      "error"
-    );
-    return;
-  }
-
-  /*
-     Prevent double clicking
-  */
-  if (confirmCreateBattleBtn) {
-    confirmCreateBattleBtn.disabled = true;
-    confirmCreateBattleBtn.textContent =
-      "Creating Battle...";
-  }
-
-  try {
-    const values =
-      calculateBattle(entryAmount);
-
-    const roomCode =
-      generateRoomCode();
-
-    /*
-       Create battle object
-    */
-    const battle = {
-      id:
-        `battle_${Date.now()}_${Math.floor(
-          Math.random() * 10000
-        )}`,
-
-      roomCode,
-
-      entryAmount:
-        values.entry,
-
-      totalPool:
-        values.totalPool,
-
-      commission:
-        values.commission,
-
-      prizeAmount:
-        values.prize,
-
-      winnerPrize:
-        values.prize,
-
-      players:
-        TOTAL_PLAYERS,
-
-      playersJoined:
-        1,
-
-      status:
-        "waiting",
-
-      creator:
-        "You",
-
-      opponent:
-        null,
-
-      creatorReady:
-        false,
-
-      opponentReady:
-        false,
-
-      createdAt:
-        new Date().toISOString(),
-
-      joinedAt:
-        null,
-
-      winner:
-        null
-    };
-
-    /*
-       ==========================================
-       SAVE BATTLE TO FIREBASE
-       ==========================================
-    */
-
-    await saveBattleToFirebase(
-      battle
-    );
-
-    /*
-       Keep local copy for current device
-    */
-    const battles =
-      getBattles();
-
-    battles.unshift(
-      battle
-    );
-
-    saveBattles(
-      battles
-    );
-
-    setCurrentBattle(
-      battle
-    );
-
-    /*
-       Deduct demo coins
-    */
-    setBalance(
-      balance - entryAmount
-    );
-
-    /*
-       Save transaction
-    */
-    addTransaction(
-      "debit",
-      entryAmount,
-      `Created Battle #${roomCode}`
-    );
-
-    /*
-       Close modal
-    */
-    closeCreateBattleModal();
-
-    /*
-       Update UI
-    */
-    renderBattles();
-    renderActiveBattle();
-
-    showToast(
-      `Battle created! Room Code: ${roomCode}`,
-      "success"
-    );
-
-    console.log(
-      "Battle successfully saved to Firebase:",
-      roomCode
-    );
-
-    /*
-       Open battle room
-    */
-    setTimeout(() => {
-      window.location.href =
-        `battle-room.html?room=${encodeURIComponent(
-          roomCode
-        )}`;
-    }, 900);
-
-  }
-  catch (error) {
-    console.error(
-      "Create battle Firebase error:",
-      error
-    );
-
-    showToast(
-      "Could not create battle. Please check your internet connection.",
-      "error"
-    );
-
-    if (confirmCreateBattleBtn) {
-      confirmCreateBattleBtn.disabled =
-        false;
-
-      confirmCreateBattleBtn.textContent =
-        "🎮 Create Battle";
-    }
-  }
-}
-
-  /* =======================================================
-     CONFIRM JOIN
-  ======================================================= */
-
-async function confirmJoinBattle() {
-
-  if (!selectedBattleToJoin) {
-
-    showToast(
-      "Please select a battle first.",
-      "error"
-    );
-
-    return;
-  }
-
-  if (confirmJoinBattleBtn) {
-
-    confirmJoinBattleBtn.disabled = true;
-
-    confirmJoinBattleBtn.textContent =
-      "Joining Battle...";
-  }
-
-  try {
-
-    const roomCode =
-      selectedBattleToJoin.roomCode;
-
-    /*
-       Get latest battle directly
-       from Firebase
-    */
-
-    const firebaseBattle =
-      await getBattleFromFirebase(
+      saveCurrentRoom(
         roomCode
       );
 
-    if (!firebaseBattle) {
 
       showToast(
-        "Battle no longer exists.",
+        `Room ${roomCode} created. Waiting for an opponent...`,
+        "Quick Match"
+      );
+
+
+      setTimeout(() => {
+
+        window.location.href =
+          `battle-room.html?room=${encodeURIComponent(roomCode)}`;
+
+      }, 600);
+
+    }
+
+    catch (error) {
+
+      console.error(
+        "Quick Match error:",
+        error
+      );
+
+      showToast(
+        "Quick Match could not start. Please try again.",
+        "Match Error",
         "error"
       );
 
-      closeJoinBattleModal();
-
-      renderBattles();
-
-      return;
     }
 
-    const battle =
-      normalizeBattle(
-        firebaseBattle
-      );
+    finally {
 
-    /*
-       Check if battle is still available
-    */
-
-    if (
-      battle.status !== "waiting" ||
-      Number(battle.playersJoined) >=
-        TOTAL_PLAYERS
-    ) {
-
-      showToast(
-        "This battle was already joined by another player.",
-        "error"
-      );
-
-      closeJoinBattleModal();
-
-      renderBattles();
-
-      return;
-    }
-
-    /*
-       Check current player active battle
-    */
-
-    const currentBattle =
-      getCurrentBattle();
-
-    if (
-      currentBattle &&
-      ![
-        "completed",
-        "cancelled"
-      ].includes(currentBattle.status)
-    ) {
-
-      showToast(
-        "You already have an active battle.",
-        "error"
-      );
-
-      return;
-    }
-
-    /*
-       Check wallet balance
-    */
-
-    const balance =
-      getBalance();
-
-    if (
-      balance <
-      Number(battle.entryAmount)
-    ) {
-
-      showToast(
-        `You need ${formatAmount(
-          battle.entryAmount
-        )} demo coins to join.`,
-        "error"
-      );
-
-      return;
-    }
-
-    /*
-       Create updated battle
-    */
-
-    const joinedAt =
-      new Date().toISOString();
-
-    const updatedBattle = {
-
-      ...battle,
-
-      playersJoined:
-        TOTAL_PLAYERS,
-
-      status:
-        "joined",
-
-      opponent:
-        "Opponent",
-
-      opponentReady:
-        false,
-
-      joinedAt
-
-    };
-
-    /*
-       UPDATE FIREBASE
-    */
-
-    await updateBattleInFirebase(
-      roomCode,
-      {
-
-        playersJoined:
-          TOTAL_PLAYERS,
-
-        status:
-          "joined",
-
-        opponent:
-          "Opponent",
-
-        opponentReady:
-          false,
-
-        joinedAt
-
-      }
-    );
-
-    console.log(
-      "Battle joined successfully:",
-      roomCode
-    );
-
-    /*
-       Keep local copy updated
-    */
-
-    const localBattles =
-      getBattles();
-
-    const existingIndex =
-      localBattles.findIndex(
-        item =>
-          String(item.roomCode) ===
-          String(roomCode)
-      );
-
-    if (existingIndex >= 0) {
-
-      localBattles[existingIndex] =
-        updatedBattle;
-
-    } else {
-
-      localBattles.unshift(
-        updatedBattle
-      );
+      setBusy(false);
 
     }
-
-    saveBattles(
-      localBattles
-    );
-
-    /*
-       Set active battle
-    */
-
-    setCurrentBattle(
-      updatedBattle
-    );
-
-    /*
-       Deduct demo coins
-    */
-
-    setBalance(
-      balance -
-      Number(updatedBattle.entryAmount)
-    );
-
-    /*
-       Save transaction
-    */
-
-    addTransaction(
-      "debit",
-      updatedBattle.entryAmount,
-      `Joined Battle #${roomCode}`
-    );
-
-    /*
-       Close modal
-    */
-
-    closeJoinBattleModal();
-
-    renderBattles();
-
-    renderActiveBattle();
-
-    showToast(
-      `Joined Battle #${roomCode}`,
-      "success"
-    );
-
-    /*
-       Open battle room
-    */
-
-    setTimeout(() => {
-
-      window.location.href =
-        `battle-room.html?room=${encodeURIComponent(
-          roomCode
-        )}`;
-
-    }, 800);
-
-  }
-
-  catch (error) {
-
-    console.error(
-      "Firebase join battle error:",
-      error
-    );
-
-    showToast(
-      "Could not join the battle. Please check your internet connection.",
-      "error"
-    );
-
-  }
-
-  finally {
-
-    if (confirmJoinBattleBtn) {
-
-      confirmJoinBattleBtn.disabled =
-        false;
-
-      confirmJoinBattleBtn.textContent =
-        "🎮 Join Battle";
-
-    }
-
-  }
-
-}
-
-  /* =======================================================
-     VIEW BATTLE
-  ======================================================= */
-
-  function viewBattle(roomCode) {
-
-    const battles =
-      getBattles();
-
-
-    const battle =
-      battles.find(
-        item =>
-          String(item.roomCode) ===
-          String(roomCode)
-      );
-
-
-    if (!battle) {
-
-      showToast(
-        "Battle not found.",
-        "error"
-      );
-
-      renderBattles();
-
-      return;
-
-    }
-
-
-    setCurrentBattle(battle);
-
-
-    window.location.href =
-      `battle-room.html?room=${encodeURIComponent(
-        battle.roomCode
-      )}`;
-
   }
 
 
-  /*
-     Make function available to dynamically
-     generated buttons
-  */
+  /* =========================
+     RENDER ROOMS
+  ========================= */
 
-  window.viewBattle =
-    viewBattle;
+  function renderRooms() {
 
-  window.openJoinBattleModal =
-    openJoinBattleModal;
+    if (!roomsList) {
+      return;
+    }
 
 
-  /* =======================================================
-     RENDER AVAILABLE BATTLES
-  ======================================================= */
+    const roomArray =
+      Object.values(rooms)
+        .map(room =>
+          normalizeRoom(
+            room.roomCode,
+            room
+          )
+        )
+        .filter(Boolean)
+        .filter(
+          room =>
+            room.status ===
+            "waiting" &&
 
-  function renderBattles() {
-
-  const sourceBattles =
-    firebaseBattlesLoaded
-      ? firebaseBattles
-      : getBattles();
-
-  const battles =
-    sourceBattles.filter(
-      battle =>
-        battle.status === "waiting" &&
-        Number(battle.playersJoined) <
-        TOTAL_PLAYERS
-    );
+            room.playerCount <
+            room.maxPlayers
+        )
+        .sort(
+          (a, b) =>
+            Number(a.createdAt) -
+            Number(b.createdAt)
+        );
 
 
     if (availableBattleCount) {
 
       availableBattleCount.textContent =
-        String(battles.length);
-
+        roomArray.length.toLocaleString();
     }
 
 
-    if (!battleList) {
-      return;
+    if (onlinePlayerCount) {
+
+      onlinePlayerCount.textContent =
+        roomArray
+          .reduce(
+            (total, room) =>
+              total +
+              room.playerCount,
+            0
+          )
+          .toLocaleString();
     }
 
 
-    battleList.innerHTML =
-      "";
+    roomsList.innerHTML = "";
 
 
-    if (battles.length === 0) {
+    if (
+      roomArray.length === 0
+    ) {
 
       emptyState?.classList.remove(
         "hidden"
       );
 
       return;
-
     }
 
 
@@ -1735,517 +1549,543 @@ async function confirmJoinBattle() {
     );
 
 
-    battles.forEach(battle => {
+    roomArray.forEach(
+      room => {
 
-      const card =
-        document.createElement("div");
-
-
-      card.className =
-        "battle-card";
-
-
-      card.innerHTML = `
-
-        <div class="battle-room">
-
-          <div class="room-icon">
-            🎮
-          </div>
-
-          <div class="room-details">
-
-            <span>
-              WAITING FOR OPPONENT
-            </span>
-
-            <strong>
-              Battle #${escapeHTML(
-                battle.roomCode
-              )}
-            </strong>
-
-          </div>
-
-        </div>
-
-
-        <div class="battle-value">
-
-          <span>
-            Entry Per Player
-          </span>
-
-          <strong>
-            🪙 ${formatAmount(
-              battle.entryAmount
-            )}
-          </strong>
-
-        </div>
-
-
-        <div class="battle-value prize">
-
-          <span>
-            Winner Prize
-          </span>
-
-          <strong>
-            🏆 ${formatAmount(
-              battle.prizeAmount
-            )}
-          </strong>
-
-        </div>
-
-
-        <button
-          class="primary-button"
-          type="button"
-        >
-          Join Battle
-        </button>
-
-      `;
-
-
-      const joinButton =
-        card.querySelector("button");
-
-
-      joinButton.addEventListener(
-        "click",
-        () => {
-
-          openJoinBattleModal(
-            battle.roomCode
+        const card =
+          document.createElement(
+            "div"
           );
 
-        }
-      );
+
+        card.className =
+          "room-card";
 
 
-      battleList.appendChild(
-        card
-      );
+        const creator =
+          escapeHTML(
+            room.creatorName ||
+            "LUDOVERSE Player"
+          );
 
-    });
 
+        const code =
+          escapeHTML(
+            room.roomCode
+          );
+
+
+        card.innerHTML = `
+
+          <div class="room-left">
+
+            <div class="room-avatar">
+              🎲
+            </div>
+
+            <div class="room-info">
+
+              <h3>
+                ${creator}
+              </h3>
+
+              <div class="room-meta">
+
+                <span class="waiting-badge">
+                  ● WAITING
+                </span>
+
+                <span class="room-players">
+                  ${room.playerCount}/${room.maxPlayers} players
+                </span>
+
+              </div>
+
+              <p class="room-description">
+                Free Ludo multiplayer room
+              </p>
+
+            </div>
+
+          </div>
+
+
+          <div class="room-actions">
+
+            <div class="room-code-small">
+              ${code}
+            </div>
+
+            <button
+              type="button"
+              class="join-room-btn"
+              data-room-code="${code}"
+            >
+              Join →
+            </button>
+
+          </div>
+        `;
+
+
+        const joinButton =
+          card.querySelector(
+            "[data-room-code]"
+          );
+
+
+        joinButton?.addEventListener(
+          "click",
+          () => {
+
+            openJoinModal(
+              room.roomCode
+            );
+
+          }
+        );
+
+
+        roomsList.appendChild(
+          card
+        );
+
+      }
+    );
   }
 
 
-  /* =======================================================
-     RENDER ACTIVE BATTLE
-  ======================================================= */
+  /* =========================
+     ACTIVE ROOM
+  ========================= */
 
-  function renderActiveBattle() {
+  function renderActiveRoom() {
 
-    if (!activeBattleContainer) {
+    if (!activeRoomSection) {
       return;
     }
 
 
-    const battle =
-      getCurrentBattle();
+    const room =
+      getCurrentRoom();
 
 
-    activeBattleContainer.innerHTML =
-      "";
+    if (!room) {
+
+      activeRoomSection.classList.remove(
+        "show"
+      );
+
+      return;
+    }
 
 
     if (
-      !battle ||
-      [
-        "completed",
-        "cancelled"
-      ].includes(battle.status)
+      currentUser &&
+      !room.players?.[
+        currentUser.uid
+      ]
     ) {
 
-      activeBattleContainer.innerHTML = `
-
-        <div class="no-active-battle">
-
-          <div class="empty-icon">
-            🎯
-          </div>
-
-          <h3>
-            No Active Battle
-          </h3>
-
-          <p>
-            Create or join a battle to start playing.
-          </p>
-
-        </div>
-
-      `;
-
-      return;
-
-    }
-
-
-    const statusText = {
-
-      waiting:
-        "Waiting for Opponent",
-
-      joined:
-        "Opponent Joined",
-
-      ready:
-        "Players Ready",
-
-      playing:
-        "Game In Progress"
-
-    };
-
-
-    activeBattleContainer.innerHTML = `
-
-      <div class="battle-card active-battle-card">
-
-        <div class="battle-room">
-
-          <div class="room-icon">
-            🎯
-          </div>
-
-          <div class="room-details">
-
-            <span>
-              ACTIVE BATTLE
-            </span>
-
-            <strong>
-              Battle #${escapeHTML(
-                battle.roomCode
-              )}
-            </strong>
-
-          </div>
-
-        </div>
-
-
-        <div class="battle-value">
-
-          <span>
-            Status
-          </span>
-
-          <strong>
-            ${statusText[battle.status] ||
-              escapeHTML(battle.status)}
-          </strong>
-
-        </div>
-
-
-        <div class="battle-value prize">
-
-          <span>
-            Winner Prize
-          </span>
-
-          <strong>
-            🏆 ${formatAmount(
-              battle.prizeAmount
-            )}
-          </strong>
-
-        </div>
-
-
-        <button
-          class="primary-button"
-          id="activeViewBattleBtn"
-          type="button"
-        >
-          🎮 View Battle
-        </button>
-
-      </div>
-
-    `;
-
-
-    const viewButton =
-      $("activeViewBattleBtn");
-
-
-    viewButton?.addEventListener(
-      "click",
-      () => {
-
-        viewBattle(
-          battle.roomCode
-        );
-
-      }
-    );
-
-  }
-
-
-  /* =======================================================
-     REFRESH
-  ======================================================= */
-
-  function refreshBattles() {
-
-    refreshBattlesBtn?.classList.add(
-      "refreshing"
-    );
-
-
-    renderWallet();
-
-    renderBattles();
-
-    renderActiveBattle();
-
-
-    setTimeout(() => {
-
-      refreshBattlesBtn?.classList.remove(
-        "refreshing"
-      );
-
-    }, 500);
-
-
-    showToast(
-      "Battle lobby refreshed.",
-      "success"
-    );
-
-  }
-
-
-  /* =======================================================
-     PROFILE MODAL
-  ======================================================= */
-
-  function createProfileModal() {
-
-    if ($("profileModal")) {
+      clearCurrentRoom();
       return;
     }
 
 
-    const modal =
-      document.createElement("div");
-
-
-    modal.id =
-      "profileModal";
-
-
-    modal.className =
-      "modal-overlay";
-
-
-    modal.innerHTML = `
-
-      <div class="battle-modal small-modal">
-
-        <div class="modal-header">
-
-          <div>
-
-            <span class="section-tag purple">
-              PLAYER PROFILE
-            </span>
-
-            <h2>
-              LUDOVERSE Profile
-            </h2>
-
-          </div>
-
-
-          <button
-            class="close-modal"
-            id="closeProfileModal"
-            type="button"
-          >
-            ×
-          </button>
-
-        </div>
-
-
-        <div class="join-summary">
-
-          <div class="join-info-row">
-
-            <span>
-              Player
-            </span>
-
-            <strong>
-              Demo Player
-            </strong>
-
-          </div>
-
-
-          <div class="join-info-row">
-
-            <span>
-              Demo Coin Balance
-            </span>
-
-            <strong id="profileBalance">
-              0
-            </strong>
-
-          </div>
-
-
-          <div class="join-info-row">
-
-            <span>
-              Total Battles
-            </span>
-
-            <strong id="profileBattles">
-              0
-            </strong>
-
-          </div>
-
-
-          <div class="join-info-row">
-
-            <span>
-              Active Battle
-            </span>
-
-            <strong id="profileActiveBattle">
-              None
-            </strong>
-
-          </div>
-
-        </div>
-
-
-        <button
-          class="secondary-button full-button"
-          id="profileCloseButton"
-          type="button"
-        >
-          Close Profile
-        </button>
-
-      </div>
-
-    `;
-
-
-    document.body.appendChild(
-      modal
-    );
-
-
-    const close =
-      () => {
-
-        modal.classList.remove(
-          "show"
-        );
-
-        document.body.style.overflow =
-          "";
-
-      };
-
-
-    $("closeProfileModal")
-      ?.addEventListener(
-        "click",
-        close
-      );
-
-
-    $("profileCloseButton")
-      ?.addEventListener(
-        "click",
-        close
-      );
-
-
-    modal.addEventListener(
-      "click",
-      event => {
-
-        if (event.target === modal) {
-          close();
-        }
-
-      }
-    );
-
-  }
-
-
-  function openProfile() {
-
-    createProfileModal();
-
-
-    const modal =
-      $("profileModal");
-
-
-    const balance =
-      getBalance();
-
-
-    const battles =
-      getBattles();
-
-
-    const activeBattle =
-      getCurrentBattle();
-
-
-    $("profileBalance").textContent =
-      `🪙 ${formatAmount(balance)}`;
-
-
-    $("profileBattles").textContent =
-      String(battles.length);
-
-
-    $("profileActiveBattle").textContent =
-      activeBattle
-        ? `#${activeBattle.roomCode}`
-        : "None";
-
-
-    modal?.classList.add(
+    activeRoomSection.classList.add(
       "show"
     );
 
 
-    document.body.style.overflow =
-      "hidden";
+    if (activeRoomCode) {
 
+      activeRoomCode.textContent =
+        room.roomCode;
+    }
+
+
+    if (activeRoomStatus) {
+
+      if (
+        room.playerCount >=
+        room.maxPlayers
+      ) {
+
+        activeRoomStatus.textContent =
+          "Both players connected. Open the room to get ready.";
+
+      }
+
+      else {
+
+        activeRoomStatus.textContent =
+          "Waiting for another player...";
+      }
+    }
   }
 
 
-  /* =======================================================
-     BUTTON EVENTS
-  ======================================================= */
+  /* =========================
+     ROOM LISTENER
+  ========================= */
+
+  function startRoomsListener() {
+
+    if (roomsUnsubscribe) {
+      return;
+    }
 
 
-  /* CREATE */
+    roomsUnsubscribe =
+      onValue(
+        getRoomsRef(),
+
+        snapshot => {
+
+          const data =
+            snapshot.exists()
+              ? snapshot.val()
+              : {};
+
+
+          const normalized =
+            {};
+
+
+          Object.entries(data)
+            .forEach(
+              ([code, rawRoom]) => {
+
+                const room =
+                  normalizeRoom(
+                    code,
+                    rawRoom
+                  );
+
+                if (room) {
+                  normalized[code] =
+                    room;
+                }
+
+              }
+            );
+
+
+          rooms =
+            normalized;
+
+
+          renderRooms();
+
+          renderActiveRoom();
+
+        },
+
+        error => {
+
+          console.error(
+            "Rooms listener error:",
+            error
+          );
+
+
+          showToast(
+            "Live room updates are unavailable.",
+            "Connection Error",
+            "error"
+          );
+        }
+      );
+  }
+
+
+  /* =========================
+     CURRENT ROOM VALIDATION
+  ========================= */
+
+  async function validateCurrentRoom() {
+
+    if (!currentRoomCode) {
+
+      renderActiveRoom();
+
+      return;
+    }
+
+
+    try {
+
+      const snapshot =
+        await get(
+          getRoomRef(
+            currentRoomCode
+          )
+        );
+
+
+      if (!snapshot.exists()) {
+
+        clearCurrentRoom();
+
+        return;
+      }
+
+
+      const room =
+        normalizeRoom(
+          currentRoomCode,
+          snapshot.val()
+        );
+
+
+      if (!room) {
+
+        clearCurrentRoom();
+
+        return;
+      }
+
+
+      if (
+        currentUser &&
+        !room.players?.[
+          currentUser.uid
+        ]
+      ) {
+
+        clearCurrentRoom();
+
+        return;
+      }
+
+
+      rooms[
+        currentRoomCode
+      ] = room;
+
+
+      renderActiveRoom();
+
+    }
+
+    catch (error) {
+
+      console.error(
+        "Current room validation error:",
+        error
+      );
+
+    }
+  }
+
+
+  /* =========================
+     COPY ROOM CODE
+  ========================= */
+
+  async function copyCurrentRoomCode() {
+
+    const room =
+      getCurrentRoom();
+
+
+    if (!room?.roomCode) {
+
+      showToast(
+        "There is no active room.",
+        "Room",
+        "error"
+      );
+
+      return;
+    }
+
+
+    try {
+
+      if (
+        navigator.clipboard &&
+        window.isSecureContext
+      ) {
+
+        await navigator.clipboard.writeText(
+          room.roomCode
+        );
+
+      }
+
+      else {
+
+        const temp =
+          document.createElement(
+            "textarea"
+          );
+
+        temp.value =
+          room.roomCode;
+
+        temp.style.position =
+          "fixed";
+
+        temp.style.opacity =
+          "0";
+
+        document.body.appendChild(
+          temp
+        );
+
+        temp.select();
+
+        document.execCommand(
+          "copy"
+        );
+
+        temp.remove();
+      }
+
+
+      showToast(
+        `Room code ${room.roomCode} copied.`,
+        "Copied"
+      );
+
+    }
+
+    catch (error) {
+
+      console.error(
+        "Copy error:",
+        error
+      );
+
+      showToast(
+        `Room code: ${room.roomCode}`,
+        "Room Code",
+        "info"
+      );
+    }
+  }
+
+
+  /* =========================
+     OPEN CURRENT ROOM
+  ========================= */
+
+  function openCurrentRoom() {
+
+    const room =
+      getCurrentRoom();
+
+
+    if (!room?.roomCode) {
+
+      showToast(
+        "There is no active room.",
+        "Room",
+        "error"
+      );
+
+      return;
+    }
+
+
+    window.location.href =
+      `battle-room.html?room=${encodeURIComponent(room.roomCode)}`;
+  }
+
+
+  /* =========================
+     LOGOUT
+  ========================= */
+
+  async function logout() {
+
+    if (!currentUser) {
+      return;
+    }
+
+
+    const confirmed =
+      window.confirm(
+        "Are you sure you want to logout?"
+      );
+
+
+    if (!confirmed) {
+      return;
+    }
+
+
+    try {
+
+      await signOut(auth);
+
+      localStorage.removeItem(
+        "ludoverseCurrentRoom"
+      );
+
+      window.location.href =
+        "login.html";
+
+    }
+
+    catch (error) {
+
+      console.error(
+        "Logout error:",
+        error
+      );
+
+      showToast(
+        "Logout failed. Please try again.",
+        "Logout Error",
+        "error"
+      );
+    }
+  }
+
+
+  /* =========================
+     EVENTS
+  ========================= */
+
+  profileBtn?.addEventListener(
+    "click",
+    event => {
+
+      event.stopPropagation();
+
+      toggleProfileMenu();
+
+    }
+  );
+
+
+  profileMenu?.addEventListener(
+    "click",
+    event => {
+
+      event.stopPropagation();
+
+    }
+  );
+
+
+  document.addEventListener(
+    "click",
+    () => {
+
+      closeProfileMenu();
+
+    }
+  );
+
+
+  logoutBtn?.addEventListener(
+    "click",
+    logout
+  );
+
 
   createBattleBtn?.addEventListener(
     "click",
@@ -2253,190 +2093,188 @@ async function confirmJoinBattle() {
   );
 
 
-  emptyCreateBattleBtn?.addEventListener(
+  emptyCreateBtn?.addEventListener(
     "click",
     openCreateModal
   );
 
 
+  quickMatchBtn?.addEventListener(
+    "click",
+    quickMatch
+  );
+
+
+  confirmCreateBtn?.addEventListener(
+    "click",
+    createRoom
+  );
+
+
   closeCreateModal?.addEventListener(
     "click",
-    closeCreateBattleModal
+    closeCreate
   );
 
 
-  confirmCreateBattleBtn?.addEventListener(
+  cancelCreateBtn?.addEventListener(
     "click",
-    createBattle
+    closeCreate
   );
 
-
-  /* REFRESH */
-
-  refreshBattlesBtn?.addEventListener(
-    "click",
-    refreshBattles
-  );
-
-
-  /* PROFILE */
-
-  profileBtn?.addEventListener(
-    "click",
-    openProfile
-  );
-
-
-  /* JOIN */
 
   closeJoinModal?.addEventListener(
     "click",
-    closeJoinBattleModal
+    closeJoin
   );
 
 
-  confirmJoinBattleBtn?.addEventListener(
+  cancelJoinBtn?.addEventListener(
     "click",
-    confirmJoinBattle
+    closeJoin
   );
 
 
-  /* QUICK AMOUNTS */
+  confirmJoinBtn?.addEventListener(
+    "click",
+    () => {
 
-  amountOptions.forEach(button => {
+      joinRoom(
+        roomCodeInput?.value || ""
+      );
 
-    button.addEventListener(
-      "click",
-      () => {
-
-        const amount =
-          Number(
-            button.dataset.amount
-          );
+    }
+  );
 
 
-        if (
-          entryAmountInput &&
-          Number.isFinite(amount)
-        ) {
+  refreshBtn?.addEventListener(
+    "click",
+    async () => {
 
-          entryAmountInput.value =
-            amount;
+      if (busy) {
+        return;
+      }
 
-        }
+      refreshBtn.disabled = true;
 
+      try {
 
-        amountOptions.forEach(item => {
+        await validateCurrentRoom();
 
-          item.classList.remove(
-            "active-amount"
-          );
-
-        });
-
-
-        button.classList.add(
-          "active-amount"
+        showToast(
+          "Room list updated.",
+          "Updated"
         );
 
+      }
 
-        updateCreateSummary();
+      finally {
+
+        setTimeout(
+          () => {
+            refreshBtn.disabled =
+              false;
+          },
+          500
+        );
 
       }
-    );
+    }
+  );
 
-  });
+
+  copyRoomBtn?.addEventListener(
+    "click",
+    copyCurrentRoomCode
+  );
 
 
-  /* INPUT */
+  openRoomBtn?.addEventListener(
+    "click",
+    openCurrentRoom
+  );
 
-  entryAmountInput?.addEventListener(
+
+  roomCodeInput?.addEventListener(
     "input",
     () => {
 
-      amountOptions.forEach(item => {
+      roomCodeInput.value =
+        roomCodeInput.value
+          .replace(/\D/g, "")
+          .slice(
+            0,
+            ROOM_CODE_LENGTH
+          );
 
-        item.classList.remove(
-          "active-amount"
+    }
+  );
+
+
+  roomCodeInput?.addEventListener(
+    "keydown",
+    event => {
+
+      if (
+        event.key ===
+        "Enter"
+      ) {
+
+        event.preventDefault();
+
+        joinRoom(
+          roomCodeInput.value
         );
-
-      });
-
-
-      updateCreateSummary();
-
-    }
-  );
-
-
-  /* CLICK OUTSIDE CREATE MODAL */
-
-  createBattleModal?.addEventListener(
-    "click",
-    event => {
-
-      if (
-        event.target === createBattleModal
-      ) {
-
-        closeCreateBattleModal();
-
       }
 
     }
   );
 
 
-  /* CLICK OUTSIDE JOIN MODAL */
-
-  joinBattleModal?.addEventListener(
+  createModal?.addEventListener(
     "click",
     event => {
 
       if (
-        event.target === joinBattleModal
+        event.target ===
+        createModal
       ) {
-
-        closeJoinBattleModal();
-
+        closeCreate();
       }
 
     }
   );
 
 
-  /* ESCAPE */
+  joinModal?.addEventListener(
+    "click",
+    event => {
+
+      if (
+        event.target ===
+        joinModal
+      ) {
+        closeJoin();
+      }
+
+    }
+  );
+
 
   document.addEventListener(
     "keydown",
     event => {
 
-      if (event.key === "Escape") {
+      if (
+        event.key ===
+        "Escape"
+      ) {
 
-        closeCreateBattleModal();
+        closeCreate();
 
-        closeJoinBattleModal();
+        closeJoin();
 
-
-        const profileModal =
-          $("profileModal");
-
-
-        if (
-          profileModal &&
-          profileModal.classList.contains(
-            "show"
-          )
-        ) {
-
-          profileModal.classList.remove(
-            "show"
-          );
-
-          document.body.style.overflow =
-            "";
-
-        }
+        closeProfileMenu();
 
       }
 
@@ -2444,100 +2282,78 @@ async function confirmJoinBattle() {
   );
 
 
-  /* =======================================================
-     STORAGE SYNC
-  ======================================================= */
+  /* =========================
+     AUTH
+  ========================= */
 
-  window.addEventListener(
-    "storage",
-    () => {
+  onAuthStateChanged(
+    auth,
+    async user => {
 
-      renderWallet();
+      if (!user) {
 
-      renderBattles();
+        window.location.href =
+          "login.html";
 
-      renderActiveBattle();
-
-    }
-  );
-
-
-  /* =======================================================
-     INITIALIZE
-  ======================================================= */
-
-  /*
-     Clean old/broken battle data
-  */
-
-  getBattles();
+        return;
+      }
 
 
-  /*
-     Render application
-  */
-
-  renderWallet();
-
-  updateCreateSummary();
-
-  renderBattles();
-
-  renderActiveBattle();
-
-/*
-=======================================================
-START FIREBASE LIVE BATTLE LISTENER
-=======================================================
-*/
-
-listenToFirebaseBattles((battles) => {
-
-  firebaseBattles =
-    battles
-      .map(normalizeBattle)
-      .filter(Boolean);
-
-  firebaseBattlesLoaded = true;
-
-  console.log(
-    "Firebase battles loaded:",
-    firebaseBattles.length
-  );
-
-  renderBattles();
-});
-
-  /*
-     If a room is provided in URL,
-     make sure current battle is correct
-  */
-
-  const roomFromURL =
-    getQueryRoomCode();
+      currentUser =
+        user;
 
 
-  if (roomFromURL) {
-
-    const battle =
-      getBattles().find(
-        item =>
-          String(item.roomCode) ===
-          String(roomFromURL)
+      renderProfile(
+        user
       );
 
 
-    if (battle) {
+      try {
 
-      setCurrentBattle(battle);
+        await ensureEconomy(
+          user
+        );
+
+        listenToEconomy(
+          user
+        );
+
+      }
+
+      catch (error) {
+
+        console.error(
+          "Economy initialization error:",
+          error
+        );
+
+        if (walletBalance) {
+          walletBalance.textContent =
+            "0";
+        }
+
+        showToast(
+          "Your LudoCoin balance could not be loaded.",
+          "Wallet",
+          "error"
+        );
+      }
+
+
+      startRoomsListener();
+
+      await validateCurrentRoom();
+
+      renderRooms();
+
+      renderActiveRoom();
 
     }
-
-  }
+  );
 
 
   console.log(
-    "🎲 LUDOVERSE Battle Lobby Ready"
+    "LUDOVERSE Professional Multiplayer Lobby Ready"
   );
 
 });
