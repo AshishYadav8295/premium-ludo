@@ -1,3 +1,35 @@
+/* =========================================================
+   LUDOVERSE — MULTIPLAYER BATTLE LOBBY
+   ---------------------------------------------------------
+   Firebase Realtime Multiplayer Lobby
+   Version: 2.0
+
+   FEATURES
+   • Firebase Authentication
+   • Realtime room discovery
+   • Atomic room creation
+   • Atomic room joining
+   • Quick Match
+   • Private Room
+   • 6-digit room codes
+   • Realtime room list
+   • Current room persistence
+   • Realtime LudoCoins display
+   • Profile menu
+   • Logout
+   • Mobile-safe interaction
+   • Race-condition protection
+   • XSS-safe rendering
+
+   ECONOMY
+   • LudoCoins are progression points only.
+   • They are not cash.
+   • No entry fee.
+   • No wagering.
+   • No prize pool.
+   • No cash withdrawal.
+   ========================================================= */
+
 "use strict";
 
 import {
@@ -6,7 +38,6 @@ import {
   ref,
   get,
   set,
-  update,
   onValue,
   runTransaction,
   onAuthStateChanged,
@@ -14,154 +45,106 @@ import {
 } from "./firebase.js";
 
 
-/*
-=========================================================
- LUDOVERSE — PROFESSIONAL MULTIPLAYER LOBBY
-=========================================================
-
- FEATURES
- - Firebase Realtime Database
- - Authentication protected
- - Live room list
- - Quick Match
- - Private 6-digit rooms
- - Atomic room creation
- - Atomic player joining
- - Realtime LudoCoin display
- - Active room persistence
- - Profile menu
- - Logout
- - Mobile responsive UI
-
- FREE PLAY
- - No entry amount
- - No prize pool
- - No withdrawals
- - No cash rewards
- - LudoCoins are progression points only
-=========================================================
-*/
-
+/* =========================================================
+   START
+   ========================================================= */
 
 document.addEventListener("DOMContentLoaded", () => {
 
-  /* =========================
-     DOM
-  ========================= */
+  /* =======================================================
+     DOM HELPER
+     ======================================================= */
 
-  const walletBalance =
-    document.getElementById("walletBalance");
+  const $ = (id) => document.getElementById(id);
 
-  const headerName =
-    document.getElementById("headerName");
+  /* Header */
+  const walletBalance = $("walletBalance");
 
-  const headerEmail =
-    document.getElementById("headerEmail");
+  const profileBtn = $("profileBtn");
+  const profileMenu = $("profileMenu");
+  const profileAvatar = $("profileAvatar");
+  const menuAvatar = $("menuAvatar");
+  const headerName = $("headerName");
+  const headerEmail = $("headerEmail");
+  const logoutBtn = $("logoutBtn");
 
-  const profileBtn =
-    document.getElementById("profileBtn");
+  /* Main actions */
+  const quickMatchBtn = $("quickMatchBtn");
+  const createBattleBtn = $("createBattleBtn");
+  const emptyCreateBtn = $("emptyCreateBtn");
+  const refreshBtn = $("refreshBtn");
 
-  const profileMenu =
-    document.getElementById("profileMenu");
+  /* Statistics */
+  const availableBattleCount = $("availableBattleCount");
+  const onlinePlayerCount = $("onlinePlayerCount");
 
-  const profileAvatar =
-    document.getElementById("profileAvatar");
+  /* Room list */
+  const roomsList = $("roomsList");
+  const emptyState = $("emptyState");
 
-  const menuAvatar =
-    document.getElementById("menuAvatar");
+  /* Active room */
+  const activeRoomSection = $("activeRoomSection");
+  const activeRoomCode = $("activeRoomCode");
+  const activeRoomStatus = $("activeRoomStatus");
+  const activeRoomPlayers = $("activeRoomPlayers");
+  const copyRoomBtn = $("copyRoomBtn");
+  const openRoomBtn = $("openRoomBtn");
+  const leaveRoomBtn = $("leaveRoomBtn");
 
-  const logoutBtn =
-    document.getElementById("logoutBtn");
+  /* Create modal */
+  const createModal = $("createModal");
+  const closeCreateModalButton = $("closeCreateModal");
+  const cancelCreateBtn = $("cancelCreateBtn");
+  const confirmCreateBtn = $("confirmCreateBtn");
 
-  const availableBattleCount =
-    document.getElementById("availableBattleCount");
+  /* Join modal */
+  const joinModal = $("joinModal");
+  const closeJoinModalButton = $("closeJoinModal");
+  const cancelJoinBtn = $("cancelJoinBtn");
+  const confirmJoinBtn = $("confirmJoinBtn");
+  const roomCodeInput = $("roomCodeInput");
 
-  const onlinePlayerCount =
-    document.getElementById("onlinePlayerCount");
-
-  const roomsList =
-    document.getElementById("roomsList");
-
-  const emptyState =
-    document.getElementById("emptyState");
-
-  const quickMatchBtn =
-    document.getElementById("quickMatchBtn");
-
-  const createBattleBtn =
-    document.getElementById("createBattleBtn");
-
-  const emptyCreateBtn =
-    document.getElementById("emptyCreateBtn");
-
-  const refreshBtn =
-    document.getElementById("refreshBtn");
-
-  const activeRoomSection =
-    document.getElementById("activeRoomSection");
-
-  const activeRoomCode =
-    document.getElementById("activeRoomCode");
-
-  const activeRoomStatus =
-    document.getElementById("activeRoomStatus");
-
-  const copyRoomBtn =
-    document.getElementById("copyRoomBtn");
-
-  const openRoomBtn =
-    document.getElementById("openRoomBtn");
-
-  const createModal =
-    document.getElementById("createModal");
-
-  const closeCreateModal =
-    document.getElementById("closeCreateModal");
-
-  const cancelCreateBtn =
-    document.getElementById("cancelCreateBtn");
-
-  const confirmCreateBtn =
-    document.getElementById("confirmCreateBtn");
-
-  const joinModal =
-    document.getElementById("joinModal");
-
-  const closeJoinModal =
-    document.getElementById("closeJoinModal");
-
-  const cancelJoinBtn =
-    document.getElementById("cancelJoinBtn");
-
-  const confirmJoinBtn =
-    document.getElementById("confirmJoinBtn");
-
-  const roomCodeInput =
-    document.getElementById("roomCodeInput");
-
-  const toast =
-    document.getElementById("toast");
-
-  const toastIcon =
-    document.getElementById("toastIcon");
-
-  const toastTitle =
-    document.getElementById("toastTitle");
-
-  const toastMessage =
-    document.getElementById("toastMessage");
+  /* Toast */
+  const toast = $("toast");
+  const toastIcon = $("toastIcon");
+  const toastTitle = $("toastTitle");
+  const toastMessage = $("toastMessage");
 
 
-  /* =========================
+  /* =======================================================
+     CONFIGURATION
+     ======================================================= */
+
+  const CONFIG = Object.freeze({
+    ROOMS_PATH: "battles",
+    ECONOMY_PATH: "economy",
+
+    MAX_PLAYERS: 2,
+
+    ROOM_CODE_LENGTH: 6,
+
+    STARTER_COINS: 1000,
+
+    CURRENT_ROOM_KEY: "ludoverseCurrentRoom",
+
+    ROOM_CREATION_ATTEMPTS: 25,
+
+    TOAST_DURATION: 3200,
+
+    OPEN_DELAY: 400
+  });
+
+
+  /* =======================================================
      STATE
-  ========================= */
+     ======================================================= */
 
   let currentUser = null;
 
   let rooms = {};
 
   let currentRoomCode =
-    localStorage.getItem("ludoverseCurrentRoom") || "";
+    localStorage.getItem(CONFIG.CURRENT_ROOM_KEY) || "";
 
   let roomsUnsubscribe = null;
 
@@ -169,76 +152,44 @@ document.addEventListener("DOMContentLoaded", () => {
 
   let busy = false;
 
+  let profileOpen = false;
 
-  /* =========================
-     CONSTANTS
-  ========================= */
-
-  const ROOMS_PATH = "battles";
-
-  const MAX_PLAYERS = 2;
-
-  const ROOM_CODE_LENGTH = 6;
-
-  const STARTER_COINS = 1000;
+  let toastTimer = null;
 
 
-  /* =========================
-     HELPERS
-  ========================= */
+  /* =======================================================
+     FIREBASE REFERENCES
+     ======================================================= */
 
-  function getRoomsRef() {
-    return ref(database, ROOMS_PATH);
-  }
-
-
-  function getRoomRef(roomCode) {
+  function roomsRef() {
     return ref(
       database,
-      `${ROOMS_PATH}/${roomCode}`
+      CONFIG.ROOMS_PATH
     );
   }
 
 
-  function getEconomyRef(uid) {
+  function roomRef(roomCode) {
     return ref(
       database,
-      `users/${uid}/economy`
+      `${CONFIG.ROOMS_PATH}/${roomCode}`
     );
   }
 
 
-  function playerName(user) {
-
-    if (!user) {
-      return "LUDOVERSE Player";
-    }
-
-    return (
-      user.displayName ||
-      user.email?.split("@")[0] ||
-      user.phoneNumber ||
-      "LUDOVERSE Player"
+  function economyRef(uid) {
+    return ref(
+      database,
+      `users/${uid}/${CONFIG.ECONOMY_PATH}`
     );
   }
 
 
-  function initials(name) {
+  /* =======================================================
+     GENERIC HELPERS
+     ======================================================= */
 
-    const value =
-      String(name || "Player")
-        .trim()
-        .split(/\s+/)
-        .slice(0, 2)
-        .map(part => part.charAt(0))
-        .join("")
-        .toUpperCase();
-
-    return value || "P";
-  }
-
-
-  function normalizeNumber(value, fallback = 0) {
+  function safeNumber(value, fallback = 0) {
 
     const number = Number(value);
 
@@ -248,39 +199,18 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
 
-  function normalizeEconomy(data) {
+  function normalizeString(value, fallback = "") {
 
-    return {
-      ludoCoins: Math.max(
-        0,
-        normalizeNumber(data?.ludoCoins)
-      ),
+    if (
+      value === null ||
+      value === undefined
+    ) {
+      return fallback;
+    }
 
-      xp: Math.max(
-        0,
-        normalizeNumber(data?.xp)
-      ),
+    const result = String(value).trim();
 
-      gamesPlayed: Math.max(
-        0,
-        normalizeNumber(data?.gamesPlayed)
-      ),
-
-      gamesWon: Math.max(
-        0,
-        normalizeNumber(data?.gamesWon)
-      ),
-
-      activityPoints: Math.max(
-        0,
-        normalizeNumber(data?.activityPoints)
-      ),
-
-      platformPoints: Math.max(
-        0,
-        normalizeNumber(data?.platformPoints)
-      )
-    };
+    return result || fallback;
   }
 
 
@@ -295,161 +225,359 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
 
+  function formatNumber(value) {
+
+    return safeNumber(value)
+      .toLocaleString("en-IN");
+  }
+
+
+  function formatAge(timestamp) {
+
+    const time =
+      safeNumber(timestamp);
+
+    if (!time) {
+      return "just now";
+    }
+
+    const difference =
+      Math.max(
+        0,
+        Date.now() - time
+      );
+
+    const seconds =
+      Math.floor(
+        difference / 1000
+      );
+
+    if (seconds < 10) {
+      return "just now";
+    }
+
+    if (seconds < 60) {
+      return `${seconds}s ago`;
+    }
+
+    const minutes =
+      Math.floor(
+        seconds / 60
+      );
+
+    if (minutes < 60) {
+      return `${minutes}m ago`;
+    }
+
+    const hours =
+      Math.floor(
+        minutes / 60
+      );
+
+    if (hours < 24) {
+      return `${hours}h ago`;
+    }
+
+    return `${Math.floor(hours / 24)}d ago`;
+  }
+
+
+  function getPlayerName(user) {
+
+    if (!user) {
+      return "LUDOVERSE Player";
+    }
+
+    return (
+      normalizeString(
+        user.displayName
+      ) ||
+
+      normalizeString(
+        user.email?.split("@")[0]
+      ) ||
+
+      normalizeString(
+        user.phoneNumber
+      ) ||
+
+      "LUDOVERSE Player"
+    );
+  }
+
+
+  function getInitials(name) {
+
+    const parts =
+      String(
+        name || "Player"
+      )
+        .trim()
+        .split(/\s+/)
+        .filter(Boolean)
+        .slice(0, 2);
+
+    const initials =
+      parts
+        .map(
+          part =>
+            part
+              .charAt(0)
+              .toUpperCase()
+        )
+        .join("");
+
+    return initials || "P";
+  }
+
+
+  /* =======================================================
+     TOAST
+     ======================================================= */
+
   function showToast(
     message,
     title = "LUDOVERSE",
     type = "success"
   ) {
 
-    if (!toast || !toastMessage) {
-      alert(message);
+    if (
+      !toast ||
+      !toastMessage
+    ) {
+      console.log(
+        `[${title}] ${message}`
+      );
+
       return;
     }
 
-    if (toastTitle) {
-      toastTitle.textContent = title;
+    if (toastTimer) {
+      clearTimeout(toastTimer);
     }
 
-    toastMessage.textContent = message;
+    if (toastTitle) {
+      toastTitle.textContent =
+        title;
+    }
+
+    toastMessage.textContent =
+      message;
+
+    toast.classList.remove(
+      "success",
+      "error",
+      "info",
+      "show"
+    );
+
+    toast.classList.add(
+      type
+    );
 
     if (toastIcon) {
 
-      if (type === "error") {
-        toastIcon.textContent = "!";
-        toastIcon.style.color = "#fca5a5";
-        toastIcon.style.background =
-          "rgba(239,68,68,.11)";
-      }
-
-      else if (type === "info") {
-        toastIcon.textContent = "i";
-        toastIcon.style.color = "#93c5fd";
-        toastIcon.style.background =
-          "rgba(59,130,246,.11)";
-      }
-
-      else {
-        toastIcon.textContent = "✓";
-        toastIcon.style.color = "#86efac";
-        toastIcon.style.background =
-          "rgba(34,197,94,.11)";
-      }
+      toastIcon.textContent =
+        type === "error"
+          ? "!"
+          : type === "info"
+            ? "i"
+            : "✓";
     }
 
-    toast.classList.add("show");
+    requestAnimationFrame(() => {
 
-    clearTimeout(showToast.timer);
+      toast.classList.add(
+        "show"
+      );
 
-    showToast.timer = setTimeout(() => {
-      toast.classList.remove("show");
-    }, 3000);
+    });
+
+    toastTimer =
+      setTimeout(() => {
+
+        toast.classList.remove(
+          "show"
+        );
+
+      }, CONFIG.TOAST_DURATION);
   }
 
 
-  function setBusy(value) {
+  /* =======================================================
+     BUSY STATE
+     ======================================================= */
 
-    busy = value;
+  function setBusy(
+    value,
+    source = ""
+  ) {
+
+    busy =
+      Boolean(value);
+
+    const buttons = [
+      quickMatchBtn,
+      createBattleBtn,
+      confirmCreateBtn,
+      confirmJoinBtn
+    ];
+
+    buttons
+      .filter(Boolean)
+      .forEach(button => {
+
+        button.disabled =
+          busy;
+
+      });
+
 
     if (quickMatchBtn) {
-      quickMatchBtn.disabled = value;
 
-      if (value) {
-        quickMatchBtn.dataset.originalHTML =
-          quickMatchBtn.innerHTML;
+      if (
+        busy &&
+        source === "quick"
+      ) {
+
+        if (
+          !quickMatchBtn.dataset
+            .originalHTML
+        ) {
+
+          quickMatchBtn.dataset
+            .originalHTML =
+            quickMatchBtn.innerHTML;
+        }
 
         quickMatchBtn.innerHTML = `
           <span class="btn-icon">◌</span>
           <span>
             <strong>Finding Match...</strong>
-            <small>Please wait</small>
+            <small>Connecting to a live room</small>
           </span>
         `;
-      }
 
-      else if (quickMatchBtn.dataset.originalHTML) {
+      } else if (
+        !busy &&
+        quickMatchBtn.dataset
+          .originalHTML
+      ) {
+
         quickMatchBtn.innerHTML =
-          quickMatchBtn.dataset.originalHTML;
+          quickMatchBtn.dataset
+            .originalHTML;
       }
     }
 
-    if (createBattleBtn) {
-      createBattleBtn.disabled = value;
-    }
 
     if (confirmCreateBtn) {
-      confirmCreateBtn.disabled = value;
+
       confirmCreateBtn.textContent =
-        value ? "Creating Room..." : "Create Room →";
+        busy && source === "create"
+          ? "Creating Room..."
+          : "Create Room →";
     }
 
+
     if (confirmJoinBtn) {
-      confirmJoinBtn.disabled = value;
+
       confirmJoinBtn.textContent =
-        value ? "Joining Room..." : "Join Room →";
+        busy && source === "join"
+          ? "Joining Room..."
+          : "Join Room →";
     }
   }
 
 
-  /* =========================
+  /* =======================================================
      PROFILE
-  ========================= */
+     ======================================================= */
 
   function renderProfile(user) {
 
-    const name = playerName(user);
+    const name =
+      getPlayerName(user);
+
+    const initials =
+      getInitials(name);
+
 
     if (headerName) {
-      headerName.textContent = name;
+      headerName.textContent =
+        name;
     }
 
+
     if (headerEmail) {
+
       headerEmail.textContent =
         user.email ||
         user.phoneNumber ||
         "Authenticated player";
     }
 
-    const letters = initials(name);
 
     if (profileAvatar) {
-      profileAvatar.textContent = letters;
+      profileAvatar.textContent =
+        initials;
     }
 
+
     if (menuAvatar) {
-      menuAvatar.textContent = letters;
+      menuAvatar.textContent =
+        initials;
     }
   }
 
 
   function toggleProfileMenu() {
 
-    if (!profileMenu || !profileBtn) {
+    if (
+      !profileMenu ||
+      !profileBtn
+    ) {
       return;
     }
 
-    const isOpen =
-      profileMenu.classList.toggle("show");
+    profileOpen =
+      !profileOpen;
+
+    profileMenu.classList.toggle(
+      "show",
+      profileOpen
+    );
 
     profileBtn.classList.toggle(
       "open",
-      isOpen
+      profileOpen
     );
 
     profileBtn.setAttribute(
       "aria-expanded",
-      String(isOpen)
+      String(profileOpen)
     );
   }
 
 
   function closeProfileMenu() {
 
-    if (!profileMenu || !profileBtn) {
+    if (
+      !profileMenu ||
+      !profileBtn
+    ) {
       return;
     }
 
-    profileMenu.classList.remove("show");
-    profileBtn.classList.remove("open");
+    profileOpen = false;
+
+    profileMenu.classList.remove(
+      "show"
+    );
+
+    profileBtn.classList.remove(
+      "open"
+    );
 
     profileBtn.setAttribute(
       "aria-expanded",
@@ -458,72 +586,92 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
 
-  /* =========================
+  /* =======================================================
      ECONOMY
-  ========================= */
+     ======================================================= */
 
   async function ensureEconomy(user) {
 
-    const economyRef =
-      getEconomyRef(user.uid);
+    if (!user?.uid) {
+      return;
+    }
+
+    const target =
+      economyRef(user.uid);
 
     const snapshot =
-      await get(economyRef);
+      await get(target);
 
     if (!snapshot.exists()) {
 
       const starterEconomy = {
-        ludoCoins: STARTER_COINS,
+
+        ludoCoins:
+          CONFIG.STARTER_COINS,
+
         xp: 0,
+
         gamesPlayed: 0,
+
         gamesWon: 0,
+
         activityPoints: 0,
+
         platformPoints: 0,
-        updatedAt: Date.now()
+
+        updatedAt:
+          Date.now()
       };
 
       await set(
-        economyRef,
+        target,
         starterEconomy
       );
 
       return starterEconomy;
     }
 
-    return normalizeEconomy(
-      snapshot.val()
-    );
+    return snapshot.val();
   }
 
 
   function listenToEconomy(user) {
 
     if (economyUnsubscribe) {
+
       economyUnsubscribe();
-      economyUnsubscribe = null;
+
+      economyUnsubscribe =
+        null;
+    }
+
+    if (!user?.uid) {
+      return;
     }
 
     economyUnsubscribe =
       onValue(
-        getEconomyRef(user.uid),
+        economyRef(user.uid),
 
         snapshot => {
 
-          const economy =
+          const data =
             snapshot.exists()
-              ? normalizeEconomy(snapshot.val())
-              : {
-                  ludoCoins: 0,
-                  xp: 0,
-                  gamesPlayed: 0,
-                  gamesWon: 0,
-                  activityPoints: 0,
-                  platformPoints: 0
-                };
+              ? snapshot.val()
+              : {};
+
+          const coins =
+            Math.max(
+              0,
+              safeNumber(
+                data?.ludoCoins
+              )
+            );
 
           if (walletBalance) {
+
             walletBalance.textContent =
-              economy.ludoCoins.toLocaleString();
+              formatNumber(coins);
           }
         },
 
@@ -535,161 +683,34 @@ document.addEventListener("DOMContentLoaded", () => {
           );
 
           if (walletBalance) {
-            walletBalance.textContent = "0";
+            walletBalance.textContent =
+              "0";
           }
         }
       );
   }
 
 
-  /* =========================
-     ROOM NORMALIZATION
-  ========================= */
-
-  function normalizeRoom(
-    roomCode,
-    data
-  ) {
-
-    if (
-      !data ||
-      typeof data !== "object"
-    ) {
-      return null;
-    }
-
-    const players =
-      data.players &&
-      typeof data.players === "object"
-        ? data.players
-        : {};
-
-    const playerList =
-      Object.values(players);
-
-    return {
-
-      roomCode: String(roomCode),
-
-      battleId:
-        data.battleId ||
-        String(roomCode),
-
-      game:
-        data.game ||
-        "ludo",
-
-      mode:
-        data.mode ||
-        "private",
-
-      creatorUid:
-        data.creatorUid ||
-        "",
-
-      creatorName:
-        data.creatorName ||
-        "LUDOVERSE Player",
-
-      creatorPhoto:
-        data.creatorPhoto ||
-        "",
-
-      players,
-
-      playerCount:
-        playerList.length,
-
-      maxPlayers:
-        Math.max(
-          2,
-          normalizeNumber(
-            data.maxPlayers,
-            MAX_PLAYERS
-          )
-        ),
-
-      status:
-        data.status ||
-        "waiting",
-
-      createdAt:
-        normalizeNumber(
-          data.createdAt,
-          0
-        ),
-
-      updatedAt:
-        normalizeNumber(
-          data.updatedAt,
-          0
-        )
-    };
-  }
-
-
-  /* =========================
-     ROOM CODE
-  ========================= */
-
-  function generateRoomCode() {
-
-    return String(
-      Math.floor(
-        100000 +
-        Math.random() * 900000
-      )
-    );
-  }
-
-
-  async function generateUniqueRoomCode() {
-
-    for (
-      let attempt = 0;
-      attempt < 15;
-      attempt++
-    ) {
-
-      const code =
-        generateRoomCode();
-
-      const snapshot =
-        await get(
-          getRoomRef(code)
-        );
-
-      if (!snapshot.exists()) {
-        return code;
-      }
-    }
-
-    throw new Error(
-      "Could not generate a unique room code."
-    );
-  }
-
-
-  /* =========================
+  /* =======================================================
      CURRENT ROOM
-  ========================= */
+     ======================================================= */
 
   function saveCurrentRoom(code) {
 
     currentRoomCode =
-      String(code || "");
+      normalizeString(code);
 
     if (currentRoomCode) {
 
       localStorage.setItem(
-        "ludoverseCurrentRoom",
+        CONFIG.CURRENT_ROOM_KEY,
         currentRoomCode
       );
 
     } else {
 
       localStorage.removeItem(
-        "ludoverseCurrentRoom"
+        CONFIG.CURRENT_ROOM_KEY
       );
     }
 
@@ -702,7 +723,7 @@ document.addEventListener("DOMContentLoaded", () => {
     currentRoomCode = "";
 
     localStorage.removeItem(
-      "ludoverseCurrentRoom"
+      CONFIG.CURRENT_ROOM_KEY
     );
 
     renderActiveRoom();
@@ -722,11 +743,337 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
 
-  /* =========================
-     ROOM MODALS
-  ========================= */
+  /* =======================================================
+     ROOM NORMALIZATION
+     ======================================================= */
 
-  function openCreateModal() {
+  function normalizePlayer(
+    uid,
+    data
+  ) {
+
+    const player =
+      data &&
+      typeof data === "object"
+        ? data
+        : {};
+
+    return {
+
+      uid:
+        normalizeString(
+          player.uid,
+          uid
+        ),
+
+      name:
+        normalizeString(
+          player.name,
+          "LUDOVERSE Player"
+        ),
+
+      photo:
+        normalizeString(
+          player.photo
+        ),
+
+      joinedAt:
+        safeNumber(
+          player.joinedAt
+        ),
+
+      ready:
+        player.ready === true,
+
+      connected:
+        player.connected !== false
+    };
+  }
+
+
+  function normalizeRoom(
+    code,
+    data
+  ) {
+
+    if (
+      !data ||
+      typeof data !== "object"
+    ) {
+      return null;
+    }
+
+    const sourcePlayers =
+      data.players &&
+      typeof data.players === "object"
+        ? data.players
+        : {};
+
+    const players = {};
+
+    Object.entries(
+      sourcePlayers
+    ).forEach(
+      ([uid, player]) => {
+
+        if (
+          player &&
+          typeof player === "object"
+        ) {
+
+          players[uid] =
+            normalizePlayer(
+              uid,
+              player
+            );
+        }
+      }
+    );
+
+
+    return {
+
+      roomCode:
+        normalizeString(
+          data.roomCode,
+          code
+        ),
+
+      battleId:
+        normalizeString(
+          data.battleId,
+          code
+        ),
+
+      game:
+        normalizeString(
+          data.game,
+          "ludo"
+        ),
+
+      mode:
+        normalizeString(
+          data.mode,
+          "private"
+        ),
+
+      creatorUid:
+        normalizeString(
+          data.creatorUid
+        ),
+
+      creatorName:
+        normalizeString(
+          data.creatorName,
+          "LUDOVERSE Player"
+        ),
+
+      creatorPhoto:
+        normalizeString(
+          data.creatorPhoto
+        ),
+
+      players,
+
+      playerCount:
+        Object.keys(players)
+          .length,
+
+      maxPlayers:
+        Math.max(
+          CONFIG.MAX_PLAYERS,
+          safeNumber(
+            data.maxPlayers,
+            CONFIG.MAX_PLAYERS
+          )
+        ),
+
+      status:
+        normalizeString(
+          data.status,
+          "waiting"
+        ),
+
+      createdAt:
+        safeNumber(
+          data.createdAt
+        ),
+
+      updatedAt:
+        safeNumber(
+          data.updatedAt
+        ),
+
+      startedAt:
+        safeNumber(
+          data.startedAt
+        ),
+
+      completedAt:
+        safeNumber(
+          data.completedAt
+        )
+    };
+  }
+
+
+  /* =======================================================
+     ROOM CODE
+     ======================================================= */
+
+  function generateRoomCode() {
+
+    return String(
+      Math.floor(
+        100000 +
+        Math.random() * 900000
+      )
+    );
+  }
+
+
+  async function generateUniqueRoomCode() {
+
+    for (
+      let attempt = 0;
+      attempt <
+        CONFIG.ROOM_CREATION_ATTEMPTS;
+      attempt++
+    ) {
+
+      const code =
+        generateRoomCode();
+
+      const snapshot =
+        await get(
+          roomRef(code)
+        );
+
+      if (!snapshot.exists()) {
+        return code;
+      }
+    }
+
+    throw new Error(
+      "Could not generate a unique room code. Please try again."
+    );
+  }
+
+
+  /* =======================================================
+     PLAYER FACTORY
+     ======================================================= */
+
+  function createPlayerRecord(
+    user,
+    now
+  ) {
+
+    return {
+
+      uid:
+        user.uid,
+
+      name:
+        getPlayerName(user),
+
+      photo:
+        user.photoURL || "",
+
+      joinedAt:
+        now,
+
+      ready:
+        false,
+
+      connected:
+        true
+    };
+  }
+
+
+  /* =======================================================
+     ROOM FACTORY
+     ======================================================= */
+
+  function createRoomData(
+    code,
+    mode = "private"
+  ) {
+
+    const now =
+      Date.now();
+
+    const player =
+      createPlayerRecord(
+        currentUser,
+        now
+      );
+
+
+    return {
+
+      battleId:
+        code,
+
+      roomCode:
+        code,
+
+      game:
+        "ludo",
+
+      mode:
+        mode === "quick"
+          ? "quick"
+          : "private",
+
+      creatorUid:
+        currentUser.uid,
+
+      creatorName:
+        getPlayerName(
+          currentUser
+        ),
+
+      creatorPhoto:
+        currentUser.photoURL || "",
+
+      players: {
+
+        [currentUser.uid]:
+          player
+      },
+
+      maxPlayers:
+        CONFIG.MAX_PLAYERS,
+
+      status:
+        "waiting",
+
+      createdAt:
+        now,
+
+      updatedAt:
+        now,
+
+      startedAt:
+        0,
+
+      completedAt:
+        0
+    };
+  }
+
+
+  /* =======================================================
+     CREATE ROOM
+     ======================================================= */
+
+  async function createRoom() {
+
+    if (busy) {
+      return;
+    }
 
     if (!currentUser) {
 
@@ -739,136 +1086,37 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    createModal?.classList.add("show");
-  }
 
+    setBusy(
+      true,
+      "create"
+    );
 
-  function closeCreate() {
-
-    createModal?.classList.remove("show");
-  }
-
-
-  function openJoinModal(code = "") {
-
-    if (!currentUser) {
-
-      showToast(
-        "Please login before joining a room.",
-        "Login Required",
-        "error"
-      );
-
-      return;
-    }
-
-    if (roomCodeInput) {
-
-      roomCodeInput.value =
-        String(code)
-          .replace(/\D/g, "")
-          .slice(
-            0,
-            ROOM_CODE_LENGTH
-          );
-    }
-
-    joinModal?.classList.add("show");
-
-    setTimeout(() => {
-      roomCodeInput?.focus();
-    }, 120);
-  }
-
-
-  function closeJoin() {
-
-    joinModal?.classList.remove("show");
-  }
-
-
-  /* =========================
-     CREATE ROOM
-  ========================= */
-
-  async function createRoom() {
-
-    if (busy) {
-      return;
-    }
-
-    if (!currentUser) {
-
-      showToast(
-        "Please login first.",
-        "Login Required",
-        "error"
-      );
-
-      return;
-    }
-
-    setBusy(true);
 
     try {
 
-      const roomCode =
+      const code =
         await generateUniqueRoomCode();
 
-      const now = Date.now();
+      const target =
+        roomRef(code);
 
-      const player = {
-        uid: currentUser.uid,
-        name: playerName(currentUser),
-        photo: currentUser.photoURL || "",
-        joinedAt: now,
-        ready: false
-      };
-
-      const roomData = {
-
-        battleId: roomCode,
-
-        roomCode: roomCode,
-
-        game: "ludo",
-
-        mode: "private",
-
-        creatorUid:
-          currentUser.uid,
-
-        creatorName:
-          playerName(currentUser),
-
-        creatorPhoto:
-          currentUser.photoURL || "",
-
-        players: {
-          [currentUser.uid]: player
-        },
-
-        maxPlayers:
-          MAX_PLAYERS,
-
-        status: "waiting",
-
-        createdAt: now,
-
-        updatedAt: now
-      };
+      const roomData =
+        createRoomData(
+          code,
+          "private"
+        );
 
 
-      const roomRef =
-        getRoomRef(roomCode);
-
-
-      const transaction =
+      const result =
         await runTransaction(
-          roomRef,
+          target,
+
           current => {
 
-            if (current !== null) {
+            if (
+              current !== null
+            ) {
               return;
             }
 
@@ -877,7 +1125,7 @@ document.addEventListener("DOMContentLoaded", () => {
         );
 
 
-      if (!transaction.committed) {
+      if (!result.committed) {
 
         throw new Error(
           "Room creation was cancelled."
@@ -885,26 +1133,27 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
 
-      saveCurrentRoom(roomCode);
+      saveCurrentRoom(code);
 
-      closeCreate();
+      closeCreateModal();
+
 
       showToast(
-        `Room ${roomCode} created successfully.`,
-        "Room Created"
+        `Room ${code} created successfully.`,
+        "Room Created",
+        "success"
       );
 
 
       setTimeout(() => {
 
         window.location.href =
-          `battle-room.html?room=${encodeURIComponent(roomCode)}`;
+          `battle-room.html?room=${encodeURIComponent(code)}`;
 
-      }, 450);
+      }, CONFIG.OPEN_DELAY);
 
-    }
 
-    catch (error) {
+    } catch (error) {
 
       console.error(
         "Create room error:",
@@ -912,41 +1161,44 @@ document.addEventListener("DOMContentLoaded", () => {
       );
 
       showToast(
-        "Could not create the room. Please try again.",
+        error?.message ||
+          "Could not create the room.",
         "Room Error",
         "error"
       );
 
-    }
+    } finally {
 
-    finally {
-
-      setBusy(false);
-
+      setBusy(
+        false,
+        "create"
+      );
     }
   }
 
 
-  /* =========================
-     JOIN ROOM INTERNAL
-  ========================= */
+  /* =======================================================
+     JOIN ROOM — ATOMIC
+     ======================================================= */
 
   async function joinRoomInternal(
-    roomCode
+    code
   ) {
 
     if (!currentUser) {
+
       throw new Error(
         "Authentication required."
       );
     }
 
+
     const normalizedCode =
-      String(roomCode || "")
+      String(code || "")
         .replace(/\D/g, "")
         .slice(
           0,
-          ROOM_CODE_LENGTH
+          CONFIG.ROOM_CODE_LENGTH
         );
 
 
@@ -962,95 +1214,91 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
 
-    const roomRef =
-      getRoomRef(normalizedCode);
+    const target =
+      roomRef(
+        normalizedCode
+      );
+
+    const now =
+      Date.now();
+
+    const player =
+      createPlayerRecord(
+        currentUser,
+        now
+      );
 
 
-    const now = Date.now();
-
-
-    const player = {
-
-      uid:
-        currentUser.uid,
-
-      name:
-        playerName(currentUser),
-
-      photo:
-        currentUser.photoURL || "",
-
-      joinedAt:
-        now,
-
-      ready:
-        false
-    };
-
-
-    let joinResult;
-
-
-    joinResult =
+    const result =
       await runTransaction(
-        roomRef,
+        target,
+
         current => {
 
-          if (!current) {
+          if (
+            !current ||
+            typeof current !==
+              "object"
+          ) {
             return;
           }
 
 
           const players =
             current.players &&
-            typeof current.players === "object"
+            typeof current.players ===
+              "object"
+
               ? {
                   ...current.players
                 }
+
               : {};
 
 
-          const existingPlayer =
-            players[
-              currentUser.uid
-            ];
-
+          /* Already inside room */
 
           if (
-            existingPlayer
+            players[
+              currentUser.uid
+            ]
           ) {
 
             return current;
           }
 
 
-          const playerCount =
-            Object.keys(players)
-              .length;
+          const status =
+            String(
+              current.status ||
+                "waiting"
+            );
+
+
+          if (
+            status !== "waiting"
+          ) {
+
+            return;
+          }
 
 
           const maxPlayers =
             Math.max(
-              2,
-              normalizeNumber(
+              CONFIG.MAX_PLAYERS,
+              safeNumber(
                 current.maxPlayers,
-                MAX_PLAYERS
+                CONFIG.MAX_PLAYERS
               )
             );
 
 
           if (
-            current.status !==
-            "waiting"
-          ) {
-            return;
-          }
-
-
-          if (
-            playerCount >=
+            Object.keys(players)
+              .length >=
             maxPlayers
           ) {
+
             return;
           }
 
@@ -1069,17 +1317,14 @@ document.addEventListener("DOMContentLoaded", () => {
             updatedAt:
               now
           };
-
         }
       );
 
 
-    if (
-      !joinResult.committed
-    ) {
+    if (!result.committed) {
 
       const latest =
-        await get(roomRef);
+        await get(target);
 
 
       if (!latest.exists()) {
@@ -1090,7 +1335,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
 
-      const latestRoom =
+      const room =
         normalizeRoom(
           normalizedCode,
           latest.val()
@@ -1098,27 +1343,42 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
       if (
-        latestRoom?.players?.[
+        room?.players?.[
           currentUser.uid
         ]
       ) {
 
         return {
+
           roomCode:
             normalizedCode,
+
           alreadyJoined:
             true
         };
       }
 
 
+      if (
+        room &&
+        room.status !==
+          "waiting"
+      ) {
+
+        throw new Error(
+          "This room has already started."
+        );
+      }
+
+
       throw new Error(
-        "This room is already full or unavailable."
+        "This room is full or unavailable."
       );
     }
 
 
     return {
+
       roomCode:
         normalizedCode,
 
@@ -1128,12 +1388,12 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
 
-  /* =========================
-     JOIN ROOM
-  ========================= */
+  /* =======================================================
+     PUBLIC JOIN
+     ======================================================= */
 
   async function joinRoom(
-    roomCode
+    code
   ) {
 
     if (busy) {
@@ -1143,7 +1403,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!currentUser) {
 
       showToast(
-        "Please login first.",
+        "Please login before joining a room.",
         "Login Required",
         "error"
       );
@@ -1151,13 +1411,18 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    setBusy(true);
+
+    setBusy(
+      true,
+      "join"
+    );
+
 
     try {
 
       const result =
         await joinRoomInternal(
-          roomCode
+          code
         );
 
 
@@ -1165,7 +1430,8 @@ document.addEventListener("DOMContentLoaded", () => {
         result.roomCode
       );
 
-      closeJoin();
+      closeJoinModal();
+
 
       showToast(
         result.alreadyJoined
@@ -1173,20 +1439,22 @@ document.addEventListener("DOMContentLoaded", () => {
           : "You joined the room successfully.",
         result.alreadyJoined
           ? "Room"
-          : "Room Joined"
+          : "Room Joined",
+        "success"
       );
 
 
       setTimeout(() => {
 
         window.location.href =
-          `battle-room.html?room=${encodeURIComponent(result.roomCode)}`;
+          `battle-room.html?room=${encodeURIComponent(
+            result.roomCode
+          )}`;
 
-      }, 400);
+      }, CONFIG.OPEN_DELAY);
 
-    }
 
-    catch (error) {
+    } catch (error) {
 
       console.error(
         "Join room error:",
@@ -1194,25 +1462,25 @@ document.addEventListener("DOMContentLoaded", () => {
       );
 
       showToast(
-        error.message ||
-        "Could not join the room.",
+        error?.message ||
+          "Could not join the room.",
         "Join Error",
         "error"
       );
 
-    }
+    } finally {
 
-    finally {
-
-      setBusy(false);
-
+      setBusy(
+        false,
+        "join"
+      );
     }
   }
 
 
-  /* =========================
+  /* =======================================================
      QUICK MATCH
-  ========================= */
+     ======================================================= */
 
   async function quickMatch() {
 
@@ -1223,7 +1491,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!currentUser) {
 
       showToast(
-        "Please login first.",
+        "Please login before using Quick Match.",
         "Login Required",
         "error"
       );
@@ -1231,13 +1499,18 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    setBusy(true);
+
+    setBusy(
+      true,
+      "quick"
+    );
+
 
     try {
 
       const snapshot =
         await get(
-          getRoomsRef()
+          roomsRef()
         );
 
 
@@ -1265,41 +1538,51 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
 
-            if (
+            const available =
               room.status ===
-              "waiting" &&
+                "waiting" &&
 
               room.playerCount <
-              room.maxPlayers &&
+                room.maxPlayers &&
 
               !room.players?.[
                 currentUser.uid
-              ]
-            ) {
+              ];
 
-              candidates.push(room);
+
+            if (available) {
+
+              candidates.push(
+                room
+              );
             }
-
           }
         );
 
 
       candidates.sort(
         (a, b) =>
-          Number(a.createdAt) -
-          Number(b.createdAt)
+          safeNumber(
+            a.createdAt
+          ) -
+          safeNumber(
+            b.createdAt
+          )
       );
 
 
-      if (
-        candidates.length > 0
+      /* Try existing room */
+
+      for (
+        const candidate
+          of candidates
       ) {
 
         try {
 
           const result =
             await joinRoomInternal(
-              candidates[0].roomCode
+              candidate.roomCode
             );
 
 
@@ -1309,111 +1592,57 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
           showToast(
-            "Opponent found. Opening your room...",
-            "Match Found"
+            "Opponent found. Opening the room...",
+            "Match Found",
+            "success"
           );
 
 
           setTimeout(() => {
 
             window.location.href =
-              `battle-room.html?room=${encodeURIComponent(result.roomCode)}`;
+              `battle-room.html?room=${encodeURIComponent(
+                result.roomCode
+              )}`;
 
-          }, 450);
+          }, CONFIG.OPEN_DELAY);
 
 
           return;
 
-        }
-
-        catch (joinError) {
+        } catch (error) {
 
           console.warn(
-            "Selected Quick Match room became unavailable:",
-            joinError
+            "Quick Match candidate unavailable:",
+            candidate.roomCode,
+            error
           );
-
         }
       }
 
 
-      /*
-       * No available room.
-       * Create a new free matchmaking room.
-       */
+      /* No room found → create one */
 
-      const roomCode =
+      const code =
         await generateUniqueRoomCode();
 
-      const now = Date.now();
 
-      const player = {
-
-        uid:
-          currentUser.uid,
-
-        name:
-          playerName(currentUser),
-
-        photo:
-          currentUser.photoURL || "",
-
-        joinedAt:
-          now,
-
-        ready:
-          false
-      };
-
-
-      const roomData = {
-
-        battleId:
-          roomCode,
-
-        roomCode:
-          roomCode,
-
-        game:
-          "ludo",
-
-        mode:
-          "quick",
-
-        creatorUid:
-          currentUser.uid,
-
-        creatorName:
-          playerName(currentUser),
-
-        creatorPhoto:
-          currentUser.photoURL || "",
-
-        players: {
-          [currentUser.uid]:
-            player
-        },
-
-        maxPlayers:
-          MAX_PLAYERS,
-
-        status:
-          "waiting",
-
-        createdAt:
-          now,
-
-        updatedAt:
-          now
-      };
+      const roomData =
+        createRoomData(
+          code,
+          "quick"
+        );
 
 
       const result =
         await runTransaction(
-          getRoomRef(roomCode),
+          roomRef(code),
+
           current => {
 
-            if (current !== null) {
+            if (
+              current !== null
+            ) {
               return;
             }
 
@@ -1425,32 +1654,34 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!result.committed) {
 
         throw new Error(
-          "Could not create a Quick Match room."
+          "Could not create Quick Match room."
         );
       }
 
 
       saveCurrentRoom(
-        roomCode
+        code
       );
 
 
       showToast(
-        `Room ${roomCode} created. Waiting for an opponent...`,
-        "Quick Match"
+        `Quick Match room ${code} created.`,
+        "Quick Match",
+        "success"
       );
 
 
       setTimeout(() => {
 
         window.location.href =
-          `battle-room.html?room=${encodeURIComponent(roomCode)}`;
+          `battle-room.html?room=${encodeURIComponent(
+            code
+          )}`;
 
-      }, 600);
+      }, CONFIG.OPEN_DELAY);
 
-    }
 
-    catch (error) {
+    } catch (error) {
 
       console.error(
         "Quick Match error:",
@@ -1458,24 +1689,25 @@ document.addEventListener("DOMContentLoaded", () => {
       );
 
       showToast(
-        "Quick Match could not start. Please try again.",
+        error?.message ||
+          "Quick Match could not start.",
         "Match Error",
         "error"
       );
 
-    }
+    } finally {
 
-    finally {
-
-      setBusy(false);
-
+      setBusy(
+        false,
+        "quick"
+      );
     }
   }
 
 
-  /* =========================
+  /* =======================================================
      RENDER ROOMS
-  ========================= */
+     ======================================================= */
 
   function renderRooms() {
 
@@ -1484,7 +1716,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
 
-    const roomArray =
+    const availableRooms =
       Object.values(rooms)
         .map(room =>
           normalizeRoom(
@@ -1493,68 +1725,75 @@ document.addEventListener("DOMContentLoaded", () => {
           )
         )
         .filter(Boolean)
-        .filter(
-          room =>
-            room.status ===
+        .filter(room =>
+
+          room.status ===
             "waiting" &&
 
-            room.playerCount <
+          room.playerCount <
             room.maxPlayers
         )
         .sort(
           (a, b) =>
-            Number(a.createdAt) -
-            Number(b.createdAt)
+            safeNumber(
+              a.createdAt
+            ) -
+            safeNumber(
+              b.createdAt
+            )
         );
 
 
     if (availableBattleCount) {
 
       availableBattleCount.textContent =
-        roomArray.length.toLocaleString();
+        String(
+          availableRooms.length
+        );
     }
 
 
     if (onlinePlayerCount) {
 
       onlinePlayerCount.textContent =
-        roomArray
-          .reduce(
+        String(
+          availableRooms.reduce(
             (total, room) =>
               total +
               room.playerCount,
+
             0
           )
-          .toLocaleString();
+        );
     }
 
 
-    roomsList.innerHTML = "";
+    roomsList.innerHTML =
+      "";
 
 
     if (
-      roomArray.length === 0
+      availableRooms.length ===
+      0
     ) {
 
-      emptyState?.classList.remove(
-        "hidden"
-      );
+      emptyState?.classList
+        .remove("hidden");
 
       return;
     }
 
 
-    emptyState?.classList.add(
-      "hidden"
-    );
+    emptyState?.classList
+      .add("hidden");
 
 
-    roomArray.forEach(
+    availableRooms.forEach(
       room => {
 
         const card =
           document.createElement(
-            "div"
+            "article"
           );
 
 
@@ -1564,8 +1803,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const creator =
           escapeHTML(
-            room.creatorName ||
-            "LUDOVERSE Player"
+            room.creatorName
           );
 
 
@@ -1575,34 +1813,73 @@ document.addEventListener("DOMContentLoaded", () => {
           );
 
 
+        const age =
+          escapeHTML(
+            formatAge(
+              room.createdAt
+            )
+          );
+
+
+        const initials =
+          escapeHTML(
+            getInitials(
+              room.creatorName
+            )
+          );
+
+
         card.innerHTML = `
 
           <div class="room-left">
 
-            <div class="room-avatar">
-              🎲
+            <div
+              class="room-avatar"
+              aria-hidden="true"
+            >
+              ${initials}
             </div>
 
             <div class="room-info">
 
-              <h3>
-                ${creator}
-              </h3>
+              <div class="room-title-line">
+
+                <h3>
+                  ${creator}
+                </h3>
+
+                <span
+                  class="room-live-dot"
+                  aria-hidden="true"
+                ></span>
+
+              </div>
 
               <div class="room-meta">
 
-                <span class="waiting-badge">
+                <span
+                  class="waiting-badge"
+                >
                   ● WAITING
                 </span>
 
-                <span class="room-players">
-                  ${room.playerCount}/${room.maxPlayers} players
+                <span
+                  class="room-players"
+                >
+                  ${room.playerCount}/${room.maxPlayers}
+                  players
+                </span>
+
+                <span
+                  class="room-age"
+                >
+                  ${age}
                 </span>
 
               </div>
 
               <p class="room-description">
-                Free Ludo multiplayer room
+                Free Ludo multiplayer · Ready when you are
               </p>
 
             </div>
@@ -1612,7 +1889,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
           <div class="room-actions">
 
-            <div class="room-code-small">
+            <div
+              class="room-code-small"
+              aria-label="Room code"
+            >
               ${code}
             </div>
 
@@ -1630,7 +1910,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const joinButton =
           card.querySelector(
-            "[data-room-code]"
+            ".join-room-btn"
           );
 
 
@@ -1649,15 +1929,14 @@ document.addEventListener("DOMContentLoaded", () => {
         roomsList.appendChild(
           card
         );
-
       }
     );
   }
 
 
-  /* =========================
+  /* =======================================================
      ACTIVE ROOM
-  ========================= */
+     ======================================================= */
 
   function renderActiveRoom() {
 
@@ -1672,9 +1951,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (!room) {
 
-      activeRoomSection.classList.remove(
-        "show"
-      );
+      activeRoomSection.classList
+        .remove("show");
 
       return;
     }
@@ -1688,13 +1966,13 @@ document.addEventListener("DOMContentLoaded", () => {
     ) {
 
       clearCurrentRoom();
+
       return;
     }
 
 
-    activeRoomSection.classList.add(
-      "show"
-    );
+    activeRoomSection.classList
+      .add("show");
 
 
     if (activeRoomCode) {
@@ -1704,19 +1982,32 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
 
+    if (activeRoomPlayers) {
+
+      activeRoomPlayers.textContent =
+        `${room.playerCount}/${room.maxPlayers}`;
+    }
+
+
     if (activeRoomStatus) {
 
       if (
+        room.status ===
+        "playing"
+      ) {
+
+        activeRoomStatus.textContent =
+          "Match is in progress";
+
+      } else if (
         room.playerCount >=
         room.maxPlayers
       ) {
 
         activeRoomStatus.textContent =
-          "Both players connected. Open the room to get ready.";
+          "Opponent connected · Open the room to get ready";
 
-      }
-
-      else {
+      } else {
 
         activeRoomStatus.textContent =
           "Waiting for another player...";
@@ -1725,9 +2016,9 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
 
-  /* =========================
-     ROOM LISTENER
-  ========================= */
+  /* =======================================================
+     REALTIME ROOM LISTENER
+     ======================================================= */
 
   function startRoomsListener() {
 
@@ -1738,7 +2029,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     roomsUnsubscribe =
       onValue(
-        getRoomsRef(),
+
+        roomsRef(),
 
         snapshot => {
 
@@ -1762,11 +2054,13 @@ document.addEventListener("DOMContentLoaded", () => {
                     rawRoom
                   );
 
-                if (room) {
-                  normalized[code] =
-                    room;
-                }
 
+                if (room) {
+
+                  normalized[
+                    room.roomCode
+                  ] = room;
+                }
               }
             );
 
@@ -1778,19 +2072,18 @@ document.addEventListener("DOMContentLoaded", () => {
           renderRooms();
 
           renderActiveRoom();
-
         },
+
 
         error => {
 
           console.error(
-            "Rooms listener error:",
+            "Room listener error:",
             error
           );
 
-
           showToast(
-            "Live room updates are unavailable.",
+            "Live room updates are temporarily unavailable.",
             "Connection Error",
             "error"
           );
@@ -1799,9 +2092,9 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
 
-  /* =========================
-     CURRENT ROOM VALIDATION
-  ========================= */
+  /* =======================================================
+     VALIDATE SAVED ROOM
+     ======================================================= */
 
   async function validateCurrentRoom() {
 
@@ -1817,7 +2110,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const snapshot =
         await get(
-          getRoomRef(
+          roomRef(
             currentRoomCode
           )
         );
@@ -1860,44 +2153,115 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
       rooms[
-        currentRoomCode
+        room.roomCode
       ] = room;
 
 
       renderActiveRoom();
 
-    }
 
-    catch (error) {
+    } catch (error) {
 
       console.error(
         "Current room validation error:",
         error
       );
-
     }
   }
 
 
-  /* =========================
-     COPY ROOM CODE
-  ========================= */
+  /* =======================================================
+     MODALS
+     ======================================================= */
 
-  async function copyCurrentRoomCode() {
+  function openCreateModal() {
 
-    const room =
-      getCurrentRoom();
-
-
-    if (!room?.roomCode) {
-
-      showToast(
-        "There is no active room.",
-        "Room",
-        "error"
-      );
-
+    if (!createModal) {
       return;
+    }
+
+    createModal.classList
+      .add("show");
+
+    document.body.classList
+      .add("modal-open");
+  }
+
+
+  function closeCreateModal() {
+
+    if (!createModal) {
+      return;
+    }
+
+    createModal.classList
+      .remove("show");
+
+    document.body.classList
+      .remove("modal-open");
+  }
+
+
+  function openJoinModal(
+    code = ""
+  ) {
+
+    if (!joinModal) {
+      return;
+    }
+
+
+    if (roomCodeInput) {
+
+      roomCodeInput.value =
+        String(code || "")
+          .replace(/\D/g, "")
+          .slice(0, 6);
+
+      setTimeout(() => {
+
+        roomCodeInput.focus();
+
+      }, 80);
+    }
+
+
+    joinModal.classList
+      .add("show");
+
+    document.body.classList
+      .add("modal-open");
+  }
+
+
+  function closeJoinModal() {
+
+    if (!joinModal) {
+      return;
+    }
+
+    joinModal.classList
+      .remove("show");
+
+    document.body.classList
+      .remove("modal-open");
+  }
+
+
+  /* =======================================================
+     COPY
+     ======================================================= */
+
+  async function copyText(
+    value
+  ) {
+
+    const text =
+      String(value || "");
+
+
+    if (!text) {
+      return false;
     }
 
 
@@ -1908,182 +2272,205 @@ document.addEventListener("DOMContentLoaded", () => {
         window.isSecureContext
       ) {
 
-        await navigator.clipboard.writeText(
-          room.roomCode
-        );
+        await navigator.clipboard
+          .writeText(text);
 
+        return true;
       }
 
-      else {
+    } catch (error) {
 
-        const temp =
-          document.createElement(
-            "textarea"
-          );
+      console.warn(
+        "Clipboard API failed:",
+        error
+      );
+    }
 
-        temp.value =
-          room.roomCode;
 
-        temp.style.position =
-          "fixed";
+    try {
 
-        temp.style.opacity =
-          "0";
-
-        document.body.appendChild(
-          temp
+      const textarea =
+        document.createElement(
+          "textarea"
         );
 
-        temp.select();
+      textarea.value =
+        text;
 
+      textarea.style.position =
+        "fixed";
+
+      textarea.style.opacity =
+        "0";
+
+      document.body.appendChild(
+        textarea
+      );
+
+      textarea.focus();
+
+      textarea.select();
+
+      const success =
         document.execCommand(
           "copy"
         );
 
-        temp.remove();
-      }
+      textarea.remove();
 
+      return success;
 
-      showToast(
-        `Room code ${room.roomCode} copied.`,
-        "Copied"
-      );
-
-    }
-
-    catch (error) {
+    } catch (error) {
 
       console.error(
-        "Copy error:",
+        "Fallback copy failed:",
         error
       );
 
-      showToast(
-        `Room code: ${room.roomCode}`,
-        "Room Code",
-        "info"
-      );
+      return false;
     }
   }
 
 
-  /* =========================
-     OPEN CURRENT ROOM
-  ========================= */
+  /* =======================================================
+     LEAVE ROOM FROM LOBBY
+     ======================================================= */
 
-  function openCurrentRoom() {
-
-    const room =
-      getCurrentRoom();
-
-
-    if (!room?.roomCode) {
-
-      showToast(
-        "There is no active room.",
-        "Room",
-        "error"
-      );
-
-      return;
-    }
-
-
-    window.location.href =
-      `battle-room.html?room=${encodeURIComponent(room.roomCode)}`;
-  }
-
-
-  /* =========================
-     LOGOUT
-  ========================= */
-
-  async function logout() {
+  async function leaveCurrentRoom() {
 
     if (!currentUser) {
       return;
     }
 
 
-    const confirmed =
-      window.confirm(
-        "Are you sure you want to logout?"
-      );
+    const code =
+      currentRoomCode;
 
 
-    if (!confirmed) {
+    if (!code) {
       return;
     }
 
 
     try {
 
-      await signOut(auth);
+      const target =
+        roomRef(code);
 
-      localStorage.removeItem(
-        "ludoverseCurrentRoom"
+
+      const result =
+        await runTransaction(
+          target,
+
+          current => {
+
+            if (
+              !current ||
+              typeof current !==
+                "object"
+            ) {
+              return;
+            }
+
+
+            const players =
+              current.players &&
+              typeof current.players ===
+                "object"
+
+                ? {
+                    ...current.players
+                  }
+
+                : {};
+
+
+            if (
+              !players[
+                currentUser.uid
+              ]
+            ) {
+
+              return current;
+            }
+
+
+            const isCreator =
+              current.creatorUid ===
+              currentUser.uid;
+
+
+            if (isCreator) {
+
+              return null;
+            }
+
+
+            delete players[
+              currentUser.uid
+            ];
+
+
+            return {
+
+              ...current,
+
+              players,
+
+              status:
+                "waiting",
+
+              updatedAt:
+                Date.now()
+            };
+          }
+        );
+
+
+      if (
+        !result.committed
+      ) {
+
+        throw new Error(
+          "Could not leave the room."
+        );
+      }
+
+
+      clearCurrentRoom();
+
+
+      showToast(
+        "You left the room.",
+        "Room",
+        "success"
       );
 
-      window.location.href =
-        "login.html";
 
-    }
-
-    catch (error) {
+    } catch (error) {
 
       console.error(
-        "Logout error:",
+        "Leave room error:",
         error
       );
 
       showToast(
-        "Logout failed. Please try again.",
-        "Logout Error",
+        error?.message ||
+          "Could not leave the room.",
+        "Leave Error",
         "error"
       );
     }
   }
 
 
-  /* =========================
-     EVENTS
-  ========================= */
+  /* =======================================================
+     EVENT LISTENERS
+     ======================================================= */
 
-  profileBtn?.addEventListener(
+  quickMatchBtn?.addEventListener(
     "click",
-    event => {
-
-      event.stopPropagation();
-
-      toggleProfileMenu();
-
-    }
-  );
-
-
-  profileMenu?.addEventListener(
-    "click",
-    event => {
-
-      event.stopPropagation();
-
-    }
-  );
-
-
-  document.addEventListener(
-    "click",
-    () => {
-
-      closeProfileMenu();
-
-    }
-  );
-
-
-  logoutBtn?.addEventListener(
-    "click",
-    logout
+    quickMatch
   );
 
 
@@ -2099,166 +2486,243 @@ document.addEventListener("DOMContentLoaded", () => {
   );
 
 
-  quickMatchBtn?.addEventListener(
-    "click",
-    quickMatch
-  );
-
-
-  confirmCreateBtn?.addEventListener(
-    "click",
-    createRoom
-  );
-
-
-  closeCreateModal?.addEventListener(
-    "click",
-    closeCreate
-  );
-
-
-  cancelCreateBtn?.addEventListener(
-    "click",
-    closeCreate
-  );
-
-
-  closeJoinModal?.addEventListener(
-    "click",
-    closeJoin
-  );
-
-
-  cancelJoinBtn?.addEventListener(
-    "click",
-    closeJoin
-  );
-
-
-  confirmJoinBtn?.addEventListener(
-    "click",
-    () => {
-
-      joinRoom(
-        roomCodeInput?.value || ""
-      );
-
-    }
-  );
-
-
   refreshBtn?.addEventListener(
     "click",
-    async () => {
-
-      if (busy) {
-        return;
-      }
-
-      refreshBtn.disabled = true;
-
-      try {
-
-        await validateCurrentRoom();
-
-        showToast(
-          "Room list updated.",
-          "Updated"
-        );
-
-      }
-
-      finally {
-
-        setTimeout(
-          () => {
-            refreshBtn.disabled =
-              false;
-          },
-          500
-        );
-
-      }
-    }
-  );
-
-
-  copyRoomBtn?.addEventListener(
-    "click",
-    copyCurrentRoomCode
-  );
-
-
-  openRoomBtn?.addEventListener(
-    "click",
-    openCurrentRoom
-  );
-
-
-  roomCodeInput?.addEventListener(
-    "input",
     () => {
 
-      roomCodeInput.value =
-        roomCodeInput.value
-          .replace(/\D/g, "")
-          .slice(
-            0,
-            ROOM_CODE_LENGTH
-          );
+      renderRooms();
 
+      validateCurrentRoom();
+
+      showToast(
+        "Room list refreshed.",
+        "Lobby",
+        "info"
+      );
     }
   );
 
 
-  roomCodeInput?.addEventListener(
-    "keydown",
-    event => {
+  closeCreateModalButton
+    ?.addEventListener(
+      "click",
+      closeCreateModal
+    );
 
-      if (
-        event.key ===
-        "Enter"
-      ) {
 
-        event.preventDefault();
+  cancelCreateBtn
+    ?.addEventListener(
+      "click",
+      closeCreateModal
+    );
+
+
+  confirmCreateBtn
+    ?.addEventListener(
+      "click",
+      createRoom
+    );
+
+
+  closeJoinModalButton
+    ?.addEventListener(
+      "click",
+      closeJoinModal
+    );
+
+
+  cancelJoinBtn
+    ?.addEventListener(
+      "click",
+      closeJoinModal
+    );
+
+
+  confirmJoinBtn
+    ?.addEventListener(
+      "click",
+      () => {
 
         joinRoom(
+          roomCodeInput?.value
+        );
+
+      }
+    );
+
+
+  roomCodeInput
+    ?.addEventListener(
+      "input",
+      () => {
+
+        roomCodeInput.value =
           roomCodeInput.value
+            .replace(/\D/g, "")
+            .slice(0, 6);
+      }
+    );
+
+
+  roomCodeInput
+    ?.addEventListener(
+      "keydown",
+      event => {
+
+        if (
+          event.key ===
+          "Enter"
+        ) {
+
+          event.preventDefault();
+
+          joinRoom(
+            roomCodeInput.value
+          );
+        }
+      }
+    );
+
+
+  profileBtn
+    ?.addEventListener(
+      "click",
+      event => {
+
+        event.stopPropagation();
+
+        toggleProfileMenu();
+      }
+    );
+
+
+  document.addEventListener(
+    "click",
+    event => {
+
+      if (
+        profileOpen &&
+        profileMenu &&
+        !profileMenu.contains(
+          event.target
+        ) &&
+        !profileBtn?.contains(
+          event.target
+        )
+      ) {
+
+        closeProfileMenu();
+      }
+    }
+  );
+
+
+  logoutBtn
+    ?.addEventListener(
+      "click",
+      async () => {
+
+        try {
+
+          await signOut(auth);
+
+        } catch (error) {
+
+          console.error(
+            "Logout error:",
+            error
+          );
+
+          showToast(
+            "Could not logout.",
+            "Logout Error",
+            "error"
+          );
+        }
+      }
+    );
+
+
+  copyRoomBtn
+    ?.addEventListener(
+      "click",
+      async () => {
+
+        const code =
+          currentRoomCode;
+
+        const success =
+          await copyText(code);
+
+        showToast(
+          success
+            ? "Room code copied."
+            : `Room code: ${code}`,
+          "Room Code",
+          success
+            ? "success"
+            : "info"
         );
       }
-
-    }
-  );
+    );
 
 
-  createModal?.addEventListener(
-    "click",
-    event => {
+  openRoomBtn
+    ?.addEventListener(
+      "click",
+      () => {
 
-      if (
-        event.target ===
-        createModal
-      ) {
-        closeCreate();
+        if (!currentRoomCode) {
+          return;
+        }
+
+        window.location.href =
+          `battle-room.html?room=${encodeURIComponent(
+            currentRoomCode
+          )}`;
       }
-
-    }
-  );
+    );
 
 
-  joinModal?.addEventListener(
-    "click",
-    event => {
+  leaveRoomBtn
+    ?.addEventListener(
+      "click",
+      leaveCurrentRoom
+    );
 
-      if (
-        event.target ===
-        joinModal
-      ) {
-        closeJoin();
-      }
 
-    }
-  );
+  /* =======================================================
+     MODAL BACKDROP
+     ======================================================= */
+
+  [createModal, joinModal]
+    .filter(Boolean)
+    .forEach(modal => {
+
+      modal.addEventListener(
+        "click",
+        event => {
+
+          if (
+            event.target ===
+            modal
+          ) {
+
+            if (
+              modal ===
+              createModal
+            ) {
+
+              closeCreateModal();
+
+            } else {
+
+              closeJoinModal();
+            }
+          }
+        }
+      );
+    });
 
 
   document.addEventListener(
@@ -2270,27 +2734,52 @@ document.addEventListener("DOMContentLoaded", () => {
         "Escape"
       ) {
 
-        closeCreate();
+        closeCreateModal();
 
-        closeJoin();
+        closeJoinModal();
 
         closeProfileMenu();
-
       }
-
     }
   );
 
 
-  /* =========================
-     AUTH
-  ========================= */
+  /* =======================================================
+     AUTH STATE
+     ======================================================= */
 
   onAuthStateChanged(
     auth,
+
     async user => {
 
-      if (!user) {
+      currentUser =
+        user || null;
+
+
+      if (!currentUser) {
+
+        if (
+          economyUnsubscribe
+        ) {
+
+          economyUnsubscribe();
+
+          economyUnsubscribe =
+            null;
+        }
+
+
+        if (
+          roomsUnsubscribe
+        ) {
+
+          roomsUnsubscribe();
+
+          roomsUnsubscribe =
+            null;
+        }
+
 
         window.location.href =
           "login.html";
@@ -2299,61 +2788,50 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
 
-      currentUser =
-        user;
-
-
       renderProfile(
-        user
+        currentUser
       );
 
 
       try {
 
         await ensureEconomy(
-          user
+          currentUser
         );
 
-        listenToEconomy(
-          user
-        );
-
-      }
-
-      catch (error) {
+      } catch (error) {
 
         console.error(
           "Economy initialization error:",
           error
         );
-
-        if (walletBalance) {
-          walletBalance.textContent =
-            "0";
-        }
-
-        showToast(
-          "Your LudoCoin balance could not be loaded.",
-          "Wallet",
-          "error"
-        );
       }
+
+
+      listenToEconomy(
+        currentUser
+      );
 
 
       startRoomsListener();
 
+
       await validateCurrentRoom();
+
 
       renderRooms();
 
       renderActiveRoom();
-
     }
   );
 
 
-  console.log(
-    "LUDOVERSE Professional Multiplayer Lobby Ready"
-  );
+  /* =======================================================
+     INITIAL UI
+     ======================================================= */
+
+  renderRooms();
+
+  renderActiveRoom();
 
 });
