@@ -13,7 +13,7 @@ import {
 /*
 =========================================================
  LUDOVERSE FREE ECONOMY
- LudoCoins + XP + Stats
+ LudoCoins + XP + Stats + One-Time Rewards
 =========================================================
 
 IMPORTANT:
@@ -22,6 +22,7 @@ IMPORTANT:
 - No withdrawals.
 - No cash prizes.
 - 10% is only a non-monetary platform metric.
+- Each free reward can be claimed only ONCE per account.
 =========================================================
 */
 
@@ -100,6 +101,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
   let coinTransactions = [];
 
+  let claimedRewards = {};
+
+  let rewardClaimInProgress = false;
+
 
   /* =====================================================
      CONSTANTS
@@ -138,6 +143,19 @@ document.addEventListener("DOMContentLoaded", () => {
     return ref(
       database,
       `users/${currentUser.uid}/coinTransactions`
+    );
+  }
+
+
+  function getClaimedRewardsRef() {
+
+    if (!currentUser) {
+      return null;
+    }
+
+    return ref(
+      database,
+      `users/${currentUser.uid}/claimedRewards`
     );
   }
 
@@ -223,7 +241,7 @@ document.addEventListener("DOMContentLoaded", () => {
       return {
         name: "Legend",
         levelStart: 50000,
-        levelEnd: 100000
+        levelEnd: 50000
       };
     }
 
@@ -278,7 +296,7 @@ document.addEventListener("DOMContentLoaded", () => {
     return {
       name: "Rookie",
       levelStart: 0,
-      levelEnd: 100
+      levelEnd: 500
     };
   }
 
@@ -289,20 +307,31 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function updateUI() {
 
-    walletBalanceElement.textContent =
-      economy.ludoCoins.toLocaleString();
+    if (walletBalanceElement) {
+      walletBalanceElement.textContent =
+        economy.ludoCoins.toLocaleString();
+    }
 
-    xpValueElement.textContent =
-      `${economy.xp.toLocaleString()} XP`;
+    if (xpValueElement) {
+      xpValueElement.textContent =
+        `${economy.xp.toLocaleString()} XP`;
+    }
 
-    statXpElement.textContent =
-      economy.xp.toLocaleString();
+    if (statXpElement) {
+      statXpElement.textContent =
+        economy.xp.toLocaleString();
+    }
 
-    gamesPlayedElement.textContent =
-      economy.gamesPlayed;
+    if (gamesPlayedElement) {
+      gamesPlayedElement.textContent =
+        economy.gamesPlayed;
+    }
 
-    gamesWonElement.textContent =
-      economy.gamesWon;
+    if (gamesWonElement) {
+      gamesWonElement.textContent =
+        economy.gamesWon;
+    }
+
 
     const winRate =
       economy.gamesPlayed > 0
@@ -312,39 +341,67 @@ document.addEventListener("DOMContentLoaded", () => {
           )
         : 0;
 
-    winRateElement.textContent =
-      `${winRate}%`;
 
-    activityPointsElement.textContent =
-      `${economy.activityPoints.toLocaleString()} pts`;
+    if (winRateElement) {
+      winRateElement.textContent =
+        `${winRate}%`;
+    }
 
-    platformPointsElement.textContent =
-      `${economy.platformPoints.toLocaleString()} pts`;
+
+    if (activityPointsElement) {
+      activityPointsElement.textContent =
+        `${economy.activityPoints.toLocaleString()} pts`;
+    }
+
+
+    if (platformPointsElement) {
+      platformPointsElement.textContent =
+        `${economy.platformPoints.toLocaleString()} pts`;
+    }
+
 
     const rank =
       getRank(economy.xp);
 
-    rankNameElement.textContent =
-      rank.name;
 
-    const currentLevelXp =
-      economy.xp - rank.levelStart;
+    if (rankNameElement) {
+      rankNameElement.textContent =
+        rank.name;
+    }
 
-    const levelRange =
-      rank.levelEnd - rank.levelStart;
 
-    const percentage =
-      Math.min(
-        100,
-        Math.max(
-          0,
-          (currentLevelXp /
-            levelRange) * 100
-        )
-      );
+    let percentage = 0;
 
-    xpFillElement.style.width =
-      `${percentage}%`;
+    if (
+      rank.levelEnd > rank.levelStart
+    ) {
+
+      const currentLevelXp =
+        economy.xp - rank.levelStart;
+
+      const levelRange =
+        rank.levelEnd - rank.levelStart;
+
+      percentage =
+        Math.min(
+          100,
+          Math.max(
+            0,
+            (currentLevelXp /
+              levelRange) * 100
+          )
+        );
+    } else {
+
+      percentage = 100;
+    }
+
+
+    if (xpFillElement) {
+      xpFillElement.style.width =
+        `${percentage}%`;
+    }
+
 
     const remaining =
       Math.max(
@@ -352,17 +409,134 @@ document.addEventListener("DOMContentLoaded", () => {
         rank.levelEnd - economy.xp
       );
 
-    if (remaining > 0) {
 
-      xpNextElement.textContent =
-        `${remaining.toLocaleString()} XP to next level`;
+    if (xpNextElement) {
 
-    } else {
+      if (
+        rank.name === "Legend"
+      ) {
 
-      xpNextElement.textContent =
-        "Maximum rank reached";
+        xpNextElement.textContent =
+          "Maximum rank reached";
 
+      } else {
+
+        xpNextElement.textContent =
+          `${remaining.toLocaleString()} XP to next level`;
+      }
     }
+  }
+
+
+  /* =====================================================
+     LOAD CLAIMED REWARDS
+  ===================================================== */
+
+  async function loadClaimedRewards() {
+
+    const claimedRef =
+      getClaimedRewardsRef();
+
+    if (!claimedRef) {
+      return;
+    }
+
+    try {
+
+      const snapshot =
+        await get(claimedRef);
+
+      if (snapshot.exists()) {
+
+        claimedRewards =
+          snapshot.val() || {};
+
+      } else {
+
+        claimedRewards = {};
+      }
+
+      updateRewardButtons();
+
+    } catch (error) {
+
+      console.error(
+        "Claimed rewards load error:",
+        error
+      );
+
+      claimedRewards = {};
+
+      updateRewardButtons();
+    }
+  }
+
+
+  /* =====================================================
+     UPDATE REWARD BUTTONS
+  ===================================================== */
+
+  function updateRewardButtons() {
+
+    rewardButtons.forEach(
+      button => {
+
+        const reward =
+          Number(
+            button.dataset.reward
+          );
+
+        const rewardKey =
+          `reward_${reward}`;
+
+
+        if (
+          claimedRewards[rewardKey] === true
+        ) {
+
+          button.classList.add(
+            "claimed"
+          );
+
+          button.disabled = true;
+
+
+          const small =
+            button.querySelector("small");
+
+
+          if (small) {
+
+            small.textContent =
+              "Already claimed";
+          }
+
+        } else {
+
+          button.classList.remove(
+            "claimed"
+          );
+
+          button.disabled = false;
+
+
+          const small =
+            button.querySelector("small");
+
+
+          if (small) {
+
+            const xp =
+              Number(
+                button.dataset.xp
+              ) || 0;
+
+            small.textContent =
+              `Coins + ${xp} XP`;
+          }
+        }
+      }
+    );
   }
 
 
@@ -384,6 +558,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const snapshot =
         await get(economyRef);
 
+
       if (snapshot.exists()) {
 
         economy =
@@ -393,23 +568,31 @@ document.addEventListener("DOMContentLoaded", () => {
 
       } else {
 
-        /*
-        First login gets free starter coins.
-        */
-
         economy = {
-          ludoCoins: STARTER_COINS,
+
+          ludoCoins:
+            STARTER_COINS,
+
           xp: 0,
+
           gamesPlayed: 0,
+
           gamesWon: 0,
+
           activityPoints: 0,
+
           platformPoints: 0
         };
 
+
         await update(
           economyRef,
-          economy
+          {
+            ...economy,
+            updatedAt: Date.now()
+          }
         );
+
 
         await createTransaction(
           "credit",
@@ -419,9 +602,12 @@ document.addEventListener("DOMContentLoaded", () => {
         );
       }
 
+
       updateUI();
 
       await loadTransactions();
+
+      await loadClaimedRewards();
 
     } catch (error) {
 
@@ -455,6 +641,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const snapshot =
         await get(transactionRef);
 
+
       if (!snapshot.exists()) {
 
         coinTransactions = [];
@@ -464,24 +651,33 @@ document.addEventListener("DOMContentLoaded", () => {
         const data =
           snapshot.val();
 
+
         coinTransactions =
           Object.entries(data)
+
             .map(
               ([id, transaction]) => ({
                 id,
                 ...transaction
               })
             )
+
             .sort(
               (a, b) =>
-                Number(b.createdAt || 0) -
-                Number(a.createdAt || 0)
+                Number(
+                  b.createdAt || 0
+                ) -
+                Number(
+                  a.createdAt || 0
+                )
             )
+
             .slice(
               0,
               MAX_HISTORY
             );
       }
+
 
       renderTransactions();
 
@@ -513,41 +709,59 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
+
+    const createdAt =
+      Date.now();
+
+
     const newTransaction =
       push(transactionRef);
+
 
     await update(
       newTransaction,
       {
+
         type,
+
         coins:
           Number(coins) || 0,
+
         xp:
           Number(xp) || 0,
+
         description,
-        createdAt:
-          Date.now()
+
+        createdAt
       }
     );
 
+
     coinTransactions.unshift({
+
       id:
         newTransaction.key,
+
       type,
+
       coins:
         Number(coins) || 0,
+
       xp:
         Number(xp) || 0,
+
       description,
-      createdAt:
-        Date.now()
+
+      createdAt
     });
+
 
     coinTransactions =
       coinTransactions.slice(
         0,
         MAX_HISTORY
       );
+
 
     renderTransactions();
   }
@@ -563,7 +777,9 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
+
     transactionList.innerHTML = "";
+
 
     if (
       coinTransactions.length === 0
@@ -580,14 +796,17 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
+
     coinTransactions.forEach(
       transaction => {
 
         const item =
           document.createElement("div");
 
+
         item.className =
           "transaction-item";
+
 
         const date =
           new Date(
@@ -596,6 +815,7 @@ document.addEventListener("DOMContentLoaded", () => {
             )
           );
 
+
         const formattedDate =
           Number.isNaN(
             date.getTime()
@@ -603,9 +823,11 @@ document.addEventListener("DOMContentLoaded", () => {
             ? ""
             : date.toLocaleString();
 
+
         const isXp =
           Number(transaction.xp) > 0 &&
           Number(transaction.coins) === 0;
+
 
         const coinText =
           Number(transaction.coins) > 0
@@ -614,12 +836,14 @@ document.addEventListener("DOMContentLoaded", () => {
               ).toLocaleString()}`
             : "";
 
+
         const xpText =
           Number(transaction.xp) > 0
             ? `+${Number(
                 transaction.xp
               )} XP`
             : "";
+
 
         item.innerHTML = `
 
@@ -628,7 +852,13 @@ document.addEventListener("DOMContentLoaded", () => {
             <div class="transaction-icon ${
               isXp ? "xp" : "credit"
             }">
-              ${isXp ? "⭐" : "🪙"}
+
+              ${
+                isXp
+                  ? "⭐"
+                  : "🪙"
+              }
+
             </div>
 
             <div>
@@ -649,11 +879,20 @@ document.addEventListener("DOMContentLoaded", () => {
           </div>
 
           <div class="transaction-amount positive">
+
             ${coinText}
-            ${coinText && xpText ? " · " : ""}
+
+            ${
+              coinText && xpText
+                ? " · "
+                : ""
+            }
+
             ${xpText}
+
           </div>
         `;
+
 
         transactionList.appendChild(
           item
@@ -670,11 +909,31 @@ document.addEventListener("DOMContentLoaded", () => {
   function escapeHTML(value) {
 
     return String(value)
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&#039;");
+
+      .replaceAll(
+        "&",
+        "&amp;"
+      )
+
+      .replaceAll(
+        "<",
+        "&lt;"
+      )
+
+      .replaceAll(
+        ">",
+        "&gt;"
+      )
+
+      .replaceAll(
+        '"',
+        "&quot;"
+      )
+
+      .replaceAll(
+        "'",
+        "&#039;"
+      );
   }
 
 
@@ -687,21 +946,31 @@ document.addEventListener("DOMContentLoaded", () => {
   ) {
 
     if (!currentUser) {
+
       showToast(
         "Please login first."
       );
+
       return;
     }
+
+
+    if (rewardClaimInProgress) {
+      return;
+    }
+
 
     const coins =
       Number(
         button.dataset.reward
       );
 
+
     const xp =
       Number(
         button.dataset.xp
       );
+
 
     if (
       !Number.isFinite(coins) ||
@@ -710,6 +979,7 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
+
     if (
       !Number.isFinite(xp) ||
       xp < 0
@@ -717,39 +987,82 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    /*
-    Each reward button can be claimed
-    only once per page session.
-    */
+
+    const rewardKey =
+      `reward_${coins}`;
+
+
+    /* ===================================================
+       PERMANENT CLAIM CHECK
+    =================================================== */
 
     if (
-      button.classList.contains(
-        "claimed"
-      )
+      claimedRewards[rewardKey] === true
     ) {
+
+      button.classList.add(
+        "claimed"
+      );
+
+      button.disabled = true;
+
+      const small =
+        button.querySelector("small");
+
+      if (small) {
+        small.textContent =
+          "Already claimed";
+      }
+
+      showToast(
+        "This reward has already been claimed."
+      );
+
       return;
     }
 
-    economy.ludoCoins += coins;
-    economy.xp += xp;
 
-    economy.activityPoints += coins;
+    rewardClaimInProgress = true;
 
-    /*
-    Non-monetary 10% platform metric.
-    */
+    button.disabled = true;
 
-    economy.platformPoints +=
+
+    const oldEconomy = {
+      ...economy
+    };
+
+
+    const platformBonus =
       Math.floor(
         coins *
         (PLATFORM_PERCENT / 100)
       );
 
+
+    /* ===================================================
+       UPDATE LOCAL ECONOMY
+    =================================================== */
+
+    economy.ludoCoins += coins;
+
+    economy.xp += xp;
+
+    economy.activityPoints += coins;
+
+    economy.platformPoints +=
+      platformBonus;
+
+
     try {
+
+      /* ================================================
+         SAVE ECONOMY
+      ================================================ */
 
       await update(
         getEconomyRef(),
         {
+
           ludoCoins:
             economy.ludoCoins,
 
@@ -773,6 +1086,35 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       );
 
+
+      /* ================================================
+         SAVE PERMANENT CLAIM
+      ================================================ */
+
+      const claimedRef =
+        getClaimedRewardsRef();
+
+
+      await update(
+        claimedRef,
+        {
+          [rewardKey]: true
+        }
+      );
+
+
+      /* ================================================
+         UPDATE LOCAL CLAIM STATE
+      ================================================ */
+
+      claimedRewards[rewardKey] =
+        true;
+
+
+      /* ================================================
+         TRANSACTION
+      ================================================ */
+
       await createTransaction(
         "credit",
         coins,
@@ -780,16 +1122,31 @@ document.addEventListener("DOMContentLoaded", () => {
         "Free Reward"
       );
 
+
+      /* ================================================
+         UPDATE BUTTON
+      ================================================ */
+
       button.classList.add(
         "claimed"
       );
 
-      button.querySelector(
-        "small"
-      ).textContent =
-        "Claimed this session";
+      button.disabled = true;
+
+
+      const small =
+        button.querySelector("small");
+
+
+      if (small) {
+
+        small.textContent =
+          "Already claimed";
+      }
+
 
       updateUI();
+
 
       showToast(
         `+${coins.toLocaleString()} LudoCoins · +${xp} XP`
@@ -802,26 +1159,32 @@ document.addEventListener("DOMContentLoaded", () => {
         error
       );
 
-      /*
-      Roll back local UI if Firebase
-      update fails.
-      */
 
-      economy.ludoCoins -= coins;
-      economy.xp -= xp;
-      economy.activityPoints -= coins;
-      economy.platformPoints -=
-        Math.floor(
-          coins *
-          (PLATFORM_PERCENT / 100)
-        );
+      /* ================================================
+         ROLLBACK LOCAL ECONOMY
+      ================================================ */
+
+      economy =
+        oldEconomy;
+
 
       updateUI();
 
+
+      button.classList.remove(
+        "claimed"
+      );
+
+      button.disabled = false;
+
+
       showToast(
-        "Reward could not be saved."
+        "Reward could not be saved. Please try again."
       );
     }
+
+
+    rewardClaimInProgress = false;
   }
 
 
@@ -838,7 +1201,6 @@ document.addEventListener("DOMContentLoaded", () => {
           claimReward(button);
         }
       );
-
     }
   );
 
@@ -850,11 +1212,6 @@ document.addEventListener("DOMContentLoaded", () => {
   createBattleBtn?.addEventListener(
     "click",
     () => {
-
-      /*
-      New free-play lobby will be connected
-      in the next development step.
-      */
 
       window.location.href =
         "battle-lobby.html";
@@ -874,8 +1231,14 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
+
       showToast(
-        `${currentUser.displayName || "LUDOVERSE Player"} · ${economy.xp.toLocaleString()} XP`
+        `${
+          currentUser.displayName ||
+          "LUDOVERSE Player"
+        } · ${
+          economy.xp.toLocaleString()
+        } XP`
       );
     }
   );
@@ -897,12 +1260,16 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
-      currentUser = user;
+
+      currentUser =
+        user;
+
 
       console.log(
         "LUDOVERSE Economy User:",
         user.uid
       );
+
 
       await loadEconomy();
     }
@@ -916,5 +1283,4 @@ document.addEventListener("DOMContentLoaded", () => {
   console.log(
     "🪙 LUDOVERSE LudoCoin + XP Economy Ready"
   );
-
 });

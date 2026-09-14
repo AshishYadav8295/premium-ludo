@@ -3,42 +3,34 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
   <meta name="theme-color" content="#070b18">
-  <meta name="description" content="LUDOVERSE Multiplayer Lobby — Find players, create private rooms and play Ludo online.">
-
+  <meta name="description" content="LUDOVERSE multiplayer lobby — find an opponent or create a private Ludo room.">
   <title>Battle Lobby | LUDOVERSE</title>
-
   <link rel="stylesheet" href="battle-lobby.css">
 </head>
 
 <body>
+  <div class="ambient ambient-one" aria-hidden="true"></div>
+  <div class="ambient ambient-two" aria-hidden="true"></div>
+  <div class="ambient ambient-three" aria-hidden="true"></div>
 
-  <!-- BACKGROUND -->
-  <div class="ambient ambient-one"></div>
-  <div class="ambient ambient-two"></div>
-  <div class="ambient ambient-three"></div>
-
-  <!-- HEADER -->
   <header class="topbar">
     <div class="topbar-inner">
 
       <a href="index.html" class="brand" aria-label="LUDOVERSE Home">
-        <span class="brand-mark">🎲</span>
-        <span class="brand-name">
-          LUDO<span>VERSE</span>
-        </span>
+        <span class="brand-mark" aria-hidden="true">🎲</span>
+        <span class="brand-name">LUDO<span>VERSE</span></span>
       </a>
 
-      <nav class="main-nav">
+      <nav class="main-nav" aria-label="Primary navigation">
         <a href="index.html">Home</a>
         <a href="battle-lobby.html" class="active">Lobby</a>
       </nav>
 
       <div class="header-right">
 
-        <div class="coin-display">
-          <span class="coin-icon">🪙</span>
+        <div class="coin-display" title="Progression points">
+          <span class="coin-icon" aria-hidden="true">🪙</span>
           <div>
             <small>LudoCoins</small>
             <strong id="walletBalance">0</strong>
@@ -51,17 +43,16 @@
             class="profile-button"
             id="profileBtn"
             aria-expanded="false"
+            aria-controls="profileMenu"
           >
             <span class="profile-avatar" id="profileAvatar">P</span>
             <span class="profile-label">Profile</span>
-            <span class="profile-chevron">⌄</span>
+            <span class="profile-chevron" aria-hidden="true">⌄</span>
           </button>
 
           <div class="profile-menu" id="profileMenu">
-
             <div class="profile-menu-head">
               <span class="profile-avatar large" id="menuAvatar">P</span>
-
               <div>
                 <strong id="headerName">LUDOVERSE Player</strong>
                 <span id="headerEmail">Loading...</span>
@@ -88,7 +79,6 @@
               <span>↪</span>
               <span>Logout</span>
             </button>
-
           </div>
         </div>
 
@@ -96,21 +86,17 @@
     </div>
   </header>
 
-
-  <!-- MAIN -->
   <main class="page">
 
-    <!-- PREMIUM HERO -->
-    <section class="hero">
+    <section class="hero" aria-labelledby="heroTitle">
 
       <div class="hero-content">
-
         <div class="eyebrow">
-          <span class="live-dot"></span>
+          <span class="live-dot" aria-hidden="true"></span>
           LUDOVERSE MATCHMAKING
         </div>
 
-        <h1>
+        <h1 id="heroTitle">
           Find your next
           <span>perfect match.</span>
         </h1>
@@ -121,61 +107,39 @@
         </p>
 
         <div class="hero-actions">
-
-          <button
-            type="button"
-            class="btn btn-primary"
-            id="quickMatchBtn"
-          >
-            <span class="btn-icon">⚡</span>
+          <button type="button" class="btn btn-primary" id="quickMatchBtn">
+            <span class="btn-icon" aria-hidden="true">⚡</span>
             <span>
               <strong>Quick Match</strong>
               <small>Find an opponent instantly</small>
             </span>
           </button>
 
-          <button
-            type="button"
-            class="btn btn-secondary"
-            id="createBattleBtn"
-          >
-            <span class="btn-icon">＋</span>
+          <button type="button" class="btn btn-secondary" id="createBattleBtn">
+            <span class="btn-icon" aria-hidden="true">＋</span>
             <span>
               <strong>Create Private Room</strong>
               <small>Invite a friend with a code</small>
             </span>
           </button>
-
         </div>
 
         <div class="hero-note">
-          <span>✓</span>
+          <span aria-hidden="true">✓</span>
           Free-to-play multiplayer · No entry required
         </div>
-
       </div>
 
-
-      <!-- HERO VISUAL -->
-      <div class="hero-visual">
-
+      <div class="hero-visual" aria-hidden="true">
         <div class="visual-glow"></div>
 
         <div class="match-card">
-
           <div class="match-card-top">
-            <span class="match-live">
-              <i></i>
-              LIVE
-            </span>
-
-            <span class="match-label">
-              LUDO MATCH
-            </span>
+            <span class="match-live"><i></i> LIVE</span>
+            <span class="match-label">LUDO MATCH</span>
           </div>
 
           <div class="match-players">
-
             <div class="match-player">
               <div class="player-orb red-orb">YOU</div>
               <span>Player</span>
@@ -190,28 +154,21 @@
               <div class="player-orb blue-orb">?</div>
               <span>Opponent</span>
             </div>
-
           </div>
 
           <div class="match-status">
             <span class="status-spinner"></span>
-            Waiting for match...
+            Live matchmaking
           </div>
-
         </div>
 
         <div class="floating-token token-one">●</div>
         <div class="floating-token token-two">●</div>
         <div class="floating-token token-three">●</div>
-
       </div>
-
     </section>
 
-
-    <!-- QUICK STATS -->
-    <section class="stats-grid">
-
+    <section class="stats-grid" aria-label="Lobby statistics">
       <div class="stat-card">
         <div class="stat-icon purple">⌁</div>
         <div>
@@ -244,231 +201,148 @@
           <span>Players / Room</span>
         </div>
       </div>
-
     </section>
 
-
-    <!-- AVAILABLE ROOMS -->
-    <section class="section">
-
+    <section class="section" aria-labelledby="roomsTitle">
       <div class="section-heading">
-
         <div>
           <div class="section-eyebrow">
             <span></span>
             LIVE ROOMS
           </div>
-
-          <h2>Available Rooms</h2>
-
-          <p>
-            Choose an open room and join the match.
-          </p>
+          <h2 id="roomsTitle">Available Rooms</h2>
+          <p>Open rooms are synchronized live through Firebase.</p>
         </div>
 
-        <button
-          type="button"
-          class="refresh-button"
-          id="refreshBtn"
-        >
-          <span>↻</span>
+        <button type="button" class="refresh-button" id="refreshBtn">
+          <span aria-hidden="true">↻</span>
           Refresh
         </button>
-
       </div>
 
-
-      <div class="room-list" id="roomsList"></div>
-
+      <div class="room-list" id="roomsList" aria-live="polite"></div>
 
       <div class="empty-room" id="emptyState">
-
         <div class="empty-illustration">
           <span>🎲</span>
         </div>
-
         <h3>No open rooms right now</h3>
-
         <p>
           Be the first player to create a room and wait for an opponent.
         </p>
-
-        <button
-          type="button"
-          class="btn btn-primary small-btn"
-          id="emptyCreateBtn"
-        >
+        <button type="button" class="btn btn-primary small-btn" id="emptyCreateBtn">
           <span>＋</span>
           Create Private Room
         </button>
-
       </div>
-
     </section>
 
-
-    <!-- ACTIVE ROOM -->
-    <section class="section active-section" id="activeRoomSection">
-
+    <section class="section active-section" id="activeRoomSection" aria-labelledby="activeRoomTitle">
       <div class="section-heading">
-
         <div>
           <div class="section-eyebrow purple-text">
             <span></span>
             YOUR ROOM
           </div>
-
-          <h2>Active Room</h2>
-
-          <p>
-            Your current multiplayer room is ready here.
-          </p>
+          <h2 id="activeRoomTitle">Active Room</h2>
+          <p>Your current multiplayer room stays synchronized across devices.</p>
         </div>
-
       </div>
 
-
       <div class="active-room-card">
-
         <div class="active-room-main">
-
           <div class="room-code-icon">#</div>
-
           <div>
             <span>ROOM CODE</span>
             <strong id="activeRoomCode">------</strong>
           </div>
-
         </div>
 
         <div class="active-room-status">
           <i></i>
-          <span id="activeRoomStatus">
-            Waiting for another player...
-          </span>
+          <span id="activeRoomStatus">Waiting for another player...</span>
+        </div>
+
+        <div class="active-room-players">
+          <span>PLAYERS</span>
+          <strong id="activeRoomPlayers">0/2</strong>
         </div>
 
         <div class="active-room-actions">
-
-          <button
-            type="button"
-            class="outline-button"
-            id="copyRoomBtn"
-          >
+          <button type="button" class="outline-button" id="copyRoomBtn">
             Copy Code
           </button>
-
-          <button
-            type="button"
-            class="primary-mini-button"
-            id="openRoomBtn"
-          >
+          <button type="button" class="outline-button danger-outline" id="leaveRoomBtn">
+            Leave
+          </button>
+          <button type="button" class="primary-mini-button" id="openRoomBtn">
             Open Room →
           </button>
-
         </div>
-
       </div>
-
     </section>
 
-
-    <!-- HOW IT WORKS -->
     <section class="section how-section">
-
       <div class="center-heading">
-
         <div class="section-eyebrow">
           <span></span>
           SIMPLE & FAST
           <span></span>
         </div>
-
         <h2>How multiplayer works</h2>
-
-        <p>
-          Everything you need to start a Ludo match in a few simple steps.
-        </p>
-
+        <p>Everything you need to start a Ludo match in a few simple steps.</p>
       </div>
 
-
       <div class="steps">
-
         <div class="step-card">
-
           <div class="step-top">
             <span>01</span>
             <div>⚡</div>
           </div>
-
           <h3>Find or Create</h3>
-
           <p>
             Use Quick Match to find an open room or create your own private room.
           </p>
-
         </div>
-
 
         <div class="step-connector"></div>
 
-
         <div class="step-card">
-
           <div class="step-top">
             <span>02</span>
             <div>🤝</div>
           </div>
-
           <h3>Connect</h3>
-
           <p>
             Share the six-digit room code with your friend or join an open room.
           </p>
-
         </div>
-
 
         <div class="step-connector"></div>
 
-
         <div class="step-card">
-
           <div class="step-top">
             <span>03</span>
             <div>🎲</div>
           </div>
-
-          <h3>Play</h3>
-
+          <h3>Ready & Play</h3>
           <p>
-            Both players get ready, the room starts, and the Ludo match begins.
+            Both players confirm readiness and the room can move into the Ludo match.
           </p>
-
         </div>
-
       </div>
-
     </section>
 
-
-    <!-- FREE PLAY SYSTEM -->
     <section class="free-play-card">
-
       <div class="free-play-icon">🎮</div>
 
       <div class="free-play-content">
-
         <span>FREE PLAY SYSTEM</span>
-
         <h2>Play. Improve. Climb.</h2>
-
         <p>
-          LudoCoins and XP are progression points used for your profile,
-          activity and game achievements.
+          LudoCoins and XP are progression points for your profile, activity,
+          achievements and future non-monetary features.
         </p>
-
       </div>
 
       <div class="free-play-points">
@@ -476,176 +350,103 @@
           <strong>🪙</strong>
           <span>LudoCoins</span>
         </div>
-
         <div>
           <strong>⭐</strong>
           <span>XP Progress</span>
         </div>
-
         <div>
           <strong>🏆</strong>
           <span>Achievements</span>
         </div>
       </div>
-
     </section>
 
   </main>
 
-
-  <!-- CREATE ROOM MODAL -->
-  <div class="modal" id="createModal">
-
+  <div class="modal" id="createModal" role="dialog" aria-modal="true" aria-labelledby="createModalTitle">
     <div class="modal-card">
-
-      <button
-        type="button"
-        class="modal-close"
-        id="closeCreateModal"
-        aria-label="Close"
-      >
-        ×
-      </button>
+      <button type="button" class="modal-close" id="closeCreateModal" aria-label="Close">×</button>
 
       <div class="modal-icon purple-modal">＋</div>
-
       <div class="modal-eyebrow">PRIVATE MULTIPLAYER</div>
-
-      <h2>Create a room</h2>
-
+      <h2 id="createModalTitle">Create a room</h2>
       <p>
         Create a free two-player Ludo room and share the six-digit code
         with your friend.
       </p>
 
       <div class="modal-info-grid">
-
         <div>
           <span>PLAYERS</span>
           <strong>2</strong>
         </div>
-
         <div>
-          <span>ENTRY</span>
+          <span>PLAY</span>
           <strong>FREE</strong>
         </div>
-
         <div>
           <span>ROOM</span>
           <strong>PRIVATE</strong>
         </div>
-
       </div>
 
-      <button
-        type="button"
-        class="modal-primary"
-        id="confirmCreateBtn"
-      >
+      <button type="button" class="modal-primary" id="confirmCreateBtn">
         Create Room →
       </button>
-
-      <button
-        type="button"
-        class="modal-cancel"
-        id="cancelCreateBtn"
-      >
+      <button type="button" class="modal-cancel" id="cancelCreateBtn">
         Cancel
       </button>
-
     </div>
-
   </div>
 
-
-  <!-- JOIN ROOM MODAL -->
-  <div class="modal" id="joinModal">
-
+  <div class="modal" id="joinModal" role="dialog" aria-modal="true" aria-labelledby="joinModalTitle">
     <div class="modal-card">
-
-      <button
-        type="button"
-        class="modal-close"
-        id="closeJoinModal"
-        aria-label="Close"
-      >
-        ×
-      </button>
+      <button type="button" class="modal-close" id="closeJoinModal" aria-label="Close">×</button>
 
       <div class="modal-icon blue-modal">#</div>
-
       <div class="modal-eyebrow">JOIN MULTIPLAYER</div>
-
-      <h2>Enter room code</h2>
-
+      <h2 id="joinModalTitle">Enter room code</h2>
       <p>
         Enter the six-digit code shared by the room creator.
       </p>
 
-      <label class="code-label" for="roomCodeInput">
-        ROOM CODE
-      </label>
-
+      <label class="code-label" for="roomCodeInput">ROOM CODE</label>
       <input
         id="roomCodeInput"
         class="room-code-input"
         type="text"
         inputmode="numeric"
-        autocomplete="off"
+        autocomplete="one-time-code"
         maxlength="6"
         placeholder="000000"
+        aria-describedby="joinHelp"
       >
+      <span id="joinHelp" class="input-help">Six digits · numbers only</span>
 
-      <button
-        type="button"
-        class="modal-primary"
-        id="confirmJoinBtn"
-      >
+      <button type="button" class="modal-primary" id="confirmJoinBtn">
         Join Room →
       </button>
-
-      <button
-        type="button"
-        class="modal-cancel"
-        id="cancelJoinBtn"
-      >
+      <button type="button" class="modal-cancel" id="cancelJoinBtn">
         Cancel
       </button>
-
     </div>
-
   </div>
 
-
-  <!-- TOAST -->
-  <div class="toast" id="toast">
-
+  <div class="toast" id="toast" role="status" aria-live="polite">
     <div class="toast-icon" id="toastIcon">✓</div>
-
     <div>
       <strong id="toastTitle">LUDOVERSE</strong>
       <span id="toastMessage">Message</span>
     </div>
-
   </div>
 
-
-  <!-- FOOTER -->
   <footer class="footer">
-
     <div class="footer-brand">
-      🎲
-      <strong>LUDO<span>VERSE</span></strong>
+      🎲 <strong>LUDO<span>VERSE</span></strong>
     </div>
-
-    <p>
-      © 2026 LUDOVERSE · Play for fun
-    </p>
-
+    <p>© 2026 LUDOVERSE · Play for fun</p>
   </footer>
 
-
   <script type="module" src="battle-lobby.js"></script>
-
 </body>
 </html>

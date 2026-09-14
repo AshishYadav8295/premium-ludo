@@ -2,1189 +2,476 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
-  >
-
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#070b16">
+  <meta name="description" content="LUDOVERSE multiplayer battle room with realtime Firebase synchronization.">
   <title>Battle Room | LUDOVERSE</title>
-
-  <link
-    rel="stylesheet"
-    href="battle-room.css"
-  >
+  <link rel="stylesheet" href="battle-room.css">
 </head>
 
 <body>
 
-  <!-- =========================================
-       BACKGROUND EFFECTS
-  ========================================== -->
-
-  <div class="background">
+  <div class="background" aria-hidden="true">
     <div class="background-glow glow-one"></div>
     <div class="background-glow glow-two"></div>
     <div class="background-grid"></div>
   </div>
 
-
-  <!-- =========================================
-       HEADER
-  ========================================== -->
-
   <header class="topbar">
-
     <div class="topbar-container">
 
-      <!-- LOGO -->
-
-      <a
-        href="index.html"
-        class="brand"
-      >
-
-        <span class="brand-icon">
-          🎲
-        </span>
-
-        <span class="brand-text">
-          LUDO<span>VERSE</span>
-        </span>
-
+      <a href="index.html" class="brand" aria-label="LUDOVERSE Home">
+        <span class="brand-icon">🎲</span>
+        <span class="brand-text">LUDO<span>VERSE</span></span>
       </a>
 
-
-      <!-- NAVIGATION -->
-
-      <nav class="top-navigation">
-
-        <a href="index.html">
-          Home
-        </a>
-
-        <a href="battle-lobby.html">
-          Battle Lobby
-        </a>
-
-        <a
-          href="battle-room.html"
-          class="active"
-        >
-          Battle Room
-        </a>
-
+      <nav class="top-navigation" aria-label="Primary navigation">
+        <a href="index.html">Home</a>
+        <a href="battle-lobby.html">Battle Lobby</a>
+        <a href="battle-room.html" class="active">Battle Room</a>
       </nav>
 
-
-      <!-- WALLET -->
-
       <div class="header-actions">
-
-        <div class="wallet-box">
-
-          <div class="wallet-icon">
-            🪙
-          </div>
-
+        <div class="wallet-box" title="Progression points">
+          <div class="wallet-icon">🪙</div>
           <div class="wallet-info">
-
-            <span>
-              Balance
-            </span>
-
-            <strong>
-              🪙
-              <span id="walletBalance">
-                0
-              </span>
-            </strong>
-
+            <span>LudoCoins</span>
+            <strong><span id="walletBalance">0</span></strong>
           </div>
-
         </div>
 
+        <div class="profile-wrap">
+          <button class="profile-button" id="profileBtn" type="button" aria-expanded="false">
+            <span class="profile-avatar" id="profileAvatar">P</span>
+            <span>Profile</span>
+            <span class="profile-chevron">⌄</span>
+          </button>
 
-        <button
-          class="profile-button"
-          id="profileBtn"
-          type="button"
-        >
+          <div class="profile-menu" id="profileMenu">
+            <div class="profile-menu-head">
+              <span class="profile-avatar large" id="menuAvatar">P</span>
+              <div>
+                <strong id="headerName">LUDOVERSE Player</strong>
+                <span id="headerEmail">Loading...</span>
+              </div>
+            </div>
 
-          👤
+            <div class="profile-menu-divider"></div>
 
-          <span>
-            Profile
-          </span>
+            <a href="wallet.html" class="profile-menu-item">
+              <span>🪙</span>
+              <span>My LudoCoins</span>
+            </a>
 
-        </button>
+            <a href="battle-lobby.html" class="profile-menu-item">
+              <span>🎮</span>
+              <span>Battle Lobby</span>
+            </a>
 
+            <button type="button" class="profile-menu-item logout-item" id="logoutBtn">
+              <span>↪</span>
+              <span>Logout</span>
+            </button>
+          </div>
+        </div>
       </div>
-
     </div>
-
   </header>
-
-
-  <!-- =========================================
-       MAIN CONTENT
-  ========================================== -->
 
   <main class="battle-room-page">
 
-
-    <!-- =========================================
-         BACK BUTTON
-    ========================================== -->
-
     <div class="back-navigation">
-
-      <button
-        id="backToLobbyBtn"
-        class="back-button"
-        type="button"
-      >
-
-        ←
-
-        <span>
-          Back to Battle Lobby
-        </span>
-
+      <button id="backToLobbyBtn" class="back-button" type="button">
+        ← <span>Back to Battle Lobby</span>
       </button>
-
     </div>
 
-
-    <!-- =========================================
-         PAGE HEADER
-    ========================================== -->
-
     <section class="battle-header">
-
       <div class="battle-header-left">
-
         <div class="live-badge">
-
           <span class="live-dot"></span>
-
-          LIVE BATTLE
-
+          FIREBASE LIVE ROOM
         </div>
 
-
-        <h1>
-
-          Battle
-
-          <span>
-            Room
-          </span>
-
-        </h1>
-
+        <h1>Battle <span>Room</span></h1>
 
         <p>
-
-          Get ready for your match.
-          Both players must be ready before
-          the game can begin.
-
+          Your room state is synchronized in real time.
+          Both players must be ready before the match can start.
         </p>
 
+        <div class="header-meta">
+          <span class="meta-pill" id="roomMode">PRIVATE ROOM</span>
+          <span class="meta-pill live-pill">
+            <i></i>
+            <span id="connectionLabel">CONNECTING...</span>
+          </span>
+        </div>
       </div>
 
-
-      <!-- ROOM CODE -->
-
       <div class="room-code-card">
-
-        <span class="room-label">
-          ROOM CODE
-        </span>
+        <span class="room-label">ROOM CODE</span>
 
         <div class="room-code-row">
-
-          <strong
-            id="roomCode"
-          >
-            ------
-          </strong>
-
+          <strong id="roomCode">------</strong>
 
           <button
             id="copyRoomCodeBtn"
             class="copy-button"
             type="button"
-            title="Copy Room Code"
+            title="Copy room code"
+            aria-label="Copy room code"
           >
             📋
           </button>
-
         </div>
 
+        <div class="room-code-actions">
+          <button id="shareRoomBtn" type="button" class="room-action-mini">
+            ↗ Share Invite
+          </button>
+        </div>
       </div>
-
     </section>
-
-
-    <!-- =========================================
-         BATTLE STATUS
-    ========================================== -->
 
     <section class="battle-status-banner">
-
       <div class="status-left">
-
-        <div
-          class="status-icon waiting"
-          id="statusIcon"
-        >
-          ⏳
-        </div>
-
+        <div class="status-icon waiting" id="statusIcon">⏳</div>
 
         <div>
-
-          <span class="status-label">
-            MATCH STATUS
-          </span>
-
-          <h2
-            id="battleStatus"
-          >
-            Waiting for Opponent
-          </h2>
-
-          <p
-            id="battleStatusDescription"
-          >
-            Waiting for another player to join
-            this battle.
+          <span class="status-label">MATCH STATUS</span>
+          <h2 id="battleStatus">Loading Room...</h2>
+          <p id="battleStatusDescription">
+            Connecting to the realtime multiplayer room.
           </p>
-
         </div>
-
       </div>
-
 
       <div class="status-right">
-
         <div class="players-count">
-
-          <span>
-            PLAYERS
-          </span>
-
+          <span>PLAYERS</span>
           <strong>
-
-            <span id="playersJoined">
-              1
-            </span>
-
+            <span id="playersJoined">0</span>
             /
-
-            <span id="totalPlayers">
-              2
-            </span>
-
+            <span id="totalPlayers">2</span>
           </strong>
-
         </div>
-
       </div>
-
     </section>
-
-
-    <!-- =========================================
-         MAIN BATTLE GRID
-    ========================================== -->
 
     <section class="battle-grid">
 
-
-      <!-- =====================================
-           PLAYERS SECTION
-      ====================================== -->
-
       <div class="players-panel">
 
-
-        <!-- PANEL HEADER -->
-
         <div class="panel-header">
-
           <div>
-
-            <span class="section-tag">
-              PLAYERS
-            </span>
-
-            <h2>
-              Battle Players
-            </h2>
-
+            <span class="section-tag">PLAYERS</span>
+            <h2>Battle Players</h2>
+            <p class="panel-subtitle">Live player and ready status</p>
           </div>
-
 
           <div class="connection-status">
-
             <span></span>
-
-            ONLINE
-
+            LIVE SYNC
           </div>
-
         </div>
-
-
-        <!-- PLAYERS ARENA -->
 
         <div class="players-arena">
 
-
-          <!-- PLAYER ONE -->
-
-          <div
-            class="player-card player-one"
-          >
-
+          <article class="player-card player-one">
             <div class="player-top">
-
-              <div class="player-avatar">
-
-                👤
-
-              </div>
-
-
-              <div
-                class="player-ready-status"
-                id="playerOneStatus"
-              >
-
-                WAITING
-
-              </div>
-
+              <div class="player-avatar" id="playerOneAvatar">P1</div>
+              <div class="player-ready-status waiting" id="playerOneStatus">WAITING</div>
             </div>
-
 
             <div class="player-details">
-
-              <span class="player-label">
-                PLAYER 1
-              </span>
-
-              <h3
-                id="playerOneName"
-              >
-                You
-              </h3>
-
-              <p>
-                Battle Creator
-              </p>
-
+              <span class="player-label">PLAYER 1 · CREATOR</span>
+              <h3 id="playerOneName">Waiting...</h3>
+              <p id="playerOneDescription">Room creator</p>
             </div>
-
 
             <div class="player-footer">
-
-              <span>
-                Entry
+              <span id="playerOneConnection" class="player-connection offline">
+                ○ OFFLINE
               </span>
-
-              <strong>
-
-                🪙
-
-                <span id="playerOneEntry">
-                  0
-                </span>
-
-              </strong>
-
+              <span class="player-role-badge">HOST</span>
             </div>
-
-          </div>
-
-
-          <!-- VS -->
+          </article>
 
           <div class="vs-container">
-
-            <div class="vs-circle">
-
-              VS
-
-            </div>
-
+            <div class="vs-line"></div>
+            <div class="vs-circle">VS</div>
+            <div class="vs-line"></div>
           </div>
 
-
-          <!-- PLAYER TWO -->
-
-          <div
-            class="player-card player-two"
-          >
-
+          <article class="player-card player-two">
             <div class="player-top">
-
-              <div
-                class="player-avatar opponent-avatar"
-                id="playerTwoAvatar"
-              >
-
-                ?
-
-              </div>
-
-
-              <div
-                class="player-ready-status"
-                id="playerTwoStatus"
-              >
-
-                WAITING
-
-              </div>
-
+              <div class="player-avatar opponent-avatar" id="playerTwoAvatar">?</div>
+              <div class="player-ready-status waiting" id="playerTwoStatus">WAITING</div>
             </div>
-
 
             <div class="player-details">
-
-              <span class="player-label">
-                PLAYER 2
-              </span>
-
-              <h3
-                id="playerTwoName"
-              >
-                Waiting...
-              </h3>
-
-              <p
-                id="playerTwoDescription"
-              >
-                Waiting for opponent
-              </p>
-
+              <span class="player-label">PLAYER 2 · OPPONENT</span>
+              <h3 id="playerTwoName">Waiting...</h3>
+              <p id="playerTwoDescription">Waiting for opponent</p>
             </div>
-
 
             <div class="player-footer">
-
-              <span>
-                Entry
+              <span id="playerTwoConnection" class="player-connection offline">
+                ○ OFFLINE
               </span>
-
-              <strong>
-
-                🪙
-
-                <span id="playerTwoEntry">
-                  0
-                </span>
-
-              </strong>
-
+              <span class="player-role-badge opponent-role">PLAYER</span>
             </div>
-
-          </div>
+          </article>
 
         </div>
-
-
-        <!-- READY SECTION -->
 
         <div class="ready-section">
-
           <div class="ready-info">
-
-            <div class="ready-icon">
-
-              🎯
-
-            </div>
-
-
+            <div class="ready-icon">🎯</div>
             <div>
-
-              <h3>
-                Ready to Play?
-              </h3>
-
-              <p
-                id="readyMessage"
-              >
+              <h3>Ready to Play?</h3>
+              <p id="readyMessage">
                 Both players must confirm they are ready.
               </p>
-
             </div>
-
           </div>
 
-
-          <button
-            class="ready-button"
-            id="readyBtn"
-            type="button"
-          >
-
-            ✓
-
-            I'm Ready
-
+          <button class="ready-button" id="readyBtn" type="button" disabled>
+            <span class="ready-button-icon">✓</span>
+            <span id="readyButtonText">Waiting for Opponent</span>
           </button>
-
         </div>
-
       </div>
-
-
-      <!-- =====================================
-           BATTLE SUMMARY
-      ====================================== -->
 
       <aside class="battle-summary-panel">
 
-
         <div class="summary-header">
-
-          <span class="section-tag purple">
-            BATTLE DETAILS
-          </span>
-
-          <h2>
-            Prize Summary
-          </h2>
-
+          <span class="section-tag purple">ROOM DETAILS</span>
+          <h2>Match Setup</h2>
+          <p>Realtime room information</p>
         </div>
-
-
-        <!-- SUMMARY CARD -->
 
         <div class="summary-card">
 
+          <div class="summary-row">
+            <span>🎮 Play System</span>
+            <strong>FREE</strong>
+          </div>
 
           <div class="summary-row">
-
-            <span>
-
-              🎮
-
-              Entry Per Player
-
-            </span>
-
-
-            <strong>
-
-              🪙
-
-              <span id="entryAmount">
-                0
-              </span>
-
-            </strong>
-
+            <span>👥 Players</span>
+            <strong id="summaryPlayers">0</strong>
           </div>
-
 
           <div class="summary-row">
-
-            <span>
-
-              👥
-
-              Total Players
-
-            </span>
-
-
-            <strong>
-
-              <span id="summaryPlayers">
-                2
-              </span>
-
-            </strong>
-
+            <span>⚡ Mode</span>
+            <strong id="summaryMode">PRIVATE ROOM</strong>
           </div>
-
 
           <div class="summary-row">
-
-            <span>
-
-              💰
-
-              Total Battle Pool
-
-            </span>
-
-
-            <strong>
-
-              🪙
-
-              <span id="totalPool">
-                0
-              </span>
-
-            </strong>
-
+            <span>● Status</span>
+            <strong id="summaryStatus">WAITING</strong>
           </div>
 
-
-          <div class="summary-row commission">
-
-            <span>
-
-              🛡️
-
-              Platform Fee
-
-            </span>
-
-
-            <strong>
-
-              10%
-
-              (
-
-              🪙
-
-              <span id="commissionAmount">
-                0
-              </span>
-
-              )
-
-            </strong>
-
+          <div class="summary-row">
+            <span># Room</span>
+            <strong id="summaryRoom">------</strong>
           </div>
-
 
           <div class="summary-divider"></div>
 
-
-          <div class="winner-prize">
-
+          <div class="progress-info">
             <div>
-
-              <span>
-                🏆 WINNER PRIZE
-              </span>
-
-              <p>
-                Prize after platform fee
-              </p>
-
+              <span>READY CHECK</span>
+              <strong>2 PLAYERS</strong>
             </div>
-
-
-            <strong>
-
-              🪙
-
-              <span id="winnerPrize">
-                0
-              </span>
-
-            </strong>
-
+            <div class="progress-track">
+              <span class="progress-fill" id="progressFill"></span>
+            </div>
+            <p>Both players confirm readiness before the creator can start.</p>
           </div>
-
         </div>
-
-
-        <!-- FAIR PLAY -->
 
         <div class="fair-play-card">
-
-          <div class="fair-play-icon">
-
-            🛡️
-
-          </div>
-
-
+          <div class="fair-play-icon">🛡️</div>
           <div>
-
-            <h3>
-              Fair Play System
-            </h3>
-
+            <h3>Fair Play System</h3>
             <p>
-
-              Match activity is tracked
-              to keep battles fair and secure.
-
+              Player readiness and room activity are synchronized through Firebase
+              so both screens see the same room state.
             </p>
-
           </div>
-
         </div>
 
+        <div class="free-play-note">
+          <span>🪙</span>
+          <div>
+            <strong>Progression only</strong>
+            <p>LudoCoins are non-monetary profile points and are not used as match entry or payout.</p>
+          </div>
+        </div>
       </aside>
-
     </section>
-
-
-    <!-- =========================================
-         GAME CONTROLS
-    ========================================== -->
 
     <section class="game-controls-section">
-
-
       <div class="controls-header">
-
         <div>
-
-          <span class="section-tag">
-            MATCH CONTROLS
-          </span>
-
-          <h2>
-            Ready to Start?
-          </h2>
-
+          <span class="section-tag">MATCH CONTROLS</span>
+          <h2>Ready to Start?</h2>
           <p>
-
-            The game will unlock when both
-            players are ready.
-
+            The creator can start the match after both players are ready.
+            The other player will be redirected automatically.
           </p>
-
         </div>
-
       </div>
-
 
       <div class="game-controls">
-
-
-        <!-- START GAME -->
-
-        <button
-          class="start-game-button"
-          id="startGameBtn"
-          type="button"
-          disabled
-        >
-
-          <span class="button-icon">
-            🎲
-          </span>
-
-
+        <button class="start-game-button" id="startGameBtn" type="button" disabled>
+          <span class="button-icon">🎲</span>
           <span>
-
-            <strong>
-              Start Ludo Match
-            </strong>
-
-            <small>
-              Both players must be ready
-            </small>
-
+            <strong>Start Ludo Match</strong>
+            <small id="startGameSubtext">Both players must be ready</small>
           </span>
-
+          <span class="button-arrow">→</span>
         </button>
 
-
-        <!-- CANCEL -->
-
-        <button
-          class="cancel-battle-button"
-          id="cancelBattleBtn"
-          type="button"
-        >
-
-          ✕
-
-          Cancel Battle
-
+        <button class="cancel-battle-button" id="cancelBattleBtn" type="button">
+          ✕ <span>Leave Room</span>
         </button>
-
       </div>
-
-
-      <!-- CANCEL POLICY -->
 
       <div class="cancel-policy">
-
-        <span>
-          ℹ️
-        </span>
-
+        <span>ℹ️</span>
         <p>
-
-          If a player cancels after the match starts,
-          cancellation rules will be applied according
-          to the battle status.
-
+          Leaving a waiting room removes your membership. If the creator leaves,
+          the private room is removed.
         </p>
-
       </div>
-
     </section>
 
-
-    <!-- =========================================
-         BATTLE TIMELINE
-    ========================================== -->
-
     <section class="timeline-section">
-
-
       <div class="timeline-header">
-
-        <span class="section-tag purple">
-          MATCH PROGRESS
-        </span>
-
-        <h2>
-          Battle Timeline
-        </h2>
-
+        <span class="section-tag purple">MATCH PROGRESS</span>
+        <h2>Battle Timeline</h2>
+        <p>Every stage is derived from the shared Firebase room state.</p>
       </div>
-
 
       <div class="battle-timeline">
 
-
-        <!-- STEP 1 -->
-
-        <div
-          class="timeline-item completed"
-          id="timelineCreated"
-        >
-
-          <div class="timeline-dot">
-
-            ✓
-
-          </div>
-
-
+        <div class="timeline-item completed" id="timelineCreated">
+          <div class="timeline-dot">✓</div>
           <div>
-
-            <span>
-              STEP 1
-            </span>
-
-            <h3>
-              Battle Created
-            </h3>
-
-            <p>
-              Your battle has been created successfully.
-            </p>
-
+            <span>STEP 1</span>
+            <h3>Room Created</h3>
+            <p>The multiplayer room exists and is ready for players.</p>
           </div>
-
         </div>
-
-
-        <!-- LINE -->
 
         <div class="timeline-line"></div>
 
-
-        <!-- STEP 2 -->
-
-        <div
-          class="timeline-item"
-          id="timelineJoined"
-        >
-
-          <div class="timeline-dot">
-
-            2
-
-          </div>
-
-
+        <div class="timeline-item" id="timelineJoined">
+          <div class="timeline-dot">2</div>
           <div>
-
-            <span>
-              STEP 2
-            </span>
-
-            <h3>
-              Opponent Joins
-            </h3>
-
-            <p>
-              Waiting for another player.
-            </p>
-
+            <span>STEP 2</span>
+            <h3>Opponent Connected</h3>
+            <p>Both player slots are filled.</p>
           </div>
-
         </div>
-
-
-        <!-- LINE -->
 
         <div class="timeline-line"></div>
 
-
-        <!-- STEP 3 -->
-
-        <div
-          class="timeline-item"
-          id="timelineReady"
-        >
-
-          <div class="timeline-dot">
-
-            3
-
-          </div>
-
-
+        <div class="timeline-item" id="timelineReady">
+          <div class="timeline-dot">3</div>
           <div>
-
-            <span>
-              STEP 3
-            </span>
-
-            <h3>
-              Players Ready
-            </h3>
-
-            <p>
-              Both players confirm readiness.
-            </p>
-
+            <span>STEP 3</span>
+            <h3>Ready Check</h3>
+            <p>Both players confirm that they are ready.</p>
           </div>
-
         </div>
-
-
-        <!-- LINE -->
 
         <div class="timeline-line"></div>
 
-
-        <!-- STEP 4 -->
-
-        <div
-          class="timeline-item"
-          id="timelinePlaying"
-        >
-
-          <div class="timeline-dot">
-
-            🎲
-
-          </div>
-
-
+        <div class="timeline-item" id="timelinePlaying">
+          <div class="timeline-dot">4</div>
           <div>
-
-            <span>
-              STEP 4
-            </span>
-
-            <h3>
-              Match Starts
-            </h3>
-
-            <p>
-              Play the Ludo battle.
-            </p>
-
+            <span>STEP 4</span>
+            <h3>Match Started</h3>
+            <p>The shared room status changes to playing.</p>
           </div>
-
         </div>
-
-
-        <!-- LINE -->
 
         <div class="timeline-line"></div>
 
-
-        <!-- STEP 5 -->
-
-        <div
-          class="timeline-item"
-          id="timelineWinner"
-        >
-
-          <div class="timeline-dot">
-
-            🏆
-
-          </div>
-
-
+        <div class="timeline-item" id="timelineWinner">
+          <div class="timeline-dot">5</div>
           <div>
-
-            <span>
-              STEP 5
-            </span>
-
-            <h3>
-              Winner Declared
-            </h3>
-
-            <p>
-              Winner receives the prize.
-            </p>
-
+            <span>STEP 5</span>
+            <h3>Match Complete</h3>
+            <p>Reserved for the later multiplayer game result system.</p>
           </div>
-
         </div>
 
       </div>
+    </section>
 
+    <section class="activity-section">
+      <div class="timeline-header">
+        <span class="section-tag">LIVE ACTIVITY</span>
+        <h2>Room Activity</h2>
+        <p>A compact view of important room events.</p>
+      </div>
+
+      <div class="activity-card">
+        <div class="activity-list" id="activityList" aria-live="polite"></div>
+        <div class="activity-empty hidden" id="activityEmpty">
+          Waiting for room activity...
+        </div>
+      </div>
     </section>
 
   </main>
 
+  <div class="modal" id="leaveModal" role="dialog" aria-modal="true" aria-labelledby="leaveModalTitle">
+    <div class="modal-card">
+      <button type="button" class="modal-close" id="closeLeaveModalBtn" aria-label="Close">×</button>
 
-  <!-- =========================================
-       CANCEL CONFIRM MODAL
-  ========================================== -->
-
-  <div
-    class="modal-overlay"
-    id="cancelModal"
-  >
-
-    <div class="cancel-modal">
-
-
-      <div class="cancel-modal-icon">
-
-        ⚠️
-
-      </div>
-
-
-      <span class="section-tag danger">
-
-        CANCEL BATTLE
-
-      </span>
-
-
-      <h2>
-        Are you sure?
-      </h2>
-
-
-      <p
-        id="cancelModalMessage"
-      >
-
-        Cancelling this battle may affect
-        the battle balance and status.
-
+      <div class="modal-icon danger-modal">!</div>
+      <div class="modal-eyebrow danger-eyebrow">LEAVE ROOM</div>
+      <h2 id="leaveModalTitle">Leave this room?</h2>
+      <p>
+        If you leave, you will need to join or create another room to continue multiplayer.
       </p>
 
-
-      <div class="cancel-modal-actions">
-
-
-        <button
-          class="modal-secondary-button"
-          id="closeCancelModalBtn"
-          type="button"
-        >
-
-          Keep Playing
-
-        </button>
-
-
-        <button
-          class="modal-danger-button"
-          id="confirmCancelBattleBtn"
-          type="button"
-        >
-
-          Yes, Cancel Battle
-
-        </button>
-
+      <div class="leave-info">
+        <span>ROOM</span>
+        <strong id="leaveRoomCode">------</strong>
       </div>
 
+      <button type="button" class="modal-danger" id="confirmLeaveBtn">
+        Leave Room
+      </button>
+      <button type="button" class="modal-cancel" id="cancelLeaveBtn">
+        Stay in Room
+      </button>
     </div>
-
   </div>
 
-
-  <!-- =========================================
-       TOAST NOTIFICATION
-  ========================================== -->
-
-  <div
-    class="toast"
-    id="toast"
-  >
-
-    <div
-      class="toast-icon"
-      id="toastIcon"
-    >
-
-      ✓
-
+  <div class="toast" id="toast" role="status" aria-live="polite">
+    <div class="toast-icon" id="toastIcon">✓</div>
+    <div>
+      <strong id="toastTitle">LUDOVERSE</strong>
+      <span id="toastMessage">Message</span>
     </div>
-
-
-    <span
-      id="toastMessage"
-    >
-      Message
-    </span>
-
   </div>
-
-
-  <!-- =========================================
-       FOOTER
-  ========================================== -->
 
   <footer class="footer">
-
-    <div class="footer-logo">
-
-      🎲
-
-      <strong>
-
-        LUDO<span>VERSE</span>
-
-      </strong>
-
+    <div class="footer-brand">
+      🎲 <strong>LUDO<span>VERSE</span></strong>
     </div>
-
-
-    <p>
-
-      © 2026 LUDOVERSE.
-      Play responsibly.
-
-    </p>
-
+    <p>© 2026 LUDOVERSE · Play for fun</p>
   </footer>
 
-
-  <!-- =========================================
-       JAVASCRIPT
-  ========================================== -->
-
-  <script src="battle-room.js"></script>
-
+  <script type="module" src="battle-room.js"></script>
 </body>
 </html>
