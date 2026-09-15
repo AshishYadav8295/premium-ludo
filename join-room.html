@@ -1,479 +1,120 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8">
-
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
-  >
-
-  <title>Join Battle | LUDOVERSE</title>
-
-  <link
-    rel="stylesheet"
-    href="join-room.css"
-  >
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#070b18">
+  <meta name="description" content="Join a LUDOVERSE private Ludo room using a six-digit room code.">
+  <title>Join Room | LUDOVERSE</title>
+  <link rel="stylesheet" href="join-room.css">
 </head>
-
 <body>
+  <div class="ambient ambient-one" aria-hidden="true"></div>
+  <div class="ambient ambient-two" aria-hidden="true"></div>
+  <div class="ambient-grid" aria-hidden="true"></div>
 
-  <!-- BACKGROUND -->
-  <div class="background">
-
-    <div class="glow glow-one"></div>
-
-    <div class="glow glow-two"></div>
-
-    <div class="grid"></div>
-
-  </div>
-
-
-  <!-- NAVBAR -->
-
-  <nav class="navbar">
-
-    <a
-      href="index.html"
-      class="brand"
-    >
-
-      <span class="brand-icon">🎲</span>
-
-      <span>
-        LUDO<span>VERSE</span>
-      </span>
-
+  <header class="topbar">
+    <a class="brand" href="index.html" aria-label="LUDOVERSE home">
+      <span class="brand-mark">🎲</span>
+      <span class="brand-name">LUDO<span>VERSE</span></span>
     </a>
-
-
-    <div class="nav-actions">
-
-      <a
-        href="wallet.html"
-        class="nav-btn"
-      >
-        💳
-        <span>Wallet</span>
+    <div class="top-actions">
+      <a class="nav-link" href="battle-lobby.html">Battle Lobby</a>
+      <a class="profile-pill" href="index.html">
+        <span class="profile-dot">●</span>
+        <span>Home</span>
       </a>
-
-
-      <a
-        href="index.html"
-        class="nav-btn profile-btn"
-      >
-        👤
-        <span>Profile</span>
-      </a>
-
     </div>
-
-  </nav>
-
-
-  <!-- MAIN -->
+  </header>
 
   <main class="join-page">
-
-
-    <!-- HEADER -->
-
-    <section class="hero-section">
-
-      <div class="hero-badge">
-        🎮 LUDOVERSE BATTLE ROOM
-      </div>
-
-
-      <h1>
-        Join Your
-        <span>Battle Room</span>
-      </h1>
-
-
-      <p>
-        Enter the 6-digit room code shared by the battle creator.
-      </p>
-
-
-      <!-- BALANCE -->
-
-      <div class="balance-pill">
-
-        <div class="balance-icon">
-          💳
-        </div>
-
-        <div>
-
-          <span>Demo Balance</span>
-
-          <strong>
-            ₹<span id="walletBalance">0</span>
-          </strong>
-
-        </div>
-
-      </div>
-
-    </section>
-
-
-
-    <!-- JOIN CARD -->
-
-    <section class="join-card">
-
-
-      <!-- CARD HEADER -->
-
-      <div class="card-header">
-
-        <div class="card-icon">
-          🎲
-        </div>
-
-
-        <div>
-
-          <span class="small-label">
-            PRIVATE BATTLE
-          </span>
-
-          <h2>
-            Enter Room Code
-          </h2>
-
-          <p>
-            Ask the battle creator for their 6-digit room code.
-          </p>
-
-        </div>
-
-      </div>
-
-
-
-      <!-- ROOM CODE INPUT -->
-
-      <div class="input-section">
-
-        <label for="roomCodeInput">
-
-          🔐 Room Code
-
-        </label>
-
-
-        <input
-          type="text"
-          id="roomCodeInput"
-          maxlength="6"
-          inputmode="numeric"
-          autocomplete="off"
-          placeholder="000000"
-        >
-
-      </div>
-
-
-
-      <!-- JOIN BUTTON -->
-
-      <button
-        id="joinBattleBtn"
-        class="join-btn"
-        type="button"
-      >
-
-        <span>🚀</span>
-
-        Join Battle
-
-      </button>
-
-
-
-      <!-- DIVIDER -->
-
-      <div class="divider">
-
-        <span>OR</span>
-
-      </div>
-
-
-
-      <!-- CREATE OWN BATTLE -->
-
-      <a
-        href="battle.html"
-        class="create-own-btn"
-      >
-
-        <span>⚔️</span>
-
-        Create Your Own Battle
-
-      </a>
-
-
-      <!-- INFO -->
-
-      <div class="security-note">
-
-        <span>🔒</span>
-
+    <section class="hero">
+      <div class="hero-copy">
+        <span class="eyebrow"><i></i> PRIVATE MULTIPLAYER</span>
+        <h1>Join your friend's <span>Ludo room.</span></h1>
         <p>
-          Your room code is used to identify your demo battle room.
+          Enter the six-digit code shared by the room creator.
+          You will be connected to the same live multiplayer room.
         </p>
 
+        <div class="trust-row">
+          <div><b>01</b><span>Get the code</span></div>
+          <div><b>02</b><span>Enter the code</span></div>
+          <div><b>03</b><span>Join & get ready</span></div>
+        </div>
       </div>
 
+      <div class="join-card">
+        <div class="card-icon">#</div>
+        <span class="card-eyebrow">ROOM ACCESS</span>
+        <h2>Enter room code</h2>
+        <p>Ask the creator for the six-digit code shown in their Battle Room.</p>
 
-    </section>
-
-
-
-    <!-- BATTLE PREVIEW -->
-
-    <section
-      class="battle-preview hidden"
-      id="battlePreview"
-    >
-
-
-      <div class="preview-top">
-
-        <div>
-
-          <span class="small-label">
-            BATTLE FOUND
-          </span>
-
-          <h2>
-            Battle Ready!
-          </h2>
-
+        <label for="roomCodeInput">6-DIGIT ROOM CODE</label>
+        <div class="code-input-wrap">
+          <input
+            id="roomCodeInput"
+            type="text"
+            inputmode="numeric"
+            autocomplete="one-time-code"
+            maxlength="6"
+            placeholder="000000"
+            aria-describedby="codeHelp"
+          >
+          <span id="codeCount">0/6</span>
         </div>
+        <small id="codeHelp">Numbers only · 6 digits</small>
 
-
-        <div class="status-badge">
-
-          <span class="status-dot"></span>
-
-          READY
-
-        </div>
-
-      </div>
-
-
-
-      <!-- PLAYERS -->
-
-      <div class="players-container">
-
-
-        <div class="player-card">
-
-          <div class="avatar you">
-
-            👤
-
+        <div class="room-preview" id="roomPreview" hidden>
+          <div class="preview-icon">✓</div>
+          <div>
+            <span>ROOM FOUND</span>
+            <strong id="previewTitle">Ready to join</strong>
+            <small id="previewMeta">Checking room...</small>
           </div>
-
-          <strong>
-            YOU
-          </strong>
-
-          <span>
-            Player 2
-          </span>
-
         </div>
 
-
-
-        <div class="vs">
-
-          VS
-
-        </div>
-
-
-
-        <div class="player-card">
-
-          <div class="avatar opponent">
-
-            ?
-
-          </div>
-
-          <strong>
-            OPPONENT
-          </strong>
-
-          <span>
-            Player 1
-          </span>
-
-        </div>
-
-
-      </div>
-
-
-
-      <!-- DETAILS -->
-
-      <div class="battle-details">
-
-
-        <div class="detail-item">
-
-          <span>🎲 Game</span>
-
-          <strong>
-            Classic Ludo
-          </strong>
-
-        </div>
-
-
-        <div class="detail-item">
-
-          <span>💰 Demo Entry</span>
-
-          <strong>
-            ₹<span id="battleEntry">0</span>
-          </strong>
-
-        </div>
-
-
-        <div class="detail-item">
-
-          <span>🏆 Demo Prize</span>
-
-          <strong class="prize">
-
-            ₹<span id="battlePrize">0</span>
-
-          </strong>
-
-        </div>
-
-
-        <div class="detail-item">
-
-          <span>👥 Players</span>
-
-          <strong>
-            2 / 2
-          </strong>
-
-        </div>
-
-
-      </div>
-
-
-
-      <!-- ACTIONS -->
-
-      <div class="preview-actions">
-
-        <button
-          id="backBtn"
-          class="back-btn"
-          type="button"
-        >
-
-          ← Back
-
+        <button id="joinBattleBtn" class="join-btn" type="button" disabled>
+          <span>Join Room</span>
+          <b>→</b>
         </button>
 
+        <button id="backBtn" class="back-btn" type="button">⌁ View Battle Lobby</button>
+        <button id="homeCancelBtn" class="home-cancel-btn" type="button">Cancel · Return Home</button>
 
-        <button
-          id="openGameBtn"
-          class="open-game-btn"
-          type="button"
-        >
-
-          🎮 Continue
-
-        </button>
-
-
+        <div class="security-note">
+          <span>●</span>
+          <p>Your room code only connects you to the selected LUDOVERSE room.</p>
+        </div>
       </div>
-
-
     </section>
 
-
-
-    <!-- SIMPLE HELP -->
-
-    <section class="help-row">
-
-      <div>
-
+    <section class="help-section">
+      <div class="help-card">
+        <span>🎲</span>
+        <div><strong>Classic Ludo</strong><small>Real-time two-player room</small></div>
+      </div>
+      <div class="help-card">
+        <span>⚡</span>
+        <div><strong>Live sync</strong><small>Room status updates instantly</small></div>
+      </div>
+      <div class="help-card">
         <span>🔐</span>
-
-        <p>
-          Get the room code from the battle creator.
-        </p>
-
+        <div><strong>Simple access</strong><small>One six-digit code is all you need</small></div>
       </div>
-
-
-      <div>
-
-        <span>🎮</span>
-
-        <p>
-          Enter the code and join the battle.
-        </p>
-
-      </div>
-
-
-      <div>
-
-        <span>🚀</span>
-
-        <p>
-          Continue when the battle is ready.
-        </p>
-
-      </div>
-
     </section>
-
-
   </main>
 
-
-
-  <!-- TOAST -->
-
-  <div
-    class="toast"
-    id="toast"
-  >
-
-    <span id="toastMessage"></span>
-
+  <div class="toast" id="toast" role="status" aria-live="polite">
+    <span id="toastIcon">!</span>
+    <div><strong id="toastTitle">LUDOVERSE</strong><span id="toastMessage">Message</span></div>
   </div>
 
-
+  <footer>
+    <strong>🎲 LUDO<span>VERSE</span></strong>
+    <span>Play for fun · Build XP · Climb the leaderboard</span>
+  </footer>
 
   <script type="module" src="join-room.js"></script>
-
 </body>
-
 </html>

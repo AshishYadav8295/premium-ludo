@@ -255,8 +255,13 @@
         <div class="summary-card">
 
           <div class="summary-row">
-            <span>🎮 Play System</span>
-            <strong>FREE</strong>
+            <span>🎮 Entry Mode</span>
+            <strong id="summaryEntryMode">FREE PLAY</strong>
+          </div>
+
+          <div class="summary-row">
+            <span>🪙 LudoCoins / Player</span>
+            <strong id="summaryCoinAmount">—</strong>
           </div>
 
           <div class="summary-row">
@@ -337,7 +342,7 @@
         </button>
 
         <button class="cancel-battle-button" id="cancelBattleBtn" type="button">
-          ✕ <span>Leave Room</span>
+          ✕ <span id="cancelBattleLabel">Cancel Battle</span>
         </button>
       </div>
 
@@ -437,8 +442,8 @@
       <button type="button" class="modal-close" id="closeLeaveModalBtn" aria-label="Close">×</button>
 
       <div class="modal-icon danger-modal">!</div>
-      <div class="modal-eyebrow danger-eyebrow">LEAVE ROOM</div>
-      <h2 id="leaveModalTitle">Leave this room?</h2>
+      <div class="modal-eyebrow danger-eyebrow" id="leaveModalEyebrow">ROOM ACTION</div>
+      <h2 id="leaveModalTitle">Cancel this battle?</h2>
       <p>
         If you leave, you will need to join or create another room to continue multiplayer.
       </p>
@@ -449,7 +454,7 @@
       </div>
 
       <button type="button" class="modal-danger" id="confirmLeaveBtn">
-        Leave Room
+        Cancel Battle
       </button>
       <button type="button" class="modal-cancel" id="cancelLeaveBtn">
         Stay in Room

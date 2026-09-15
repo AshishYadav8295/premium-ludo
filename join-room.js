@@ -1,1403 +1,243 @@
 "use strict";
 
-/* =========================================================
-   LUDOVERSE - FIREBASE JOIN ROOM SYSTEM
-   PROFESSIONAL REALTIME VERSION
-   ========================================================= */
-
 import {
   auth,
   database,
   ref,
   get,
-  update,
-  onValue,
   runTransaction,
   onAuthStateChanged
 } from "./firebase.js";
 
-
 document.addEventListener("DOMContentLoaded", () => {
+  const roomCodeInput = document.getElementById("roomCodeInput");
+  const codeCount = document.getElementById("codeCount");
+  const joinBattleBtn = document.getElementById("joinBattleBtn");
+  const backBtn = document.getElementById("backBtn");
+  const homeCancelBtn = document.getElementById("homeCancelBtn");
+  const roomPreview = document.getElementById("roomPreview");
+  const previewTitle = document.getElementById("previewTitle");
+  const previewMeta = document.getElementById("previewMeta");
+  const toast = document.getElementById("toast");
+  const toastIcon = document.getElementById("toastIcon");
+  const toastTitle = document.getElementById("toastTitle");
+  const toastMessage = document.getElementById("toastMessage");
 
-  /* =========================================================
-     DOM ELEMENTS
-     ========================================================= */
-
-  const walletBalanceElement =
-    document.getElementById("walletBalance");
-
-  const roomCodeInput =
-    document.getElementById("roomCodeInput");
-
-  const joinBattleBtn =
-    document.getElementById("joinBattleBtn");
-
-  const battlePreview =
-    document.getElementById("battlePreview");
-
-  const battleEntry =
-    document.getElementById("battleEntry");
-
-  const battlePrize =
-    document.getElementById("battlePrize");
-
-  const openGameBtn =
-    document.getElementById("openGameBtn");
-
-  const backBtn =
-    document.getElementById("backBtn");
-
-  const toast =
-    document.getElementById("toast");
-
-  const toastMessage =
-    document.getElementById("toastMessage");
-
-
-  /* =========================================================
-     APP STATE
-     ========================================================= */
+  const ROOM_PATH = "battles";
+  const MAX_PLAYERS = 2;
+  const CODE_LENGTH = 6;
+  const CURRENT_ROOM_KEY = "ludoverseCurrentRoom";
 
   let currentUser = null;
+  let busy = false;
+  let previewTimer = null;
+  let previewRequest = 0;
 
-  let walletBalance = 0;
-
-  let walletLoaded = false;
-
-  let currentBattle = null;
-
-  let joiningBattle = false;
-
-
-  /* =========================================================
-     SHOW TOAST
-     ========================================================= */
-
-  function showToast(
-    message,
-    type = "success"
-  ) {
-
-    if (!toast || !toastMessage) {
-      alert(message);
+  function toastMessageShow(message, title = "LUDOVERSE", type = "error") {
+    if (!toast) {
+      window.alert(message);
       return;
     }
-
-    toastMessage.textContent =
-      message;
-
-    toast.classList.remove(
-      "success",
-      "error",
-      "show"
-    );
-
-    toast.classList.add(type);
-
-    requestAnimationFrame(() => {
-      toast.classList.add("show");
-    });
-
-    setTimeout(() => {
-      toast.classList.remove("show");
-    }, 4000);
-
+    toastTitle.textContent = title;
+    toastMessage.textContent = message;
+    toastIcon.textContent = type === "success" ? "✓" : type === "info" ? "i" : "!";
+    toast.classList.remove("show");
+    requestAnimationFrame(() => toast.classList.add("show"));
+    clearTimeout(toastMessageShow.timer);
+    toastMessageShow.timer = setTimeout(() => toast.classList.remove("show"), 3200);
   }
 
-
-  /* =========================================================
-     FORMAT AMOUNT
-     ========================================================= */
-
-  function formatAmount(amount) {
-
-    return Number(
-      amount || 0
-    ).toLocaleString("en-IN");
-
+  function normalizeCode(value) {
+    return String(value || "").replace(/\D/g, "").slice(0, CODE_LENGTH);
   }
 
-
-  /* =========================================================
-     UPDATE WALLET DISPLAY
-     ========================================================= */
-
-  function updateWalletDisplay() {
-
-    if (!walletBalanceElement) {
-      return;
-    }
-
-    walletBalanceElement.textContent =
-      formatAmount(walletBalance);
-
+  function roomRef(code) {
+    return ref(database, `${ROOM_PATH}/${code}`);
   }
 
-
-  /* =========================================================
-     GET WALLET REFERENCE
-     ========================================================= */
-
-  function getWalletRef() {
-
-    if (!currentUser) {
-      return null;
-    }
-
-    return ref(
-      database,
-      `users/${currentUser.uid}/wallet`
-    );
-
+  function playerName(user) {
+    return user?.displayName ||
+      user?.email?.split("@")[0] ||
+      user?.phoneNumber ||
+      "LUDOVERSE Player";
   }
 
-
-  /* =========================================================
-     GET BATTLE REFERENCE
-     ========================================================= */
-
-  function getBattleRef(roomCode) {
-
-    return ref(
-      database,
-      `battles/${roomCode}`
-    );
-
+  function setButtonState() {
+    joinBattleBtn.disabled = busy || roomCodeInput.value.length !== CODE_LENGTH;
+    joinBattleBtn.innerHTML = busy
+      ? "<span>Joining Room...</span><b>◌</b>"
+      : "<span>Join Room</span><b>→</b>";
   }
 
-
-  /* =========================================================
-     REALTIME WALLET SYNC
-     ========================================================= */
-
-  function startWalletListener() {
-
-    const walletRef =
-      getWalletRef();
-
-    if (!walletRef) {
-      return;
-    }
-
-    console.log(
-      "Starting realtime wallet sync..."
-    );
-
-    onValue(
-      walletRef,
-      snapshot => {
-
-        if (snapshot.exists()) {
-
-          const walletData =
-            snapshot.val();
-
-          walletBalance =
-            Number(
-              walletData.balance
-            ) || 0;
-
-        } else {
-
-          walletBalance = 0;
-
-        }
-
-        walletLoaded = true;
-
-        updateWalletDisplay();
-
-        console.log(
-          "Realtime wallet balance:",
-          walletBalance
-        );
-
-      },
-      error => {
-
-        console.error(
-          "Wallet realtime error:",
-          error
-        );
-
-        walletLoaded = false;
-
-        showToast(
-          "Could not load wallet. Check Firebase connection.",
-          "error"
-        );
-
-      }
-    );
-
+  function hidePreview() {
+    roomPreview.hidden = true;
   }
 
-
-  /* =========================================================
-     LOAD WALLET ONCE
-     ========================================================= */
-
-  async function loadWallet() {
-
-    const walletRef =
-      getWalletRef();
-
-    if (!walletRef) {
-      return;
-    }
-
-    try {
-
-      const snapshot =
-        await get(walletRef);
-
-      if (snapshot.exists()) {
-
-        const walletData =
-          snapshot.val();
-
-        walletBalance =
-          Number(
-            walletData.balance
-          ) || 0;
-
-      } else {
-
-        walletBalance = 0;
-
-      }
-
-      walletLoaded = true;
-
-      updateWalletDisplay();
-
-      console.log(
-        "Wallet loaded:",
-        walletBalance
-      );
-
-    } catch (error) {
-
-      console.error(
-        "Wallet load error:",
-        error
-      );
-
-      walletLoaded = false;
-
-      showToast(
-        `Wallet error: ${error.message}`,
-        "error"
-      );
-
-    }
-
-  }
-
-
-  /* =========================================================
-     VALIDATE ROOM CODE
-     ========================================================= */
-
-  function validateRoomCode(code) {
-
-    if (!code) {
-
-      showToast(
-        "Please enter a room code.",
-        "error"
-      );
-
-      return false;
-
-    }
-
+  async function preview(code) {
+    const request = ++previewRequest;
     if (!/^\d{6}$/.test(code)) {
-
-      showToast(
-        "Please enter a valid 6-digit room code.",
-        "error"
-      );
-
-      return false;
-
+      hidePreview();
+      return;
     }
-
-    return true;
-
-  }
-
-
-  /* =========================================================
-     GET PLAYER COUNT
-     ========================================================= */
-
-  function getPlayerCount(battle) {
-
-    if (!battle || !battle.players) {
-      return 0;
-    }
-
-    return Object.keys(
-      battle.players
-    ).length;
-
-  }
-
-
-  /* =========================================================
-     GET BATTLE FROM FIREBASE
-     ========================================================= */
-
-  async function getBattle(roomCode) {
 
     try {
-
-      const battleRef =
-        getBattleRef(roomCode);
-
-      const snapshot =
-        await get(battleRef);
+      const snapshot = await get(roomRef(code));
+      if (request !== previewRequest) return;
 
       if (!snapshot.exists()) {
-        return null;
+        hidePreview();
+        toastMessageShow("No room found with that six-digit code.", "Room Not Found");
+        return;
       }
 
-      return snapshot.val();
+      const room = snapshot.val() || {};
+      const players = room.players && typeof room.players === "object" ? room.players : {};
+      const count = Object.keys(players).length;
+      const maxPlayers = Math.max(MAX_PLAYERS, Number(room.maxPlayers) || MAX_PLAYERS);
+      const status = String(room.status || "waiting");
 
+      if (status !== "waiting") {
+        hidePreview();
+        toastMessageShow(
+          status === "playing" ? "This room has already started." : "This room is not available.",
+          "Room Unavailable"
+        );
+        return;
+      }
+
+      if (count >= maxPlayers && !players[currentUser?.uid]) {
+        hidePreview();
+        toastMessageShow("This room is already full.", "Room Full");
+        return;
+      }
+
+      previewTitle.textContent = players[currentUser?.uid]
+        ? "You are already in this room"
+        : "Room is available";
+      previewMeta.textContent =
+        `${count}/${maxPlayers} players · ${room.mode === "quick" ? "Quick Match" : "Private Room"}`;
+      roomPreview.hidden = false;
     } catch (error) {
-
-      console.error(
-        "Battle load error:",
-        error
-      );
-
-      throw error;
-
+      console.error("Room preview error:", error);
+      hidePreview();
+      toastMessageShow("Could not check this room right now.", "Connection Error");
     }
-
   }
 
-
-  /* =========================================================
-     SHOW BATTLE PREVIEW
-     ========================================================= */
-
-  function showBattlePreview(battle) {
-
-    if (!battle) {
-      return;
-    }
-
-    currentBattle = battle;
-
-    if (battleEntry) {
-
-      battleEntry.textContent =
-        formatAmount(battle.entry);
-
-    }
-
-    if (battlePrize) {
-
-      battlePrize.textContent =
-        formatAmount(battle.prize);
-
-    }
-
-    if (battlePreview) {
-
-      battlePreview.classList.remove(
-        "hidden"
-      );
-
-      setTimeout(() => {
-
-        battlePreview.scrollIntoView({
-          behavior: "smooth",
-          block: "center"
-        });
-
-      }, 100);
-
-    }
-
+  function schedulePreview() {
+    clearTimeout(previewTimer);
+    previewTimer = setTimeout(() => preview(normalizeCode(roomCodeInput.value)), 220);
   }
 
-
-  /* =========================================================
-     HIDE BATTLE PREVIEW
-     ========================================================= */
-
-  function hideBattlePreview() {
-
-    if (battlePreview) {
-
-      battlePreview.classList.add(
-        "hidden"
-      );
-
-    }
-
-    currentBattle = null;
-
-  }
-
-
-  /* =========================================================
-     PREVIEW BATTLE
-     ========================================================= */
-
-  async function previewBattle() {
-
-    if (!roomCodeInput) {
-      return;
-    }
-
-    const roomCode =
-      roomCodeInput.value
-        .replace(/\D/g, "")
-        .slice(0, 6);
-
-    roomCodeInput.value =
-      roomCode;
-
-    if (roomCode.length !== 6) {
-
-      hideBattlePreview();
-
-      return;
-
-    }
-
-    try {
-
-      const battle =
-        await getBattle(roomCode);
-
-      if (!battle) {
-
-        hideBattlePreview();
-
-        showToast(
-          "No battle found with this room code.",
-          "error"
-        );
-
-        return;
-
-      }
-
-      if (
-        battle.status === "completed"
-      ) {
-
-        hideBattlePreview();
-
-        showToast(
-          "This battle has already been completed.",
-          "error"
-        );
-
-        return;
-
-      }
-
-      if (
-        battle.status === "cancelled"
-      ) {
-
-        hideBattlePreview();
-
-        showToast(
-          "This battle is no longer available.",
-          "error"
-        );
-
-        return;
-
-      }
-
-      showBattlePreview(battle);
-
-      showToast(
-        "Battle found! Ready to join.",
-        "success"
-      );
-
-      console.log(
-        "Battle found:",
-        roomCode
-      );
-
-    } catch (error) {
-
-      console.error(
-        "Preview battle error:",
-        error
-      );
-
-      hideBattlePreview();
-
-      showToast(
-        `Firebase error: ${error.message}`,
-        "error"
-      );
-
-    }
-
-  }
-
-
-  /* =========================================================
-     CREATE TRANSACTION
-     ========================================================= */
-
-  function createTransaction(
-    roomCode,
-    entryAmount
-  ) {
-
-    return {
-
-      id:
-        `${Date.now()}-${currentUser.uid.slice(0, 6)}`,
-
-      type:
-        "debit",
-
-      amount:
-        Number(entryAmount),
-
-      description:
-        "Joined Demo Battle - Room " +
-        roomCode,
-
-      date:
-        new Date().toLocaleString(),
-
-      createdAt:
-        new Date().toISOString()
-
-    };
-
-  }
-
-
-  /* =========================================================
-     SET JOIN BUTTON LOADING STATE
-     ========================================================= */
-
-  function setJoinButtonLoading(isLoading) {
-
-    if (!joinBattleBtn) {
-      return;
-    }
-
-    joinBattleBtn.disabled =
-      isLoading;
-
-    joinBattleBtn.innerHTML =
-      isLoading
-        ? "<span>⏳</span> Joining..."
-        : "<span>🚀</span> Join Battle";
-
-  }
-
-
-  /* =========================================================
-     JOIN BATTLE
-     ========================================================= */
-
-  async function joinBattle() {
-
-    if (joiningBattle) {
-      return;
-    }
-
-
-    /* =========================================
-       AUTH CHECK
-       ========================================= */
+  async function joinRoom() {
+    if (busy) return;
 
     if (!currentUser) {
-
-      showToast(
-        "Please login first.",
-        "error"
-      );
-
-      return;
-
-    }
-
-
-    /* =========================================
-       WALLET CHECK
-       ========================================= */
-
-    if (!walletLoaded) {
-
-      showToast(
-        "Wallet is still loading. Please wait.",
-        "error"
-      );
-
-      return;
-
-    }
-
-
-    /* =========================================
-       INPUT CHECK
-       ========================================= */
-
-    if (!roomCodeInput) {
-
-      showToast(
-        "Room code input not found.",
-        "error"
-      );
-
-      return;
-
-    }
-
-
-    const roomCode =
-      roomCodeInput.value
-        .trim()
-        .replace(/\D/g, "")
-        .slice(0, 6);
-
-
-    if (!validateRoomCode(roomCode)) {
+      toastMessageShow("Please login first.", "Login Required");
       return;
     }
 
+    const code = normalizeCode(roomCodeInput.value);
+    roomCodeInput.value = code;
 
-    joiningBattle = true;
+    if (!/^\d{6}$/.test(code)) {
+      toastMessageShow("Enter the complete six-digit room code.", "Invalid Code");
+      roomCodeInput.focus();
+      return;
+    }
 
-    setJoinButtonLoading(true);
-
+    busy = true;
+    setButtonState();
 
     try {
-
-      /* =========================================
-         GET LATEST BATTLE
-         ========================================= */
-
-      const battle =
-        await getBattle(roomCode);
-
-
-      if (!battle) {
-
-        hideBattlePreview();
-
-        showToast(
-          "No battle found with this room code.",
-          "error"
-        );
-
-        return;
-
-      }
-
-
-      /* =========================================
-         CREATOR CHECK
-         ========================================= */
-
-      if (
-        battle.creatorUid ===
-        currentUser.uid
-      ) {
-
-        showToast(
-          "You are already the creator of this battle.",
-          "error"
-        );
-
-        return;
-
-      }
-
-
-      /* =========================================
-         STATUS CHECK
-         ========================================= */
-
-      if (
-        battle.status === "completed"
-      ) {
-
-        showToast(
-          "This battle has already been completed.",
-          "error"
-        );
-
-        return;
-
-      }
-
-
-      if (
-        battle.status === "cancelled"
-      ) {
-
-        showToast(
-          "This battle is no longer available.",
-          "error"
-        );
-
-        return;
-
-      }
-
-
-      /* =========================================
-         ALREADY JOINED CHECK
-         ========================================= */
-
-      if (
-        battle.players &&
-        battle.players[currentUser.uid]
-      ) {
-
-        currentBattle = battle;
-
-        localStorage.setItem(
-          "ludoverseCurrentBattle",
-          JSON.stringify(battle)
-        );
-
-        showBattlePreview(battle);
-
-        showToast(
-          "You already joined this battle.",
-          "success"
-        );
-
-        return;
-
-      }
-
-
-      /* =========================================
-         PLAYER COUNT CHECK
-         ========================================= */
-
-      const playersJoined =
-        getPlayerCount(battle);
-
-      const maxPlayers =
-        Number(
-          battle.maxPlayers
-        ) || 2;
-
-
-      if (
-        playersJoined >= maxPlayers
-      ) {
-
-        showToast(
-          "This battle room is already full.",
-          "error"
-        );
-
-        return;
-
-      }
-
-
-      /* =========================================
-         ENTRY AMOUNT
-         ========================================= */
-
-      const entryAmount =
-        Number(
-          battle.entry
-        ) || 0;
-
-
-      if (entryAmount <= 0) {
-
-        showToast(
-          "Invalid battle entry amount.",
-          "error"
-        );
-
-        return;
-
-      }
-
-
-      /* =========================================
-         LATEST WALLET LOAD
-         ========================================= */
-
-      const walletRef =
-        getWalletRef();
-
-
-      const walletSnapshot =
-        await get(walletRef);
-
-
-      const walletData =
-        walletSnapshot.exists()
-          ? walletSnapshot.val()
-          : null;
-
-
-      const latestBalance =
-        walletData
-          ? Number(walletData.balance) || 0
-          : 0;
-
-
-      /* =========================================
-         BALANCE CHECK
-         ========================================= */
-
-      if (
-        latestBalance < entryAmount
-      ) {
-
-        showToast(
-          `Insufficient demo balance. You need ₹${formatAmount(entryAmount)}.`,
-          "error"
-        );
-
-        return;
-
-      }
-
-
-      /* =========================================
-         PREPARE PLAYER DATA
-         ========================================= */
-
-      const playerData = {
-
-        uid:
-          currentUser.uid,
-
-        name:
-          currentUser.displayName ||
-          currentUser.email ||
-          "Player",
-
-        photo:
-          currentUser.photoURL ||
-          "",
-
-        joinedAt:
-          new Date().toISOString()
-
-      };
-
-
-      /* =========================================
-         RECHECK + RESERVE BATTLE SLOT
-         ========================================= */
-
-      const battleRef =
-        getBattleRef(roomCode);
-
-
-      const battleTransaction =
-        await runTransaction(
-          battleRef,
-          currentData => {
-
-            if (!currentData) {
-              return;
-            }
-
-
-            if (
-              currentData.creatorUid ===
-              currentUser.uid
-            ) {
-              return;
-            }
-
-
-            if (
-              currentData.status ===
-              "completed"
-            ) {
-              return;
-            }
-
-
-            if (
-              currentData.status ===
-              "cancelled"
-            ) {
-              return;
-            }
-
-
-            const players =
-              currentData.players || {};
-
-
-            if (
-              players[currentUser.uid]
-            ) {
-
-              return currentData;
-
-            }
-
-
-            const currentPlayerCount =
-              Object.keys(players).length;
-
-
-            const maximumPlayers =
-              Number(
-                currentData.maxPlayers
-              ) || 2;
-
-
-            if (
-              currentPlayerCount >=
-              maximumPlayers
-            ) {
-
-              return;
-            }
-
-
-            players[currentUser.uid] =
-              playerData;
-
-
-            currentData.players =
-              players;
-
-
-            currentData.status =
-              "ready";
-
-
-            currentData.joinedAt =
-              new Date().toISOString();
-
-
-            currentData.updatedAt =
-              new Date().toISOString();
-
-
-            return currentData;
-
-          }
-        );
-
-
-      if (
-        !battleTransaction.committed
-      ) {
-
-        showToast(
-          "This battle could not be joined. It may already be full.",
-          "error"
-        );
-
-        return;
-
-      }
-
-
-      /* =========================================
-         DEDUCT WALLET SAFELY
-         ========================================= */
-
-      const walletTransaction =
-        await runTransaction(
-          walletRef,
-          currentWallet => {
-
-            if (!currentWallet) {
-              return;
-            }
-
-
-            const currentBalance =
-              Number(
-                currentWallet.balance
-              ) || 0;
-
-
-            if (
-              currentBalance < entryAmount
-            ) {
-
-              return;
-            }
-
-
-            const transactions =
-              Array.isArray(
-                currentWallet.transactions
-              )
-                ? currentWallet.transactions
-                : [];
-
-
-            transactions.unshift(
-              createTransaction(
-                roomCode,
-                entryAmount
-              )
-            );
-
-
-            currentWallet.balance =
-              currentBalance -
-              entryAmount;
-
-
-            currentWallet.transactions =
-              transactions.slice(
-                0,
-                50
-              );
-
-
-            currentWallet.updatedAt =
-              new Date().toISOString();
-
-
-            return currentWallet;
-
-          }
-        );
-
-
-      /* =========================================
-         WALLET TRANSACTION FAILED
-         ========================================= */
-
-      if (
-        !walletTransaction.committed
-      ) {
-
-        /*
-          Remove player if wallet payment failed.
-        */
-
-        try {
-
-          const latestBattle =
-            battleTransaction.snapshot.val();
-
-
-          if (
-            latestBattle &&
-            latestBattle.players
-          ) {
-
-            delete latestBattle.players[
-              currentUser.uid
-            ];
-
-
-            const remainingPlayers =
-              Object.keys(
-                latestBattle.players
-              ).length;
-
-
-            latestBattle.status =
-              remainingPlayers >= 2
-                ? "ready"
-                : "waiting";
-
-
-            latestBattle.updatedAt =
-              new Date().toISOString();
-
-
-            await update(
-              battleRef,
-              latestBattle
-            );
-
-          }
-
-        } catch (rollbackError) {
-
-          console.error(
-            "Battle rollback error:",
-            rollbackError
-          );
-
+      const result = await runTransaction(roomRef(code), (current) => {
+        if (!current || typeof current !== "object") return;
+
+        const players = current.players && typeof current.players === "object"
+          ? { ...current.players }
+          : {};
+
+        if (players[currentUser.uid]) {
+          return current;
         }
 
+        const maxPlayers = Math.max(MAX_PLAYERS, Number(current.maxPlayers) || MAX_PLAYERS);
 
-        showToast(
-          "Insufficient demo balance.",
-          "error"
-        );
+        if (String(current.status || "waiting") !== "waiting") return;
+        if (Object.keys(players).length >= maxPlayers) return;
 
-        return;
+        players[currentUser.uid] = {
+          uid: currentUser.uid,
+          name: playerName(currentUser),
+          photo: currentUser.photoURL || "",
+          joinedAt: Date.now(),
+          ready: false,
+          connected: true
+        };
 
+        return { ...current, players, updatedAt: Date.now() };
+      });
+
+      if (!result.committed) {
+        const latest = await get(roomRef(code));
+        if (!latest.exists()) throw new Error("This room does not exist.");
+
+        const room = latest.val() || {};
+        const players = room.players && typeof room.players === "object" ? room.players : {};
+
+        if (!players[currentUser.uid]) {
+          if (String(room.status || "waiting") !== "waiting") {
+            throw new Error("This room has already started.");
+          }
+          throw new Error("This room is full or unavailable.");
+        }
       }
 
+      localStorage.setItem(CURRENT_ROOM_KEY, code);
+      toastMessageShow("Room joined. Opening the Battle Room...", "Connected", "success");
 
-      /* =========================================
-         UPDATE LOCAL BALANCE
-         ========================================= */
-
-      const updatedWallet =
-        walletTransaction.snapshot.val();
-
-
-      walletBalance =
-        Number(
-          updatedWallet.balance
-        ) || 0;
-
-
-      walletLoaded = true;
-
-      updateWalletDisplay();
-
-
-      /* =========================================
-         GET FINAL BATTLE
-         ========================================= */
-
-      const finalBattle =
-        battleTransaction.snapshot.val();
-
-
-      currentBattle =
-        finalBattle;
-
-
-      /* =========================================
-         SAVE CURRENT BATTLE
-         ========================================= */
-
-      localStorage.setItem(
-        "ludoverseCurrentBattle",
-        JSON.stringify(finalBattle)
-      );
-
-
-      /* =========================================
-         SHOW BATTLE PREVIEW
-         ========================================= */
-
-      showBattlePreview(
-        finalBattle
-      );
-
-
-      showToast(
-        "🎉 Battle joined successfully!",
-        "success"
-      );
-
-
-      console.log(
-        "Battle joined successfully:",
-        roomCode
-      );
-
-
+      setTimeout(() => {
+        window.location.href = `battle-room.html?room=${encodeURIComponent(code)}`;
+      }, 450);
     } catch (error) {
-
-      console.error(
-        "Join battle error:",
-        error
-      );
-
-
-      showToast(
-        `Could not join battle: ${error.message}`,
-        "error"
-      );
-
+      console.error("Join room error:", error);
+      toastMessageShow(error?.message || "Could not join the room.", "Join Error");
     } finally {
-
-      joiningBattle = false;
-
-      setJoinButtonLoading(false);
-
+      busy = false;
+      setButtonState();
     }
-
   }
 
+  roomCodeInput.addEventListener("input", () => {
+    roomCodeInput.value = normalizeCode(roomCodeInput.value);
+    codeCount.textContent = `${roomCodeInput.value.length}/${CODE_LENGTH}`;
+    setButtonState();
+    schedulePreview();
+  });
 
-  /* =========================================================
-     ROOM CODE INPUT
-     ========================================================= */
-
-  roomCodeInput?.addEventListener(
-    "input",
-    () => {
-
-      roomCodeInput.value =
-        roomCodeInput.value
-          .replace(/\D/g, "")
-          .slice(0, 6);
-
-
-      if (
-        roomCodeInput.value.length === 6
-      ) {
-
-        previewBattle();
-
-      } else {
-
-        hideBattlePreview();
-
-      }
-
-    }
-  );
-
-
-  /* =========================================================
-     ENTER KEY
-     ========================================================= */
-
-  roomCodeInput?.addEventListener(
-    "keydown",
-    event => {
-
-      if (
-        event.key === "Enter"
-      ) {
-
-        event.preventDefault();
-
-        joinBattle();
-
-      }
-
-    }
-  );
-
-
-  /* =========================================================
-     JOIN BUTTON
-     ========================================================= */
-
-  joinBattleBtn?.addEventListener(
-    "click",
-    event => {
-
+  roomCodeInput.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
       event.preventDefault();
-
-      joinBattle();
-
+      joinRoom();
     }
-  );
+  });
 
+  joinBattleBtn.addEventListener("click", joinRoom);
+  backBtn.addEventListener("click", () => {
+    window.location.href = "battle-lobby.html";
+  });
 
-  /* =========================================================
-     OPEN GAME
-     ========================================================= */
+  homeCancelBtn?.addEventListener("click", () => {
+    window.location.href = "index.html";
+  });
 
-  openGameBtn?.addEventListener(
-    "click",
-    () => {
-
-      if (!currentBattle) {
-
-        showToast(
-          "Please join a battle first.",
-          "error"
-        );
-
-        return;
-
-      }
-
-
-      localStorage.setItem(
-        "ludoverseCurrentBattle",
-        JSON.stringify(currentBattle)
-      );
-
-
-      window.location.href =
-        "game.html";
-
+  onAuthStateChanged(auth, (user) => {
+    if (!user) {
+      window.location.href = "login.html";
+      return;
     }
-  );
-
-
-  /* =========================================================
-     BACK BUTTON
-     ========================================================= */
-
-  backBtn?.addEventListener(
-    "click",
-    () => {
-
-      window.location.href =
-        "index.html";
-
-    }
-  );
-
-
-  /* =========================================================
-     AUTH STATE
-     ========================================================= */
-
-  onAuthStateChanged(
-    auth,
-    async user => {
-
-      if (!user) {
-
-        window.location.href =
-          "login.html";
-
-        return;
-
-      }
-
-
-      currentUser =
-        user;
-
-
-      console.log(
-        "Join Room User:",
-        currentUser.uid
-      );
-
-
-      await loadWallet();
-
-
-      startWalletListener();
-
-
-      console.log(
-        "🎲 LUDOVERSE Join Room Ready!"
-      );
-
-    }
-  );
-
-
-  /* =========================================================
-     INITIALIZE
-     ========================================================= */
-
-  updateWalletDisplay();
-
+    currentUser = user;
+    setButtonState();
+    console.log("LUDOVERSE Join Room Ready:", user.uid);
+  });
 });

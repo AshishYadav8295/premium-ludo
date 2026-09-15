@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#070b18">
+  <meta name="description" content="Create a LUDOVERSE public or private multiplayer battle.">
+  <title>Create Battle | LUDOVERSE</title>
+  <link rel="stylesheet" href="battle-setup.css">
+</head>
+<body>
+  <div class="ambient ambient-one" aria-hidden="true"></div>
+  <div class="ambient ambient-two" aria-hidden="true"></div>
+  <div class="grid" aria-hidden="true"></div>
+
+  <header class="topbar">
+    <a href="index.html" class="brand" aria-label="LUDOVERSE Home">
+      <span class="brand-mark">🎲</span>
+      <span class="brand-name">LUDO<span>VERSE</span></span>
+    </a>
+    <a href="battle-lobby.html" class="back-link">← Battle Lobby</a>
+  </header>
+
+  <main class="page">
+    <section class="intro">
+      <span class="eyebrow"><i></i> BATTLE SETUP</span>
+      <h1>Build your <span>perfect room.</span></h1>
+      <p>Choose who can discover your room and whether you want to use free play or virtual LudoCoins for the match.</p>
+      <div class="feature-row">
+        <span>✓ Firebase realtime</span>
+        <span>✓ Six-digit room code</span>
+        <span>✓ Auto-expiry protection</span>
+      </div>
+    </section>
+
+    <section class="setup-card" aria-labelledby="setupTitle">
+      <div class="card-head">
+        <div>
+          <span class="card-eyebrow">CREATE MULTIPLAYER</span>
+          <h2 id="setupTitle">Battle settings</h2>
+        </div>
+        <div class="secure-pill">🔐 LIVE ROOM</div>
+      </div>
+
+      <fieldset class="option-group">
+        <legend>Battle visibility</legend>
+        <div class="option-grid two">
+          <label class="option selected" data-choice="visibility">
+            <input type="radio" name="visibility" value="public" checked>
+            <span class="option-icon">🌐</span>
+            <span class="option-copy"><strong>Public</strong><small>Visible in the Battle Lobby</small></span>
+            <span class="check">✓</span>
+          </label>
+          <label class="option" data-choice="visibility">
+            <input type="radio" name="visibility" value="private">
+            <span class="option-icon">🔒</span>
+            <span class="option-copy"><strong>Private</strong><small>Join only with the room code</small></span>
+            <span class="check">✓</span>
+          </label>
+        </div>
+      </fieldset>
+
+      <fieldset class="option-group">
+        <legend>Participation mode</legend>
+        <div class="option-grid two">
+          <label class="option selected" data-choice="entry">
+            <input type="radio" name="entryMode" value="free" checked>
+            <span class="option-icon">🆓</span>
+            <span class="option-copy"><strong>Free Play</strong><small>No LudoCoins are reserved</small></span>
+            <span class="check">✓</span>
+          </label>
+          <label class="option" data-choice="entry">
+            <input type="radio" name="entryMode" value="coins">
+            <span class="option-icon">🪙</span>
+            <span class="option-copy"><strong>LudoCoins</strong><small>Virtual progression points only</small></span>
+            <span class="check">✓</span>
+          </label>
+        </div>
+      </fieldset>
+
+      <div class="coin-panel" id="coinPanel" hidden>
+        <div>
+          <span>VIRTUAL LUDOCOINS</span>
+          <strong>Select amount to reserve</strong>
+          <small>Virtual progression points only · minimum 50 · maximum 10,000.</small>
+        </div>
+        <div class="coin-options" role="radiogroup" aria-label="LudoCoins amount">
+          <label><input type="radio" name="coinAmount" value="100"><span>100</span></label>
+          <label class="selected"><input type="radio" name="coinAmount" value="250" checked><span>250</span></label>
+          <label><input type="radio" name="coinAmount" value="500"><span>500</span></label>
+          <label><input type="radio" name="coinAmount" value="1000"><span>1,000</span></label>
+          <label class="custom-amount-option">
+            <input type="radio" name="coinAmount" value="custom">
+            <span class="custom-amount-content">
+              <b>Custom</b>
+              <input id="customCoinAmount" type="number" inputmode="numeric" min="50" max="10000" step="50" value="50" aria-label="Custom LudoCoins amount">
+            </span>
+          </label>
+        </div>
+      </div>
+
+      <div class="summary">
+        <div><span>Visibility</span><strong id="summaryVisibility">PUBLIC</strong></div>
+        <div><span>Mode</span><strong id="summaryEntry">FREE PLAY</strong></div>
+        <div><span>Room lifetime</span><strong>15 MIN</strong></div>
+      </div>
+
+      <button id="createBtn" class="create-btn" type="button">
+        <span id="createBtnText">Create Public Battle</span><b>→</b>
+      </button>
+      <button id="cancelBtn" class="cancel-btn" type="button">Cancel · Return Home</button>
+
+      <div class="status" id="status" role="status" aria-live="polite"></div>
+    </section>
+  </main>
+
+  <div class="toast" id="toast" role="status" aria-live="polite">
+    <span id="toastIcon">!</span>
+    <div><strong id="toastTitle">LUDOVERSE</strong><span id="toastMessage">Message</span></div>
+  </div>
+
+  <script type="module" src="battle-setup.js"></script>
+</body>
+</html>

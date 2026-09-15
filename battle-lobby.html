@@ -102,7 +102,7 @@
         </h1>
 
         <p class="hero-description">
-          Jump into a live Ludo room, create a private room for a friend,
+          Find a live public battle, create your own battle,
           or let Quick Match find an available opponent for you.
         </p>
 
@@ -118,15 +118,15 @@
           <button type="button" class="btn btn-secondary" id="createBattleBtn">
             <span class="btn-icon" aria-hidden="true">＋</span>
             <span>
-              <strong>Create Private Room</strong>
-              <small>Invite a friend with a code</small>
+              <strong>Create Battle</strong>
+              <small>Choose public or private settings</small>
             </span>
           </button>
         </div>
 
         <div class="hero-note">
           <span aria-hidden="true">✓</span>
-          Free-to-play multiplayer · No entry required
+          Free play + virtual LudoCoin progression · No cash value
         </div>
       </div>
 
@@ -189,7 +189,7 @@
       <div class="stat-card">
         <div class="stat-icon green">✓</div>
         <div>
-          <strong>FREE</strong>
+          <strong>FREE PLAY</strong>
           <span>Play System</span>
         </div>
       </div>
@@ -200,40 +200,6 @@
           <strong>2</strong>
           <span>Players / Room</span>
         </div>
-      </div>
-    </section>
-
-    <section class="section" aria-labelledby="roomsTitle">
-      <div class="section-heading">
-        <div>
-          <div class="section-eyebrow">
-            <span></span>
-            LIVE ROOMS
-          </div>
-          <h2 id="roomsTitle">Available Rooms</h2>
-          <p>Open rooms are synchronized live through Firebase.</p>
-        </div>
-
-        <button type="button" class="refresh-button" id="refreshBtn">
-          <span aria-hidden="true">↻</span>
-          Refresh
-        </button>
-      </div>
-
-      <div class="room-list" id="roomsList" aria-live="polite"></div>
-
-      <div class="empty-room" id="emptyState">
-        <div class="empty-illustration">
-          <span>🎲</span>
-        </div>
-        <h3>No open rooms right now</h3>
-        <p>
-          Be the first player to create a room and wait for an opponent.
-        </p>
-        <button type="button" class="btn btn-primary small-btn" id="emptyCreateBtn">
-          <span>＋</span>
-          Create Private Room
-        </button>
       </div>
     </section>
 
@@ -273,12 +239,46 @@
             Copy Code
           </button>
           <button type="button" class="outline-button danger-outline" id="leaveRoomBtn">
-            Leave
+            Cancel Battle
           </button>
           <button type="button" class="primary-mini-button" id="openRoomBtn">
             Open Room →
           </button>
         </div>
+      </div>
+    </section>
+
+    <section class="section" aria-labelledby="roomsTitle">
+      <div class="section-heading">
+        <div>
+          <div class="section-eyebrow">
+            <span></span>
+            LIVE ROOMS
+          </div>
+          <h2 id="roomsTitle">Available Rooms</h2>
+          <p>Open rooms are synchronized live through Firebase.</p>
+        </div>
+
+        <button type="button" class="refresh-button" id="refreshBtn">
+          <span aria-hidden="true">↻</span>
+          Refresh
+        </button>
+      </div>
+
+      <div class="room-list" id="roomsList" aria-live="polite"></div>
+
+      <div class="empty-room" id="emptyState">
+        <div class="empty-illustration">
+          <span>🎲</span>
+        </div>
+        <h3>No open rooms right now</h3>
+        <p>
+          No public battle is waiting right now. Create a battle and choose your preferred settings.
+        </p>
+        <button type="button" class="btn btn-primary small-btn" id="emptyCreateBtn">
+          <span>＋</span>
+          Create Battle
+        </button>
       </div>
     </section>
 
@@ -301,7 +301,7 @@
           </div>
           <h3>Find or Create</h3>
           <p>
-            Use Quick Match to find an open room or create your own private room.
+            Use Quick Match to find an open room or create your own battle with flexible settings.
           </p>
         </div>
 

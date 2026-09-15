@@ -164,7 +164,7 @@ document.addEventListener(
 function playNow() {
 
   window.location.href =
-    "game.html";
+    "battle-lobby.html";
 
 }
 
@@ -176,7 +176,7 @@ function playNow() {
 function createRoom() {
 
   window.location.href =
-    "wallet.html";
+    "battle-setup.html";
 
 }
 
@@ -199,12 +199,22 @@ function openWallet() {
 
 function openBattles() {
 
-  alert(
-    "🎮 My Games feature is coming soon!"
-  );
+  window.location.href =
+    "battle-lobby.html";
 
 }
 
+
+/* ==========================================
+   GLOBAL NAVIGATION BRIDGE
+   Inline buttons in the home page can safely
+   call these module functions.
+========================================== */
+
+window.playNow = playNow;
+window.createRoom = createRoom;
+window.openWallet = openWallet;
+window.openBattles = openBattles;
 
 /* ==========================================
    FIREBASE PROPER LOGOUT
