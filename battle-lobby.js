@@ -476,6 +476,19 @@ document.addEventListener("DOMContentLoaded", () => {
      ROOM OBJECT FACTORY
      ======================================================= */
 
+  const ROOM_LIFETIME_MS = 15 * 60 * 1000;
+
+  function isRoomExpired(room, now = Date.now()) {
+    if (!room || typeof room !== "object") return true;
+
+    const expiresAt = safeNumber(room.expiresAt);
+    if (expiresAt > 0) return expiresAt <= now;
+
+    // Backward compatibility for rooms created before expiresAt was stored.
+    const createdAt = safeNumber(room.createdAt);
+    return createdAt > 0 && createdAt + ROOM_LIFETIME_MS <= now;
+  }
+
   function createPlayerRecord(user, now) {
     return {
       uid: user.uid,
@@ -510,7 +523,7 @@ document.addEventListener("DOMContentLoaded", () => {
       completedAt: 0,
       entryMode: "free",
       coinAmount: 0,
-      expiresAt: now + (15 * 60 * 1000),
+      expiresAt: now + ROOM_LIFETIME_MS,
       coinReservation: { amount: 0, status: "none", ownerUid: currentUser.uid, refundedAt: 0 }
     };
   }
@@ -610,6 +623,10 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
+      if (isRoomExpired(current, now)) {
+        return;
+      }
+
       if (Object.keys(players).length >= maxPlayers) {
         return;
       }
@@ -637,6 +654,10 @@ document.addEventListener("DOMContentLoaded", () => {
           roomCode: normalizedCode,
           alreadyJoined: true
         };
+      }
+
+      if (room && isRoomExpired(room)) {
+        throw new Error("This room has expired. Create a new room to continue.");
       }
 
       if (room && room.status !== "waiting") {
@@ -720,7 +741,7 @@ document.addEventListener("DOMContentLoaded", () => {
           (room.mode === "public" || room.mode === "quick") &&
           room.status === "waiting" &&
           room.playerCount < room.maxPlayers &&
-          (!room.expiresAt || room.expiresAt > Date.now()) &&
+          !isRoomExpired(room) &&
           !room.players?.[currentUser.uid];
 
         if (isAvailable) candidates.push(room);

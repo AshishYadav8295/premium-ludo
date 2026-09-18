@@ -27,6 +27,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const MAX_PLAYERS = 2;
   const CODE_LENGTH = 6;
   const CURRENT_ROOM_KEY = "ludoverseCurrentRoom";
+  const ROOM_LIFETIME_MS = 15 * 60 * 1000;
 
   let currentUser = null;
   let busy = false;
@@ -53,6 +54,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function roomRef(code) {
     return ref(database, `${ROOM_PATH}/${code}`);
+  }
+
+  function isRoomExpired(room, now = Date.now()) {
+    if (!room || typeof room !== "object") return true;
+
+    const expiresAt = Number(room.expiresAt) || 0;
+    if (expiresAt > 0) return expiresAt <= now;
+
+    // Backward compatibility for rooms created before expiresAt existed.
+    const createdAt = Number(room.createdAt) || 0;
+    return createdAt > 0 && createdAt + ROOM_LIFETIME_MS <= now;
   }
 
   function playerName(user) {
@@ -95,6 +107,15 @@ document.addEventListener("DOMContentLoaded", () => {
       const count = Object.keys(players).length;
       const maxPlayers = Math.max(MAX_PLAYERS, Number(room.maxPlayers) || MAX_PLAYERS);
       const status = String(room.status || "waiting");
+
+      if (status === "waiting" && isRoomExpired(room)) {
+        hidePreview();
+        toastMessageShow(
+          "This room has expired. Create a new room to continue.",
+          "Room Expired"
+        );
+        return;
+      }
 
       if (status !== "waiting") {
         hidePreview();
@@ -164,6 +185,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const maxPlayers = Math.max(MAX_PLAYERS, Number(current.maxPlayers) || MAX_PLAYERS);
 
         if (String(current.status || "waiting") !== "waiting") return;
+        if (isRoomExpired(current)) return;
         if (Object.keys(players).length >= maxPlayers) return;
 
         players[currentUser.uid] = {
@@ -186,6 +208,9 @@ document.addEventListener("DOMContentLoaded", () => {
         const players = room.players && typeof room.players === "object" ? room.players : {};
 
         if (!players[currentUser.uid]) {
+          if (isRoomExpired(room)) {
+            throw new Error("This room has expired. Create a new room to continue.");
+          }
           if (String(room.status || "waiting") !== "waiting") {
             throw new Error("This room has already started.");
           }
