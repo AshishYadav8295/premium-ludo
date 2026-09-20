@@ -1612,6 +1612,19 @@ let battleListener =
 let isAnimating =
   false;
 
+/*
+  Realtime synchronization guard.
+
+  Firebase can deliver a snapshot while a local dice/token
+  animation is still running. We keep that snapshot pending
+  instead of replacing the state currently being animated.
+*/
+let pendingRemoteState =
+  null;
+
+let lastLocalUpdatedAt =
+  0;
+
 let soundOn =
   true;
 
@@ -1784,6 +1797,152 @@ function sleep(ms){
     resolve =>
       setTimeout(resolve,ms)
   );
+}
+
+
+/* =========================================================
+   REALTIME STATE HELPERS
+   ========================================================= */
+
+function nextUpdatedAt(){
+
+  const current =
+    Number(
+      gameState?.updatedAt
+    ) || 0;
+
+  const now =
+    Date.now();
+
+  return Math.max(
+    now,
+    current + 1,
+    lastLocalUpdatedAt + 1
+  );
+}
+
+
+function applyRemoteGameState(
+  incoming
+){
+
+  if(!incoming){
+    return;
+  }
+
+  const incomingAt =
+    Number(
+      incoming.updatedAt
+    ) || 0;
+
+  /*
+    Never let an older Firebase snapshot roll
+    the client back to a previous turn/phase.
+  */
+  const currentAt =
+    Number(
+      gameState?.updatedAt
+    ) || 0;
+
+  if(
+    incomingAt < currentAt ||
+    incomingAt < lastLocalUpdatedAt
+  ){
+    return;
+  }
+
+  if(isAnimating){
+
+    if(
+      !pendingRemoteState ||
+      incomingAt >=
+        (
+          Number(
+            pendingRemoteState.updatedAt
+          ) || 0
+        )
+    ){
+
+      pendingRemoteState =
+        incoming;
+
+    }
+
+    return;
+  }
+
+  gameState =
+    incoming;
+
+  lastLocalUpdatedAt =
+    Math.max(
+      lastLocalUpdatedAt,
+      incomingAt
+    );
+
+  renderGame();
+  updatePlayerInformation();
+
+  if(gameState.winner){
+    showWinner(
+      gameState.winner
+    );
+  }
+}
+
+
+function finishLocalAction(
+  localState
+){
+
+  const local =
+    normalizeGame(
+      localState
+    );
+
+  const pending =
+    pendingRemoteState;
+
+  pendingRemoteState =
+    null;
+
+  /*
+    Prefer a Firebase snapshot only when it is at
+    least as new as the state we just wrote.
+  */
+  if(
+    pending &&
+    Number(
+      pending.updatedAt
+    ) >=
+    Number(
+      local.updatedAt
+    )
+  ){
+
+    gameState =
+      pending;
+
+  }else{
+
+    gameState =
+      local;
+
+  }
+
+  lastLocalUpdatedAt =
+    Math.max(
+      lastLocalUpdatedAt,
+      Number(
+        gameState.updatedAt
+      ) || 0
+    );
+
+  isAnimating =
+    false;
+
+  renderGame();
+  updatePlayerInformation();
 }
 
 
@@ -1991,13 +2150,21 @@ function normalizeGame(
    FINISHED COUNT
    ========================================================= */
 
-function finishedCount(color){
+function finishedCount(
+  color,
+  tokenSource = null
+){
 
-  return gameState?.tokens?.[color]
-    ? gameState.tokens[color]
-        .filter(token =>
-          token.position === FINISHED_POSITION
-        ).length
+  const tokens =
+    tokenSource ||
+    gameState?.tokens?.[color];
+
+  return tokens
+    ? tokens.filter(
+        token =>
+          token.position ===
+          FINISHED_POSITION
+      ).length
     : 0;
 }
 
@@ -2090,6 +2257,17 @@ function tokenElement(
     "aria-label",
     `${token.color} token ${token.id + 1}`
   );
+
+  /*
+    Token identity is stored on the element so the
+    board can use one permanent delegated click handler.
+    This survives every render/re-render.
+  */
+  element.dataset.color =
+    token.color;
+
+  element.dataset.tokenId =
+    String(token.id);
 
   return element;
 }
@@ -2189,11 +2367,17 @@ function placeGroup(items){
    RENDER GAME
    ========================================================= */
 
-function renderGame(){
+function renderGame(
+  tokenSource = null
+){
 
   if(!gameState){
     return;
   }
+
+  const tokens =
+    tokenSource ||
+    gameState.tokens;
 
   removeTokens();
 
@@ -2201,10 +2385,10 @@ function renderGame(){
   /* SCORE */
 
   userScore.textContent =
-    `${finishedCount("red")} / 4`;
+    `${finishedCount("red", tokens.red)} / 4`;
 
   aiScore.textContent =
-    `${finishedCount("yellow")} / 4`;
+    `${finishedCount("yellow", tokens.yellow)} / 4`;
 
 
   /* TURN */
@@ -2272,7 +2456,7 @@ function renderGame(){
 
       let homeIndex = 0;
 
-      gameState.tokens[color]
+      tokens[color]
         .forEach(token => {
 
           if(
@@ -2312,11 +2496,6 @@ function renderGame(){
             element.classList.add(
               "selectable"
             );
-
-            element.addEventListener(
-              "click",
-              () => moveMyToken(token.id)
-            );
           }
 
           slot.appendChild(element);
@@ -2335,7 +2514,7 @@ function renderGame(){
   ["red","yellow"].forEach(
     color => {
 
-      gameState.tokens[color]
+      tokens[color]
         .forEach(token => {
 
           const coordinate =
@@ -2372,11 +2551,6 @@ function renderGame(){
 
             element.classList.add(
               "selectable"
-            );
-
-            element.addEventListener(
-              "click",
-              () => moveMyToken(token.id)
             );
           }
 
@@ -2534,8 +2708,19 @@ async function animateToken(
   number
 ){
 
+  const animationTokens = {
+    red:
+      gameState.tokens.red.map(
+        item => ({...item})
+      ),
+    yellow:
+      gameState.tokens.yellow.map(
+        item => ({...item})
+      )
+  };
+
   const localToken =
-    gameState.tokens[color][tokenId];
+    animationTokens[color][tokenId];
 
   if(!localToken){
     return;
@@ -2557,7 +2742,9 @@ async function animateToken(
 
     sound("move");
 
-    renderGame();
+    renderGame(
+      animationTokens
+    );
 
     await sleep(170);
   }
@@ -2838,9 +3025,7 @@ async function rollDice(){
     return;
   }
 
-  if(
-    gameState.phase !== "roll"
-  ){
+  if(gameState.phase !== "roll"){
     return;
   }
 
@@ -2852,6 +3037,7 @@ async function rollDice(){
     !gameState.players.red ||
     !gameState.players.yellow
   ){
+
     status.textContent =
       "⏳ Waiting for both players.";
 
@@ -2861,6 +3047,9 @@ async function rollDice(){
 
   isAnimating =
     true;
+
+  pendingRemoteState =
+    null;
 
   rollBtn.disabled =
     true;
@@ -2899,35 +3088,46 @@ async function rollDice(){
         ? "yellow"
         : "red";
 
+    const updatedAt =
+      nextUpdatedAt();
+
+    const localState = {
+      ...gameState,
+
+      dice:number,
+
+      phase:"roll",
+
+      turn:nextTurn,
+
+      sixCount:{
+        ...gameState.sixCount,
+        [role]:0,
+        [nextTurn]:0
+      },
+
+      updatedAt
+
+    };
 
     await update(
       gameRef,
       {
-
         dice:number,
-
         phase:"roll",
-
         turn:nextTurn,
-
         sixCount:{
           ...gameState.sixCount,
           [role]:0,
           [nextTurn]:0
         },
-
-        updatedAt:
-          Date.now()
-
+        updatedAt
       }
     );
 
-
-    isAnimating =
-      false;
-
-    renderGame();
-    updatePlayerInformation();
+    finishLocalAction(
+      localState
+    );
 
     status.textContent =
       "⚠️ Three consecutive 6s — your turn is lost.";
@@ -2965,11 +3165,38 @@ async function rollDice(){
               : "red"
           );
 
+    const updatedAt =
+      nextUpdatedAt();
+
+    const localState = {
+      ...gameState,
+
+      dice:number,
+
+      phase:"roll",
+
+      turn:nextTurn,
+
+      sixCount:{
+        ...gameState.sixCount,
+        [role]:
+          number === 6
+            ? newSixCount
+            : 0,
+
+        [nextTurn]:
+          nextTurn === role
+            ? newSixCount
+            : 0
+      },
+
+      updatedAt
+
+    };
 
     await update(
       gameRef,
       {
-
         dice:number,
 
         phase:"roll",
@@ -2989,18 +3216,13 @@ async function rollDice(){
               : 0
         },
 
-        updatedAt:
-          Date.now()
-
+        updatedAt
       }
     );
 
-
-    isAnimating =
-      false;
-
-    renderGame();
-    updatePlayerInformation();
+    finishLocalAction(
+      localState
+    );
 
     return;
   }
@@ -3010,10 +3232,27 @@ async function rollDice(){
     Valid move exists.
   */
 
+  const updatedAt =
+    nextUpdatedAt();
+
+  const localState = {
+    ...gameState,
+
+    dice:number,
+
+    phase:"move",
+
+    sixCount:{
+      ...gameState.sixCount,
+      [role]:newSixCount
+    },
+
+    updatedAt
+  };
+
   await update(
     gameRef,
     {
-
       dice:number,
 
       phase:"move",
@@ -3023,18 +3262,13 @@ async function rollDice(){
         [role]:newSixCount
       },
 
-      updatedAt:
-        Date.now()
-
+      updatedAt
     }
   );
 
-
-  isAnimating =
-    false;
-
-  renderGame();
-  updatePlayerInformation();
+  finishLocalAction(
+    localState
+  );
 
 }
 
@@ -3093,9 +3327,15 @@ async function moveMyToken(
   isAnimating =
     true;
 
+  pendingRemoteState =
+    null;
+
 
   /*
-    Clone tokens locally.
+    Clone the complete token state.
+    The authoritative gameState is NOT mutated during
+    animation. This prevents Firebase snapshots from
+    colliding with the visual movement.
   */
 
   const updatedTokens = {
@@ -3129,10 +3369,18 @@ async function moveMyToken(
     movingToken.position =
       0;
 
+    sound("move");
+
+    renderGame(
+      updatedTokens
+    );
+
+    await sleep(170);
+
   }else{
 
     /*
-      Animate locally.
+      Animate locally using only the cloned state.
     */
 
     for(
@@ -3143,10 +3391,9 @@ async function moveMyToken(
 
       movingToken.position++;
 
-      gameState.tokens =
-        updatedTokens;
-
-      renderGame();
+      renderGame(
+        updatedTokens
+      );
 
       sound("move");
 
@@ -3180,7 +3427,8 @@ async function moveMyToken(
     coord(movingToken);
 
 
-  let captured = false;
+  let captured =
+    false;
 
 
   if(
@@ -3310,11 +3558,6 @@ async function moveMyToken(
   }
 
 
-  /*
-    If token finished on final move,
-    still keep extra turn on 6/capture.
-  */
-
   if(winner){
 
     nextTurn =
@@ -3324,9 +3567,7 @@ async function moveMyToken(
 
 
   const newSixCount =
-    (
-      number === 6
-    )
+    number === 6
       ? (
           gameState.sixCount[role] || 0
         )
@@ -3334,60 +3575,64 @@ async function moveMyToken(
 
 
   /*
-    Save complete shared state.
+    Save one complete authoritative shared state.
   */
+
+  const updatedAt =
+    nextUpdatedAt();
+
+  const localState = {
+
+    ...gameState,
+
+    tokens:
+      updatedTokens,
+
+    finished:{
+      red:redFinished,
+      yellow:yellowFinished
+    },
+
+    dice:0,
+
+    phase:
+      winner
+        ? "finished"
+        : "roll",
+
+    turn:
+      winner
+        ? role
+        : nextTurn,
+
+    winner,
+
+    sixCount:{
+      ...gameState.sixCount,
+
+      [role]:
+        (
+          number === 6 ||
+          captured
+        )
+          ? newSixCount
+          : 0
+    },
+
+    updatedAt
+
+  };
+
 
   await set(
     gameRef,
-    {
-
-      ...gameState,
-
-      tokens:
-        updatedTokens,
-
-      finished:{
-        red:redFinished,
-        yellow:yellowFinished
-      },
-
-      dice:0,
-
-      phase:
-        winner
-          ? "finished"
-          : "roll",
-
-      turn:
-        winner
-          ? role
-          : nextTurn,
-
-      winner,
-
-      sixCount:{
-        ...gameState.sixCount,
-        [role]:
-          (
-            number === 6 ||
-            captured
-          )
-            ? newSixCount
-            : 0
-      },
-
-      updatedAt:
-        Date.now()
-
-    }
+    localState
   );
 
 
-  isAnimating =
-    false;
-
-  renderGame();
-  updatePlayerInformation();
+  finishLocalAction(
+    localState
+  );
 
 
   if(captured){
@@ -3694,12 +3939,19 @@ function startListeners(){
             gameState.players.yellow =
               yellowPlayer;
 
-            gameState.updatedAt =
-              Date.now();
+            /*
+              Player membership is derived from the battle
+              record. Do not bump updatedAt here because
+              updatedAt belongs to the authoritative game
+              state and is used to reject stale snapshots.
+            */
 
-            renderGame();
+            if(!isAnimating){
 
-            updatePlayerInformation();
+              renderGame();
+              updatePlayerInformation();
+
+            }
 
           }
 
@@ -3726,7 +3978,7 @@ function startListeners(){
         }
 
 
-        gameState =
+        let incoming =
           normalizeGame(
             snapshot.val()
           );
@@ -3742,11 +3994,9 @@ function startListeners(){
           const players =
             battleData.players || {};
 
-
           const redPlayer =
             battleData.creatorUid ||
             null;
-
 
           let yellowPlayer =
             null;
@@ -3768,31 +4018,25 @@ function startListeners(){
             });
 
 
-          gameState.players.red =
+          incoming.players.red =
             redPlayer;
 
-          gameState.players.yellow =
+          incoming.players.yellow =
             yellowPlayer;
 
         }
 
 
-        renderGame();
-
-        updatePlayerInformation();
-
-
         /*
-          Winner handling.
+          Never render/replace the live state in the
+          middle of a local dice or token animation.
+          Store the newest snapshot and apply it when
+          the local action finishes.
         */
 
-        if(gameState.winner){
-
-          showWinner(
-            gameState.winner
-          );
-
-        }
+        applyRemoteGameState(
+          incoming
+        );
 
       }
     );
@@ -3817,6 +4061,10 @@ async function restartGame(){
   }
 
   if(!gameRef){
+    return;
+  }
+
+  if(isAnimating){
     return;
   }
 
@@ -3856,11 +4104,21 @@ async function restartGame(){
 
 
   fresh.updatedAt =
-    Date.now();
+    nextUpdatedAt();
 
+
+  pendingRemoteState =
+    null;
+
+  isAnimating =
+    true;
 
   await set(
     gameRef,
+    fresh
+  );
+
+  finishLocalAction(
     fresh
   );
 
@@ -3872,6 +4130,66 @@ async function restartGame(){
     "🎲 New game started.";
 
 }
+
+
+/* =========================================================
+   TOKEN INPUT
+   ========================================================= */
+
+/*
+  One permanent listener handles every token created by
+  every render. Individual token buttons no longer depend
+  on render timing or Firebase callbacks.
+*/
+board.addEventListener(
+  "click",
+  event => {
+
+    const tokenElement =
+      event.target.closest(
+        ".token"
+      );
+
+    if(!tokenElement){
+      return;
+    }
+
+    if(
+      !board.contains(
+        tokenElement
+      )
+    ){
+      return;
+    }
+
+    const tokenColor =
+      tokenElement.dataset.color;
+
+    if(
+      tokenColor !== role
+    ){
+      return;
+    }
+
+    const tokenId =
+      Number(
+        tokenElement.dataset.tokenId
+      );
+
+    if(
+      !Number.isInteger(
+        tokenId
+      )
+    ){
+      return;
+    }
+
+    moveMyToken(
+      tokenId
+    );
+
+  }
+);
 
 
 /* =========================================================
