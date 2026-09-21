@@ -365,175 +365,222 @@ main{
 
  .token{
   position:absolute;
-  width:68%;
-  aspect-ratio:.82;
+  width:72%;
+  aspect-ratio:1;
   z-index:100;
 
-  border:2px solid rgba(255,255,255,.92);
-  border-radius:48% 48% 38% 38% / 42% 42% 24% 24%;
   appearance:none;
   -webkit-appearance:none;
+  border:0;
+  padding:0;
   overflow:visible;
-
-  background:
-    linear-gradient(
-      145deg,
-      var(--token-light) 0%,
-      var(--token-main) 42%,
-      var(--token-deep) 100%
-    );
-
-  box-shadow:
-    0 8px 12px #000a,
-    0 2px 0 rgba(255,255,255,.5) inset,
-    0 -8px 12px rgba(0,0,0,.28) inset,
-    0 0 0 1px rgba(0,0,0,.28),
-    0 0 18px var(--token-glow);
-
-  transition:
-    left .13s linear,
-    top .13s linear,
-    transform .18s,
-    filter .18s;
-
-  touch-action:manipulation;
+  border-radius:50%;
+  background:transparent;
   cursor:default;
+  touch-action:manipulation;
+  transform:translateZ(0);
+  filter:
+    drop-shadow(0 7px 7px rgba(0,0,0,.42))
+    drop-shadow(0 0 8px var(--token-glow));
 }
 
 .token::before{
   content:"";
   position:absolute;
-  width:58%;
-  aspect-ratio:1;
-  left:21%;
-  top:5%;
+  inset:5%;
   border-radius:50%;
 
   background:
-    radial-gradient(
-      circle at 32% 25%,
-      #ffffffd9 0 8%,
-      var(--token-light) 18%,
-      var(--token-main) 55%,
-      var(--token-deep) 100%
-    );
+    radial-gradient(circle at 32% 22%,
+      rgba(255,255,255,.98) 0 7%,
+      rgba(255,255,255,.36) 8% 15%,
+      transparent 16%),
+    radial-gradient(circle at 38% 30%,
+      var(--token-light) 0 13%,
+      var(--token-main) 42%,
+      var(--token-deep) 82%,
+      #090b14 100%);
 
-  border:1px solid rgba(255,255,255,.62);
-
+  border:2px solid rgba(255,255,255,.92);
   box-shadow:
-    0 3px 7px #0008,
-    inset 2px 2px 5px #fff8,
-    inset -4px -5px 7px #0007;
-
-  pointer-events:none;
+    inset 2px 2px 4px rgba(255,255,255,.75),
+    inset -5px -7px 10px rgba(0,0,0,.58),
+    0 0 0 2px rgba(0,0,0,.22),
+    0 0 18px var(--token-glow),
+    0 0 34px var(--token-glow);
 }
 
 .token::after{
   content:"";
   position:absolute;
-  width:88%;
-  height:23%;
-  left:6%;
-  bottom:-4%;
-  border-radius:48%;
-
+  left:16%;
+  top:15%;
+  width:68%;
+  height:68%;
+  border-radius:50%;
+  border:1px solid rgba(255,255,255,.42);
   background:
-    linear-gradient(
-      180deg,
-      var(--token-main),
-      var(--token-deep)
-    );
-
-  border:1px solid rgba(255,255,255,.5);
-
+    radial-gradient(circle at 50% 44%,
+      rgba(255,255,255,.12),
+      transparent 46%),
+    linear-gradient(145deg,
+      rgba(255,255,255,.18),
+      rgba(0,0,0,.12));
   box-shadow:
-    0 5px 8px #0009,
-    inset 2px 2px 3px #fff6,
-    inset -3px -3px 5px #0007;
-
+    inset 0 1px 2px rgba(255,255,255,.65),
+    inset 0 -3px 5px rgba(0,0,0,.32);
   pointer-events:none;
 }
 
 .token .token-gem{
   position:absolute;
+  z-index:3;
   left:50%;
-  top:31%;
-  transform:translateX(-50%);
-
-  width:31%;
+  top:50%;
+  width:35%;
   aspect-ratio:1;
-
+  transform:translate(-50%,-50%);
   display:grid;
   place-items:center;
 
   color:#fff;
-  font-size:clamp(7px,1.5vw,15px);
+  font-size:clamp(8px,1.7vw,16px);
+  font-weight:900;
   line-height:1;
 
-  text-shadow:
-    0 1px 3px #000b,
-    0 0 7px #fff9;
-
-  border:1px solid #fff9;
+  border:1px solid rgba(255,255,255,.95);
   border-radius:50%;
-
   background:
-    radial-gradient(
-      circle at 35% 30%,
-      #ffffffee,
-      var(--token-main) 35%,
-      var(--token-deep) 100%
-    );
+    radial-gradient(circle at 30% 25%,
+      #fff,
+      var(--token-light) 20%,
+      var(--token-main) 55%,
+      var(--token-deep) 100%);
 
   box-shadow:
-    0 2px 5px #0008,
-    inset 1px 1px 3px #fff9,
-    inset -2px -2px 3px #0006;
-
+    0 0 0 2px rgba(0,0,0,.22),
+    inset 1px 1px 3px rgba(255,255,255,.95),
+    inset -2px -2px 4px rgba(0,0,0,.5),
+    0 0 10px rgba(255,255,255,.78),
+    0 0 20px var(--token-glow);
+  text-shadow:0 1px 3px rgba(0,0,0,.85);
   pointer-events:none;
 }
 
 .token.red{
-  --token-light:#ffb7bd;
-  --token-main:#e51f32;
-  --token-deep:#720713;
-  --token-glow:#ff314055;
+  --token-light:#ffb7c0;
+  --token-main:#f01938;
+  --token-deep:#760714;
+  --token-glow:rgba(255,35,65,.72);
 }
 
 .token.yellow{
-  --token-light:#fff3a6;
-  --token-main:#f2c414;
-  --token-deep:#8a6200;
-  --token-glow:#ffd83f55;
+  --token-light:#fff4a7;
+  --token-main:#ffd21a;
+  --token-deep:#8b6100;
+  --token-glow:rgba(255,211,45,.72);
+}
+
+.token.movement-source-hidden{
+  opacity:0 !important;
+  pointer-events:none !important;
+}
+
+.cinematic-token{
+  position:absolute;
+  z-index:9999;
+  width:clamp(26px,4.6vw,50px);
+  height:clamp(34px,6vw,62px);
+  transform:translate(-50%,-50%);
+  pointer-events:none;
+  will-change:left,top,transform,filter;
+  transition:left var(--move-duration, 300ms) cubic-bezier(.22,.72,.22,1),
+             top var(--move-duration, 300ms) cubic-bezier(.22,.72,.22,1);
+  filter:drop-shadow(0 9px 9px rgba(0,0,0,.52));
+}
+
+.cinematic-token::before{
+  content:"";
+  position:absolute;
+  left:16%;
+  right:16%;
+  top:25%;
+  bottom:3%;
+  border-radius:28% 28% 40% 40% / 20% 20% 38% 38%;
+  background:linear-gradient(145deg,var(--ct-light) 0%,var(--ct-main) 46%,var(--ct-deep) 100%);
+  border:2px solid rgba(255,255,255,.92);
+  box-shadow:inset 2px 2px 5px #fff9,inset -5px -8px 10px #0009,0 0 20px var(--ct-glow),0 0 42px var(--ct-glow);
+}
+
+.cinematic-token::after{
+  content:"";
+  position:absolute;
+  left:25%;
+  top:2%;
+  width:50%;
+  aspect-ratio:1;
+  border-radius:50%;
+  background:radial-gradient(circle at 30% 24%,#fff 0 8%,var(--ct-light) 18%,var(--ct-main) 58%,var(--ct-deep) 100%);
+  border:2px solid rgba(255,255,255,.96);
+  box-shadow:inset 2px 2px 4px #fff9,inset -4px -5px 7px #0008,0 0 15px var(--ct-glow);
+}
+
+.cinematic-token-gem{
+  position:absolute;
+  z-index:3;
+  left:50%;
+  top:25%;
+  width:23%;
+  aspect-ratio:1;
+  transform:translate(-50%,-50%) rotate(45deg);
+  border-radius:3px;
+  background:linear-gradient(135deg,#fff,var(--ct-light) 30%,var(--ct-main));
+  border:1px solid #fff;
+  box-shadow:0 0 8px #fff,0 0 18px var(--ct-glow);
+}
+
+.cinematic-token-ring{
+  position:absolute;
+  z-index:4;
+  left:50%;
+  top:24%;
+  width:70%;
+  height:70%;
+  transform:translate(-50%,-50%);
+  border:1px solid #ffffff55;
+  border-radius:50%;
+  box-shadow:inset 0 1px 2px #fff8,0 0 8px #fff5;
+}
+
+.cinematic-token.red{--ct-light:#ffbec7;--ct-main:#f0183a;--ct-deep:#710511;--ct-glow:#ff294fbb;}
+.cinematic-token.yellow{--ct-light:#fff5ad;--ct-main:#ffd21a;--ct-deep:#8b6100;--ct-glow:#ffd52fbb;}
+
+.cinematic-token.moving{
+  transform:translate(-50%,-50%);
+  filter:drop-shadow(0 10px 12px rgba(0,0,0,.5)) brightness(1.06);
+}
+
+.cinematic-token.arrived{animation:cinematicArrival .34s ease-out;}
+
+@keyframes cinematicArrival{
+  0%{transform:translate(-50%,-50%);filter:brightness(1.06) drop-shadow(0 0 14px var(--ct-glow));}
+  50%{transform:translate(-50%,-50%);filter:brightness(1.16) drop-shadow(0 0 20px var(--ct-glow));}
+  100%{transform:translate(-50%,-50%);filter:brightness(1) drop-shadow(0 9px 9px rgba(0,0,0,.52));}
 }
 
 .token.selectable{
   cursor:pointer;
-  animation:glow .72s infinite alternate;
-}
-
-@keyframes glow{
-  to{
-    transform:scale(1.14);
-
-    box-shadow:
-      0 4px 10px #0009,
-      0 0 10px #fff,
-      0 0 24px #fff,
-      0 0 38px #fff9;
-  }
+  animation:none;
+  filter:
+    drop-shadow(0 7px 7px rgba(0,0,0,.42))
+    drop-shadow(0 0 8px var(--token-glow))
+    drop-shadow(0 0 16px var(--token-glow));
 }
 
 .token.moving{
-  animation:movePulse .22s infinite alternate;
+  animation:none;
 }
 
-@keyframes movePulse{
-  to{
-    filter:brightness(1.15);
-    transform:scale(1.07);
-  }
-}
 
 .token.capture-pop{
   animation:capturePop .65s ease-out;
@@ -554,24 +601,10 @@ main{
   }
 }
 
-.token.finish-pop{
-  animation:finishPop .9s ease-out;
-}
-
-@keyframes finishPop{
-  0%{
-    transform:scale(.6);
-    opacity:.3;
-  }
-
-  55%{
-    transform:scale(1.35);
-  }
-
-  100%{
-    transform:scale(1);
-    opacity:1;
-  }
+/* Finished tokens keep the exact same visual size and appearance. */
+.token.finished{
+  animation:none !important;
+  transform:none !important;
 }
 
 .home-slot .token{
@@ -898,6 +931,38 @@ main{
   color:#c8d3e7;
 }
 
+.win-prize{
+  margin:18px auto 4px;
+  width:min(100%,320px);
+  padding:14px 16px;
+  border:1px solid #ffffff22;
+  border-radius:18px;
+  background:linear-gradient(135deg,#ffffff0b,#ffffff04);
+  box-shadow:inset 0 1px 0 #ffffff12,0 10px 28px #0004;
+}
+
+.win-prize span{
+  display:block;
+  font-size:10px;
+  letter-spacing:1.6px;
+  color:#9eafd0;
+  font-weight:800;
+}
+
+.win-prize strong{
+  display:block;
+  margin-top:4px;
+  font-size:19px;
+  color:#fff;
+}
+
+.win-prize small{
+  display:block;
+  margin-top:4px;
+  color:#c7d2e7;
+  font-size:12px;
+}
+
 .playAgain{
   margin-top:15px;
 
@@ -995,6 +1060,35 @@ main{
     padding:15px;
   }
 }
+
+/* Keep every non-moving token visible during movement. Only the moving token
+   is hidden because its exact-size proxy travels between cells. */
+.movement-proxy{
+  position:absolute !important;
+  z-index:9999 !important;
+  margin:0 !important;
+  padding:0 !important;
+  pointer-events:none !important;
+  left:0;
+  top:0;
+  transform:translate(-50%,-50%) !important;
+  transition:left var(--move-duration,300ms) cubic-bezier(.22,.72,.22,1),
+             top var(--move-duration,300ms) cubic-bezier(.22,.72,.22,1) !important;
+  animation:none !important;
+  opacity:1 !important;
+  filter:
+    drop-shadow(0 7px 7px rgba(0,0,0,.42))
+    drop-shadow(0 0 8px var(--token-glow))
+    drop-shadow(0 0 16px var(--token-glow)) !important;
+}
+.movement-proxy::before,
+.movement-proxy::after{
+  animation:none !important;
+}
+.movement-proxy .token-gem{
+  animation:none !important;
+}
+
 </style>
 </head>
 
@@ -1135,7 +1229,7 @@ main{
 
         🎯 Capturing gives an extra roll.<br>
 
-        🏆 Move all 4 tokens to the center to win.<br>
+        🏆 Complete the winning lane with all 4 tokens to win.<br>
 
         🌐 Both players see the same game in real time.
 
@@ -1162,6 +1256,12 @@ main{
     <p id="winText">
       Congratulations!
     </p>
+
+    <div class="win-prize" id="winPrize">
+      <span>GAME TYPE</span>
+      <strong>FREE GAME</strong>
+      <small>Prize: ₹0 • No entry fee</small>
+    </div>
 
     <button
       class="playAgain"
@@ -1607,7 +1707,11 @@ const START = {
 
 const HOME = {
 
+  /* Six visible winning-lane cells on the actual 15x15 board.
+     Position 51 is the first coloured lane cell and position 56 is
+     the final winning cell. */
   red:[
+    [7,1],
     [7,2],
     [7,3],
     [7,4],
@@ -1616,6 +1720,7 @@ const HOME = {
   ],
 
   yellow:[
+    [7,13],
     [7,12],
     [7,11],
     [7,10],
@@ -1688,6 +1793,15 @@ let battleListener =
 let isAnimating =
   false;
 
+let isDiceAnimating =
+  false;
+
+let activeDiceRollId =
+  null;
+
+let activeDiceRollStarted =
+  false;
+
 /*
   Realtime synchronization guard.
 
@@ -1700,6 +1814,15 @@ let pendingRemoteState =
 
 let lastLocalUpdatedAt =
   0;
+
+let activeMoveId =
+  null;
+
+let activeMoveRemote =
+  false;
+
+let activeMoveAnimationStarted =
+  false;
 
 let soundOn =
   true;
@@ -1898,74 +2021,89 @@ function nextUpdatedAt(){
 }
 
 
-function applyRemoteGameState(
-  incoming
-){
+function applyRemoteGameState(incoming){
 
-  if(!incoming){
+  if(!incoming){ return; }
+
+  const incomingAt = Number(incoming.updatedAt) || 0;
+  const currentAt = Number(gameState?.updatedAt) || 0;
+
+  if(incomingAt < currentAt || incomingAt < lastLocalUpdatedAt){
     return;
   }
-
-  const incomingAt =
-    Number(
-      incoming.updatedAt
-    ) || 0;
 
   /*
-    Never let an older Firebase snapshot roll
-    the client back to a previous turn/phase.
+    Dice rolls are authoritative Firebase events too. The player who owns
+    the roll publishes the random number once; both devices only animate
+    that same number. Only the rolling player is allowed to advance the
+    game from phase "rolling" to phase "move"/"roll".
   */
-  const currentAt =
-    Number(
-      gameState?.updatedAt
-    ) || 0;
+  if(incoming.phase === "rolling" && incoming.diceRoll?.id){
+    lastLocalUpdatedAt = Math.max(lastLocalUpdatedAt,incomingAt);
+    gameState = incoming;
+    pendingRemoteState = null;
+    isAnimating = true;
+    isDiceAnimating = true;
 
-  if(
-    incomingAt < currentAt ||
-    incomingAt < lastLocalUpdatedAt
-  ){
-    return;
-  }
-
-  if(isAnimating){
-
-    if(
-      !pendingRemoteState ||
-      incomingAt >=
-        (
-          Number(
-            pendingRemoteState.updatedAt
-          ) || 0
-        )
-    ){
-
-      pendingRemoteState =
-        incoming;
-
+    if(activeDiceRollId !== incoming.diceRoll.id){
+      activeDiceRollId = incoming.diceRoll.id;
+      void playSharedDiceRoll(incoming);
     }
 
     return;
   }
 
-  gameState =
-    incoming;
+  const incomingMoveId = incoming.moveAnimation?.id || null;
 
-  lastLocalUpdatedAt =
-    Math.max(
-      lastLocalUpdatedAt,
-      incomingAt
-    );
+  if(incoming.phase === "animating" && incomingMoveId){
+    lastLocalUpdatedAt = Math.max(lastLocalUpdatedAt,incomingAt);
+    gameState = incoming;
+    pendingRemoteState = null;
+    isAnimating = true;
 
+    if(activeMoveId !== incomingMoveId){
+      activeMoveId = incomingMoveId;
+      activeMoveRemote = incoming.moveAnimation.ownerUid !== currentUser?.uid;
+      activeMoveAnimationStarted = false;
+    }
+
+    renderGame();
+
+    if(!activeMoveAnimationStarted){
+      void playSharedMoveAnimation(incoming);
+    }
+
+    return;
+  }
+
+  /* Never let the final Firebase snapshot interrupt an animation. */
+  if(activeMoveId && !incomingMoveId){
+    if(!pendingRemoteState || incomingAt >= Number(pendingRemoteState.updatedAt || 0)){
+      pendingRemoteState = incoming;
+    }
+    return;
+  }
+
+  if(isDiceAnimating){
+    if(!pendingRemoteState || incomingAt >= Number(pendingRemoteState.updatedAt || 0)){
+      pendingRemoteState = incoming;
+    }
+    return;
+  }
+
+  if(isAnimating){
+    if(!pendingRemoteState || incomingAt >= Number(pendingRemoteState.updatedAt || 0)){
+      pendingRemoteState = incoming;
+    }
+    return;
+  }
+
+  gameState = incoming;
+  lastLocalUpdatedAt = Math.max(lastLocalUpdatedAt,incomingAt);
   renderGame();
   updatePlayerInformation();
-
-  if(gameState.winner){
-    showWinner(
-      gameState.winner
-    );
-  }
+  if(gameState.winner){ showWinner(gameState.winner); }
 }
-
 
 function finishLocalAction(
   localState
@@ -2015,6 +2153,17 @@ function finishLocalAction(
     );
 
   isAnimating =
+    false;
+
+  isDiceAnimating =
+    false;
+
+  board.classList.remove("board-shared-animating");
+
+  activeMoveId =
+    null;
+
+  activeMoveRemote =
     false;
 
   renderGame();
@@ -2071,6 +2220,8 @@ function createInitialGame(){
 
     dice:0,
 
+    diceRoll:null,
+
     phase:"roll",
 
     winner:null,
@@ -2079,6 +2230,8 @@ function createInitialGame(){
       red:0,
       yellow:0
     },
+
+    moveAnimation:null,
 
     version:1,
 
@@ -2191,6 +2344,9 @@ function normalizeGame(
     dice:
       Number(source.dice) || 0,
 
+    diceRoll:
+      source.diceRoll || null,
+
     phase:
       source.phase || "roll",
 
@@ -2210,6 +2366,9 @@ function normalizeGame(
         ) || 0
 
     },
+
+    moveAnimation:
+      source.moveAnimation || null,
 
     version:
       Number(source.version) || 1,
@@ -2255,28 +2414,43 @@ function coord(token){
     return null;
   }
 
+  const position = Number(token.position);
+
   if(
-    token.position === HOME_POSITION ||
-    token.position >= FINISHED_POSITION
+    position === HOME_POSITION ||
+    position < 0 ||
+    position > FINISHED_POSITION
   ){
     return null;
   }
 
-  if(token.position < 52){
+  /*
+    Authoritative path model:
+    0..50  = outer track up to the player's entry arrow
+    51..56 = all six coloured winning-lane cells
 
+    The board really contains six coloured lane cells. The previous build
+    had only five in HOME, which made the Yellow route skip [7,13] and made
+    the last part of the route look like an extra step.
+
+    FINISHED_POSITION (56) is therefore the final coloured winning cell. A
+    finished token remains visible there at its normal size; the score/win
+    state is determined by its position, not by hiding or scaling the token.
+  */
+  if(position <= 50){
     return TRACK[
       (
         START[token.color] +
-        token.position
+        position
       ) % 52
     ];
   }
 
-  const index =
-    token.position - 52;
+  if(position <= FINISHED_POSITION){
+    return HOME[token.color][position - 51] || null;
+  }
 
-  return HOME[token.color][index]
-    || null;
+  return null;
 }
 
 
@@ -2355,6 +2529,15 @@ function tokenElement(
 
   element.dataset.tokenId =
     String(token.id);
+
+  const activeMove = gameState?.moveAnimation;
+  if(
+    activeMove &&
+    activeMove.color === token.color &&
+    Number(activeMove.tokenId) === Number(token.id)
+  ){
+    element.classList.add("movement-source-hidden");
+  }
 
   return element;
 }
@@ -2466,220 +2649,196 @@ function renderGame(
     tokenSource ||
     gameState.tokens;
 
-  removeTokens();
+  /*
+    IMPORTANT:
+    Token DOM nodes are reconciled instead of being removed and recreated.
+    This keeps every token continuously visible while dice rolls, Firebase
+    snapshots arrive, or another token is moving.
+  */
+  const existing = new Map();
 
+  board
+    .querySelectorAll('.token:not(.movement-proxy)')
+    .forEach(element => {
+      const keyName =
+        `${element.dataset.color}:${element.dataset.tokenId}`;
+      existing.set(keyName,element);
+    });
+
+  const desired = new Set();
+  const activeMove = gameState.moveAnimation;
+
+  function getTokenElement(token){
+    const keyName =
+      `${token.color}:${token.id}`;
+
+    desired.add(keyName);
+
+    let element =
+      existing.get(keyName);
+
+    if(!element){
+      element = tokenElement(token);
+    }
+
+    element.dataset.color = token.color;
+    element.dataset.tokenId = String(token.id);
+
+    const shouldHide = Boolean(
+      activeMove &&
+      activeMove.color === token.color &&
+      Number(activeMove.tokenId) === Number(token.id) &&
+      isAnimating
+    );
+
+    element.classList.toggle(
+      'movement-source-hidden',
+      shouldHide
+    );
+
+    element.classList.remove('selectable');
+    element.classList.toggle('finished', Boolean(token.finished));
+
+    const selectable =
+      token.color === role &&
+      gameState.turn === role &&
+      gameState.phase === 'move' &&
+      !isAnimating &&
+      !isDiceAnimating &&
+      valid(token,gameState.dice);
+
+    if(selectable){
+      element.classList.add('selectable');
+    }
+
+    return element;
+  }
 
   /* SCORE */
-
   userScore.textContent =
-    `${finishedCount("red", tokens.red)} / 4`;
+    `${finishedCount('red',tokens.red)} / 4`;
 
   aiScore.textContent =
-    `${finishedCount("yellow", tokens.yellow)} / 4`;
-
+    `${finishedCount('yellow',tokens.yellow)} / 4`;
 
   /* TURN */
-
   const myTurn =
     gameState.turn === role;
 
-
-  if(role === "red"){
-
-    if(gameState.turn === "red"){
-
-      turnBox.innerHTML =
-        `🔴 You<small>Your Turn</small>`;
-
-    }else{
-
-      turnBox.innerHTML =
-        `🟡 Player 2<small>Opponent's Turn</small>`;
-    }
-
+  if(role === 'red'){
+    turnBox.innerHTML =
+      gameState.turn === 'red'
+        ? `🔴 You<small>Your Turn</small>`
+        : `🟡 Player 2<small>Opponent's Turn</small>`;
   }else{
-
-    if(gameState.turn === "yellow"){
-
-      turnBox.innerHTML =
-        `🟡 You<small>Your Turn</small>`;
-
-    }else{
-
-      turnBox.innerHTML =
-        `🔴 Player 1<small>Opponent's Turn</small>`;
-    }
+    turnBox.innerHTML =
+      gameState.turn === 'yellow'
+        ? `🟡 You<small>Your Turn</small>`
+        : `🔴 Player 1<small>Opponent's Turn</small>`;
   }
 
-
   /* DICE */
-
-  dice.textContent =
-    gameState.dice
-      ? gameState.dice
-      : "🎲";
-
+  if(gameState.phase !== "rolling") {
+    dice.textContent =
+      gameState.dice
+        ? gameState.dice
+        : "🎲";
+  }
 
   /* ROLL BUTTON */
-
-  const roomReady =
-    Boolean(
-      gameState.players.red &&
-      gameState.players.yellow
-    );
+  const roomReady = Boolean(
+    gameState.players.red &&
+    gameState.players.yellow
+  );
 
   rollBtn.disabled =
     !roomReady ||
     gameState.winner !== null ||
     isAnimating ||
-    gameState.phase !== "roll" ||
+    isDiceAnimating ||
+    gameState.phase !== 'roll' ||
     !myTurn;
 
-
   /* HOME TOKENS */
+  ['red','yellow'].forEach(color => {
+    let homeIndex = 0;
 
-  ["red","yellow"].forEach(
-    color => {
+    tokens[color].forEach(token => {
+      if(token.position !== HOME_POSITION){
+        return;
+      }
 
-      let homeIndex = 0;
+      if(token.finished){
+        return;
+      }
 
-      tokens[color]
-        .forEach(token => {
+      const slot =
+        homeSlots[color]?.[homeIndex++];
 
-          if(
-            token.position !== HOME_POSITION
-          ){
-            return;
-          }
+      if(!slot){
+        return;
+      }
 
-          if(
-            token.finished
-          ){
-            return;
-          }
+      const element =
+        getTokenElement(token);
 
-          const slot =
-            homeSlots[color][homeIndex++];
+      /* Remove board layout overrides when returning home. */
+      element.style.width = '';
+      element.style.height = '';
+      element.style.aspectRatio = '';
+      element.style.left = '';
+      element.style.top = '';
+      element.style.zIndex = '';
+      element.style.margin = '';
 
-          if(!slot){
-            return;
-          }
-
-          const element =
-            tokenElement(token);
-
-          const selectable =
-            color === role &&
-            gameState.turn === role &&
-            gameState.phase === "move" &&
-            !isAnimating &&
-            valid(
-              token,
-              gameState.dice
-            );
-
-          if(selectable){
-
-            element.classList.add(
-              "selectable"
-            );
-          }
-
-          slot.appendChild(element);
-
-        });
-
-    }
-  );
-
+      slot.appendChild(element);
+    });
+  });
 
   /* BOARD TOKENS */
-
   const groups = {};
 
-
-  ["red","yellow"].forEach(
-    color => {
-
-      tokens[color]
-        .forEach(token => {
-
-          const coordinate =
-            coord(token);
-
-          if(!coordinate){
-            return;
-          }
-
-          const cellKey =
-            key(
-              coordinate[0],
-              coordinate[1]
-            );
-
-          if(!groups[cellKey]){
-            groups[cellKey] = [];
-          }
-
-          const element =
-            tokenElement(token);
-
-          const selectable =
-            color === role &&
-            gameState.turn === role &&
-            gameState.phase === "move" &&
-            !isAnimating &&
-            valid(
-              token,
-              gameState.dice
-            );
-
-          if(selectable){
-
-            element.classList.add(
-              "selectable"
-            );
-          }
-
-          groups[cellKey].push({
-
-            token,
-
-            element
-
-          });
-
-        });
-
-    }
-  );
-
-
-  Object.entries(groups)
-    .forEach(
-      ([cellKey,items]) => {
-
-        const cell =
-          cells[cellKey];
-
-        if(!cell){
-          return;
-        }
-
-        items.forEach(
-          item =>
-            cell.appendChild(
-              item.element
-            )
-        );
-
-        placeGroup(items);
-
+  ['red','yellow'].forEach(color => {
+    tokens[color].forEach(token => {
+      const coordinate = coord(token);
+      if(!coordinate){
+        return;
       }
-    );
 
+      const cellKey =
+        key(coordinate[0],coordinate[1]);
+
+      if(!groups[cellKey]){
+        groups[cellKey] = [];
+      }
+
+      const element =
+        getTokenElement(token);
+
+      groups[cellKey].push({token,element});
+    });
+  });
+
+  Object.entries(groups).forEach(([cellKey,items]) => {
+    const cell = cells[cellKey];
+    if(!cell){
+      return;
+    }
+
+    items.forEach(item => {
+      cell.appendChild(item.element);
+    });
+
+    placeGroup(items);
+  });
+
+  /* Remove only genuinely stale token nodes. */
+  existing.forEach((element,keyName) => {
+    if(!desired.has(keyName) && element.isConnected){
+      element.remove();
+    }
+  });
 }
-
 
 /* =========================================================
    ROOM / PLAYER INFORMATION
@@ -2727,6 +2886,14 @@ function updatePlayerInformation(){
     return;
   }
 
+
+  if(gameState.phase === "rolling") {
+
+    const rollingColor = gameState.diceRoll?.color;
+    const rollingName = rollingColor === role ? "You" : (rollingColor === "red" ? "Player 1" : "Player 2");
+    status.textContent = `🎲 ${rollingName} is rolling...`;
+    return;
+  }
 
   if(gameState.turn === role){
 
@@ -2802,55 +2969,350 @@ async function rollAnimation(
    ANIMATE TOKEN
    ========================================================= */
 
-async function animateToken(
-  color,
-  tokenId,
-  number
-){
+function boardPointForPosition(color, position, tokenId, tokenSource, homeIndexOverride = null){
 
-  const animationTokens = {
-    red:
-      gameState.tokens.red.map(
-        item => ({...item})
-      ),
-    yellow:
-      gameState.tokens.yellow.map(
-        item => ({...item})
-      )
+  const boardRect = board.getBoundingClientRect();
+  let rect = null;
+
+  if(position === HOME_POSITION){
+    const sourceTokens = tokenSource?.[color] || gameState?.tokens?.[color] || [];
+    const homeTokens = sourceTokens
+      .filter(t => t.position === HOME_POSITION)
+      .sort((a,b) => Number(a.id) - Number(b.id));
+    const foundIndex = homeTokens.findIndex(t => Number(t.id) === Number(tokenId));
+    const homeIndex = homeIndexOverride !== null && homeIndexOverride !== undefined
+      ? Number(homeIndexOverride)
+      : Math.max(0,foundIndex);
+    const slot = homeSlots[color]?.[homeIndex];
+    rect = slot?.getBoundingClientRect() || null;
+  }else if(position <= FINISHED_POSITION){
+    const coordinate = coord({color,position});
+    const cell = coordinate ? cells[key(coordinate[0],coordinate[1])] : null;
+    rect = cell?.getBoundingClientRect() || null;
+  }
+
+  if(!rect){
+    const center = boardRect.width / 2;
+    return {x:center,y:center};
+  }
+
+  return {
+    x:rect.left + rect.width/2 - boardRect.left,
+    y:rect.top + rect.height/2 - boardRect.top
   };
-
-  const localToken =
-    animationTokens[color][tokenId];
-
-  if(!localToken){
-    return;
-  }
-
-
-  if(
-    localToken.position ===
-    HOME_POSITION
-  ){
-
-    return;
-  }
-
-
-  for(let step=0;step<number;step++){
-
-    localToken.position++;
-
-    sound("move");
-
-    renderGame(
-      animationTokens
-    );
-
-    await sleep(170);
-  }
-
 }
 
+function createMovementProxy(color, tokenId){
+  const source = document.querySelector(
+    `.token[data-color="${color}"][data-token-id="${tokenId}"]`
+  );
+
+  const proxy = tokenElement({
+    id:Number(tokenId),
+    color,
+    position:0,
+    finished:false
+  });
+
+  proxy.classList.remove("movement-source-hidden");
+  proxy.classList.add("movement-proxy");
+
+  if(source){
+    const rect = source.getBoundingClientRect();
+    proxy.style.width = `${rect.width}px`;
+    proxy.style.height = `${rect.height}px`;
+    proxy.style.aspectRatio = "auto";
+    proxy.style.margin = "0";
+  }
+
+  return proxy;
+}
+
+async function playSharedDiceRoll(state){
+
+  const roll = state?.diceRoll;
+  if(!roll || !roll.id){ return; }
+  if(activeDiceRollId === roll.id && activeDiceRollStarted){ return; }
+
+  activeDiceRollId = roll.id;
+  activeDiceRollStarted = true;
+  isDiceAnimating = true;
+  isAnimating = true;
+  gameState = state;
+
+  renderGame();
+
+  const finalNumber = Number(roll.number) || 1;
+  await rollAnimation(finalNumber);
+
+  /* Only the player who pressed Roll Dice resolves the result. */
+  if(String(roll.ownerUid) === String(currentUser?.uid)){
+
+    const color = roll.color;
+    const currentSixCount = Number(state.sixCount?.[color]) || 0;
+    const newSixCount = finalNumber === 6 ? currentSixCount + 1 : 0;
+
+    let nextTurn = color;
+    let nextPhase = "move";
+    let nextSixCount = {
+      ...state.sixCount,
+      [color]:newSixCount
+    };
+
+    if(newSixCount >= 3){
+      nextTurn = color === "red" ? "yellow" : "red";
+      nextPhase = "roll";
+      nextSixCount = {
+        ...state.sixCount,
+        [color]:0,
+        [nextTurn]:0
+      };
+    }else{
+      const validTokens = (state.tokens?.[color] || [])
+        .filter(token => valid(token,finalNumber));
+
+      if(validTokens.length === 0){
+        nextTurn = finalNumber === 6
+          ? color
+          : (color === "red" ? "yellow" : "red");
+        nextPhase = "roll";
+        nextSixCount = {
+          ...state.sixCount,
+          [color]:finalNumber === 6 ? newSixCount : 0,
+          [nextTurn]:nextTurn === color ? newSixCount : 0
+        };
+      }
+    }
+
+    const finalUpdatedAt = Math.max(
+      Date.now(),
+      Number(state.updatedAt || 0) + 1,
+      lastLocalUpdatedAt + 1
+    );
+
+    const finalState = normalizeGame({
+      ...state,
+      dice:finalNumber,
+      diceRoll:null,
+      phase:nextPhase,
+      turn:nextTurn,
+      sixCount:nextSixCount,
+      updatedAt:finalUpdatedAt
+    });
+
+    try{
+      await update(gameRef,{
+        dice:finalNumber,
+        diceRoll:null,
+        phase:nextPhase,
+        turn:nextTurn,
+        sixCount:nextSixCount,
+        updatedAt:finalUpdatedAt
+      });
+    }catch(error){
+      console.error("Dice result sync failed.",error);
+    }
+
+    pendingRemoteState = null;
+    gameState = finalState;
+    lastLocalUpdatedAt = Math.max(lastLocalUpdatedAt,finalUpdatedAt);
+    activeDiceRollId = null;
+    activeDiceRollStarted = false;
+    isDiceAnimating = false;
+    isAnimating = false;
+    renderGame();
+    updatePlayerInformation();
+
+    if(newSixCount >= 3){
+      status.textContent = "⚠️ Three consecutive 6s — your turn is lost.";
+    }
+
+    return;
+  }
+
+  /* Remote device: use the newest authoritative result after animation. */
+  const pending = pendingRemoteState;
+  pendingRemoteState = null;
+  activeDiceRollId = null;
+  activeDiceRollStarted = false;
+  isDiceAnimating = false;
+  isAnimating = false;
+
+  if(pending && Number(pending.updatedAt || 0) >= Number(state.updatedAt || 0)){
+    gameState = normalizeGame(pending);
+    lastLocalUpdatedAt = Math.max(lastLocalUpdatedAt,Number(gameState.updatedAt)||0);
+  }else{
+    gameState = normalizeGame(state);
+  }
+
+  renderGame();
+  updatePlayerInformation();
+}
+
+async function playSharedMoveAnimation(state){
+
+  const move = state?.moveAnimation;
+  if(!move || !move.id){ return; }
+  if(activeMoveAnimationStarted && activeMoveId === move.id){ return; }
+
+  activeMoveId = move.id;
+  activeMoveAnimationStarted = true;
+  isAnimating = true;
+  isDiceAnimating = false;
+  gameState = state;
+  board.classList.add("board-shared-animating");
+
+  const fromPosition = Number(move.fromPosition);
+  const toPosition = Number(move.toPosition);
+  const tokenId = Number(move.tokenId);
+  const color = move.color;
+  const duration = Math.max(Number(move.duration) || 1000,900);
+  const steps = Math.max(1,Number(move.steps) || Math.abs(toPosition-fromPosition));
+  const stepDuration = duration / steps;
+  const startAt = Number(move.startedAt) || Date.now();
+
+  /*
+    Create and position the movement copy BEFORE hiding the real token and
+    BEFORE waiting for the shared start timestamp. This removes the old
+    700ms/1s blank gap where the token appeared to disappear.
+  */
+  const sourceToken = document.querySelector(
+    `.token[data-color="${color}"][data-token-id="${tokenId}"]`
+  );
+
+  const mover = createMovementProxy(color,tokenId);
+  const from = boardPointForPosition(
+    color,
+    fromPosition,
+    tokenId,
+    state.tokens,
+    move.fromHomeIndex
+  );
+
+  mover.style.transition = "none";
+  mover.style.left = `${from.x}px`;
+  mover.style.top = `${from.y}px`;
+  board.appendChild(mover);
+
+  if(sourceToken){
+    sourceToken.classList.add("movement-source-hidden");
+  }
+
+  void mover.offsetWidth;
+
+  /* Every device waits for the same scheduled start timestamp. */
+  const wait = startAt - Date.now();
+  if(wait > 0){
+    await sleep(wait);
+  }
+
+  /* If a device received the event late, start at the correct step. */
+  const elapsed = Math.max(0,Date.now() - startAt);
+  let firstStep = Math.floor(elapsed / stepDuration) + 1;
+  if(firstStep > steps){ firstStep = steps; }
+
+  if(firstStep > 1){
+    const catchupPosition = fromPosition + firstStep - 1;
+    const catchupPoint = boardPointForPosition(
+      color,
+      catchupPosition,
+      tokenId,
+      state.tokens,
+      move.fromHomeIndex
+    );
+    mover.style.left = `${catchupPoint.x}px`;
+    mover.style.top = `${catchupPoint.y}px`;
+  }
+
+  mover.style.transition = "left var(--move-duration,300ms) cubic-bezier(.22,.72,.22,1), top var(--move-duration,300ms) cubic-bezier(.22,.72,.22,1)";
+
+  for(let i=firstStep;i<=steps;i++){
+    const position = fromPosition + i;
+    const nextPoint = boardPointForPosition(
+      color,
+      position,
+      tokenId,
+      state.tokens,
+      move.fromHomeIndex
+    );
+
+    mover.style.setProperty("--move-duration",`${stepDuration}ms`);
+    mover.style.left = `${nextPoint.x}px`;
+    mover.style.top = `${nextPoint.y}px`;
+    mover.classList.add("moving");
+    sound("move");
+
+    await sleep(Math.max(20,stepDuration));
+  }
+
+  mover.classList.remove("moving");
+  await sleep(40);
+  mover.remove();
+  board.classList.remove("board-shared-animating");
+
+  const result = move.result;
+
+  /* Only the player who initiated the move publishes the final state. */
+  if(
+    result &&
+    gameRef &&
+    activeMoveId === move.id &&
+    String(move.ownerUid) === String(currentUser?.uid)
+  ){
+    const finalState = {
+      ...state,
+      tokens:result.tokens,
+      finished:result.finished,
+      dice:0,
+      phase:result.phase,
+      turn:result.turn,
+      winner:result.winner,
+      sixCount:result.sixCount,
+      moveAnimation:null,
+      updatedAt:Number(move.finalUpdatedAt) || (Number(state.updatedAt)||0) + 1
+    };
+
+    try{
+      await set(gameRef,finalState);
+    }catch(error){
+      console.warn("Could not publish movement final state.",error);
+    }
+  }
+
+  activeMoveId = null;
+  activeMoveRemote = false;
+  activeMoveAnimationStarted = false;
+  isAnimating = false;
+
+  if(gameState?.moveAnimation?.id === move.id){
+    const finalResult = move.result || {};
+
+    gameState = normalizeGame({
+      ...state,
+      tokens:finalResult.tokens || state.tokens,
+      finished:finalResult.finished || state.finished,
+      dice:0,
+      phase:finalResult.phase || "roll",
+      turn:finalResult.turn || state.turn,
+      winner:finalResult.winner || null,
+      sixCount:finalResult.sixCount || state.sixCount,
+      moveAnimation:null,
+      updatedAt:Number(move.finalUpdatedAt) || (Number(state.updatedAt)||0) + 1
+    });
+
+    renderGame();
+    updatePlayerInformation();
+
+    if(gameState.winner){
+      showWinner(gameState.winner);
+    }
+  }
+}
+
+/* Kept as a compatibility wrapper for older callers. */
+async function animateLocalSharedMove(state){
+  return playSharedMoveAnimation(state);
+}
 
 /* =========================================================
    GET TRACK POSITION
@@ -2879,19 +3341,24 @@ function getFutureCoordinate(
   const future =
     token.position + number;
 
-
-  if(future >= 52){
-
+  if(future > FINISHED_POSITION){
     return null;
   }
 
+  if(future <= 50){
+    return TRACK[
+      (
+        START[token.color] +
+        future
+      ) % 52
+    ];
+  }
 
-  return TRACK[
-    (
-      START[token.color] +
-      future
-    ) % 52
-  ];
+  if(future <= FINISHED_POSITION){
+    return HOME[token.color][future - 51] || null;
+  }
+
+  return null;
 }
 
 
@@ -3029,6 +3496,14 @@ function showWinner(
       ? "You brought all four tokens home!"
       : "Your opponent brought all four tokens home first.";
 
+  const winPrize = document.getElementById("winPrize");
+  if(winPrize){
+    winPrize.innerHTML = `
+      <span>GAME TYPE</span>
+      <strong>FREE GAME</strong>
+      <small>Prize: ₹0 • No entry fee</small>
+    `;
+  }
 
   celebration.style.display =
     "grid";
@@ -3109,654 +3584,209 @@ function hideCelebration(){
 
 async function rollDice(){
 
-  if(!gameState){
+  if(!gameState || !currentUser || !roomCode || !gameRef){ return; }
+  if(role !== gameState.turn){ return; }
+  if(gameState.phase !== "roll"){ return; }
+  if(gameState.winner){ return; }
+  if(!gameState.players.red || !gameState.players.yellow){
+    status.textContent = "⏳ Waiting for both players.";
     return;
   }
 
-  if(!currentUser){
-    return;
-  }
+  const number = Math.floor(Math.random() * 6) + 1;
+  const updatedAt = nextUpdatedAt();
+  const rollId = `${role}-${currentUser.uid}-${updatedAt}-${Math.random().toString(36).slice(2,8)}`;
 
-  if(!roomCode){
-    return;
-  }
-
-  if(role !== gameState.turn){
-    return;
-  }
-
-  if(gameState.phase !== "roll"){
-    return;
-  }
-
-  if(gameState.winner){
-    return;
-  }
-
-  if(
-    !gameState.players.red ||
-    !gameState.players.yellow
-  ){
-
-    status.textContent =
-      "⏳ Waiting for both players.";
-
-    return;
-  }
-
-
-  isAnimating =
-    true;
-
-  pendingRemoteState =
-    null;
-
-  rollBtn.disabled =
-    true;
-
-  renderGame();
-
-  /*
-    Generate the authoritative dice result exactly once.
-    Never generate a second random number after the
-    visual dice animation.
-  */
-  const number =
-    Math.floor(
-      Math.random() * 6
-    ) + 1;
-
-  await rollAnimation(
-    number
-  );
-
-
-  const currentSixCount =
-    gameState.sixCount[role] || 0;
-
-
-  const newSixCount =
-    number === 6
-      ? currentSixCount + 1
-      : 0;
-
-
-  /*
-    Three consecutive 6s:
-    lose turn.
-  */
-
-  if(newSixCount >= 3){
-
-    const nextTurn =
-      role === "red"
-        ? "yellow"
-        : "red";
-
-    const updatedAt =
-      nextUpdatedAt();
-
-    const localState = {
-      ...gameState,
-
-      dice:number,
-
-      phase:"roll",
-
-      turn:nextTurn,
-
-      sixCount:{
-        ...gameState.sixCount,
-        [role]:0,
-        [nextTurn]:0
-      },
-
-      updatedAt
-
-    };
-
-    await update(
-      gameRef,
-      {
-        dice:number,
-        phase:"roll",
-        turn:nextTurn,
-        sixCount:{
-          ...gameState.sixCount,
-          [role]:0,
-          [nextTurn]:0
-        },
-        updatedAt
-      }
-    );
-
-    finishLocalAction(
-      localState
-    );
-
-    status.textContent =
-      "⚠️ Three consecutive 6s — your turn is lost.";
-
-    return;
-  }
-
-
-  const tokens =
-    gameState.tokens[role];
-
-
-  const validTokens =
-    tokens.filter(
-      token =>
-        valid(
-          token,
-          number
-        )
-    );
-
-
-  /*
-    No valid move.
-  */
-
-  if(validTokens.length === 0){
-
-    const nextTurn =
-      number === 6
-        ? role
-        : (
-            role === "red"
-              ? "yellow"
-              : "red"
-          );
-
-    const updatedAt =
-      nextUpdatedAt();
-
-    const localState = {
-      ...gameState,
-
-      dice:number,
-
-      phase:"roll",
-
-      turn:nextTurn,
-
-      sixCount:{
-        ...gameState.sixCount,
-        [role]:
-          number === 6
-            ? newSixCount
-            : 0,
-
-        [nextTurn]:
-          nextTurn === role
-            ? newSixCount
-            : 0
-      },
-
-      updatedAt
-
-    };
-
-    await update(
-      gameRef,
-      {
-        dice:number,
-
-        phase:"roll",
-
-        turn:nextTurn,
-
-        sixCount:{
-          ...gameState.sixCount,
-          [role]:
-            number === 6
-              ? newSixCount
-              : 0,
-
-          [nextTurn]:
-            nextTurn === role
-              ? newSixCount
-              : 0
-        },
-
-        updatedAt
-      }
-    );
-
-    finishLocalAction(
-      localState
-    );
-
-    return;
-  }
-
-
-  /*
-    Valid move exists.
-  */
-
-  const updatedAt =
-    nextUpdatedAt();
-
-  const localState = {
+  const rollingState = {
     ...gameState,
-
-    dice:number,
-
-    phase:"move",
-
-    sixCount:{
-      ...gameState.sixCount,
-      [role]:newSixCount
+    dice:0,
+    diceRoll:{
+      id:rollId,
+      ownerUid:currentUser.uid,
+      color:role,
+      number,
+      startedAt:Date.now()
     },
-
+    phase:"rolling",
     updatedAt
   };
 
-  await update(
-    gameRef,
-    {
-      dice:number,
+  isAnimating = true;
+  isDiceAnimating = true;
+  pendingRemoteState = null;
+  activeDiceRollId = rollId;
+  gameState = normalizeGame(rollingState);
+  renderGame();
 
-      phase:"move",
+  try{
+    await set(gameRef,gameState);
+  }catch(error){
+    console.error("Could not start dice roll.",error);
+    isAnimating = false;
+    isDiceAnimating = false;
+    activeDiceRollId = null;
+    activeDiceRollStarted = false;
+    return;
+  }
 
-      sixCount:{
-        ...gameState.sixCount,
-        [role]:newSixCount
-      },
-
-      updatedAt
-    }
-  );
-
-  finishLocalAction(
-    localState
-  );
-
+  /* Local fallback if Firebase echo is delayed. */
+  if(activeDiceRollId === rollId && !activeDiceRollStarted){
+    void playSharedDiceRoll(gameState);
+  }
 }
-
 
 /* =========================================================
    MOVE TOKEN
    ========================================================= */
 
-async function moveMyToken(
-  tokenId
-){
+async function moveMyToken(tokenId){
 
-  if(!gameState){
-    return;
-  }
+  if(!gameState || isAnimating || isDiceAnimating){ return; }
+  if(gameState.turn !== role || gameState.phase !== "move"){ return; }
 
-  if(isAnimating){
-    return;
-  }
-
-  if(
-    gameState.turn !== role
-  ){
-    return;
-  }
-
-  if(
-    gameState.phase !== "move"
-  ){
-    return;
-  }
-
-  const number =
-    Number(
-      gameState.dice
-    );
-
-
-  if(!number){
-    return;
-  }
-
-
-  const token =
-    gameState.tokens[role][tokenId];
-
-
-  if(
-    !token ||
-    !valid(token,number)
-  ){
-    return;
-  }
-
-
-  isAnimating =
-    true;
-
-  pendingRemoteState =
-    null;
-
-
-  /*
-    Clone the complete token state.
-    The authoritative gameState is NOT mutated during
-    animation. This prevents Firebase snapshots from
-    colliding with the visual movement.
-  */
+  const number = Number(gameState.dice);
+  const token = gameState.tokens[role]?.[tokenId];
+  if(!number || !token || !valid(token,number)){ return; }
 
   const updatedTokens = {
-
-    red:
-      gameState.tokens.red.map(
-        item => ({...item})
-      ),
-
-    yellow:
-      gameState.tokens.yellow.map(
-        item => ({...item})
-      )
-
+    red:gameState.tokens.red.map(item => ({...item})),
+    yellow:gameState.tokens.yellow.map(item => ({...item}))
   };
 
+  const movingToken = updatedTokens[role][tokenId];
+  const fromPosition = movingToken.position;
+  const homeTokensBeforeMove = gameState.tokens[role]
+    .filter(item => item.position === HOME_POSITION)
+    .sort((a,b) => Number(a.id) - Number(b.id));
+  const fromHomeIndex = fromPosition === HOME_POSITION
+    ? Math.max(0,homeTokensBeforeMove.findIndex(item => Number(item.id) === Number(tokenId)))
+    : null;
+  const toPosition = fromPosition === HOME_POSITION ? 0 : fromPosition + number;
 
-  const movingToken =
-    updatedTokens[role][tokenId];
+  if(toPosition > FINISHED_POSITION){ return; }
 
+  movingToken.position = toPosition;
+  movingToken.finished = toPosition === FINISHED_POSITION;
 
-  /*
-    Unlock token from home.
-  */
+  const finalCoordinate = coord(movingToken);
+  let captured = false;
 
-  if(
-    movingToken.position ===
-    HOME_POSITION
-  ){
+  if(finalCoordinate && toPosition <= 50 && !SAFE.has(key(finalCoordinate[0],finalCoordinate[1]))){
+    const opponent = role === "red" ? "yellow" : "red";
+    const targetKey = key(finalCoordinate[0],finalCoordinate[1]);
 
-    movingToken.position =
-      0;
-
-    sound("move");
-
-    renderGame(
-      updatedTokens
-    );
-
-    await sleep(170);
-
-  }else{
-
-    /*
-      Animate locally using only the cloned state.
-    */
-
-    for(
-      let step=0;
-      step<number;
-      step++
-    ){
-
-      movingToken.position++;
-
-      renderGame(
-        updatedTokens
-      );
-
-      sound("move");
-
-      await sleep(150);
-    }
-
+    updatedTokens[opponent].forEach(opponentToken => {
+      const opponentCoordinate = coord(opponentToken);
+      if(
+        opponentToken.position >= 0 &&
+        opponentToken.position <= 50 &&
+        opponentCoordinate &&
+        key(opponentCoordinate[0],opponentCoordinate[1]) === targetKey
+      ){
+        opponentToken.position = HOME_POSITION;
+        opponentToken.finished = false;
+        captured = true;
+      }
+    });
   }
 
+  const redFinished = updatedTokens.red.filter(item => item.position === FINISHED_POSITION).length;
+  const yellowFinished = updatedTokens.yellow.filter(item => item.position === FINISHED_POSITION).length;
+  const winner = redFinished === 4 ? "red" : yellowFinished === 4 ? "yellow" : null;
+  const finishedToken = toPosition === FINISHED_POSITION;
+  const nextTurn = winner
+    ? role
+    : (number === 6 || captured || finishedToken ? role : role === "red" ? "yellow" : "red");
 
+  const newSixCount = number === 6 ? (gameState.sixCount[role] || 0) : 0;
+  const updatedAt = nextUpdatedAt();
+  const finalUpdatedAt = updatedAt + 1;
+  const moveId = `${role}-${tokenId}-${updatedAt}-${Math.random().toString(36).slice(2,8)}`;
   /*
-    Finish token.
+    Professional movement timing:
+    - unlocking from HOME is quick and deliberate
+    - board travel uses a consistent per-cell duration instead of becoming
+      excessively slow on higher dice values
   */
-
-  if(
-    movingToken.position >=
-    FINISHED_POSITION
-  ){
-
-    movingToken.position =
-      FINISHED_POSITION;
-
-    sound("win");
-  }
-
-
-  /*
-    Capture opponent.
-  */
-
-  const coordinate =
-    coord(movingToken);
-
-
-  let captured =
-    false;
-
-
-  if(
-    coordinate &&
-    movingToken.position < 52
-  ){
-
-    const cellKey =
-      key(
-        coordinate[0],
-        coordinate[1]
-      );
-
-
-    if(
-      !SAFE.has(cellKey)
-    ){
-
-      const opponent =
-        role === "red"
-          ? "yellow"
-          : "red";
-
-
-      updatedTokens[opponent]
-        .forEach(
-          opponentToken => {
-
-            const opponentCoordinate =
-              coord(opponentToken);
-
-
-            if(
-              opponentToken.position >= 0 &&
-              opponentToken.position < 52 &&
-              opponentCoordinate &&
-              key(
-                opponentCoordinate[0],
-                opponentCoordinate[1]
-              ) === cellKey
-            ){
-
-              opponentToken.position =
-                HOME_POSITION;
-
-              captured =
-                true;
-
-            }
-
-          }
-        );
-
-    }
-
-  }
-
-
-  if(captured){
-
-    sound("capture");
-
-  }
-
-
-  /*
-    Calculate finished count.
-  */
-
-  const redFinished =
-    updatedTokens.red.filter(
-      item =>
-        item.position ===
-        FINISHED_POSITION
-    ).length;
-
-
-  const yellowFinished =
-    updatedTokens.yellow.filter(
-      item =>
-        item.position ===
-        FINISHED_POSITION
-    ).length;
-
-
-  /*
-    Winner.
-  */
-
-  let winner =
-    null;
-
-
-  if(redFinished === 4){
-
-    winner =
-      "red";
-
-  }else if(
-    yellowFinished === 4
-  ){
-
-    winner =
-      "yellow";
-
-  }
-
-
-  /*
-    Determine next turn.
-  */
-
-  let nextTurn =
-    role === "red"
-      ? "yellow"
-      : "red";
-
-
-  if(
-    number === 6 ||
-    captured
-  ){
-
-    nextTurn =
-      role;
-
-  }
-
-
-  if(winner){
-
-    nextTurn =
-      role;
-
-  }
-
-
-  const newSixCount =
-    number === 6
-      ? (
-          gameState.sixCount[role] || 0
-        )
-      : 0;
-
-
-  /*
-    Save one complete authoritative shared state.
-  */
-
-  const updatedAt =
-    nextUpdatedAt();
-
-  const localState = {
-
-    ...gameState,
-
-    tokens:
-      updatedTokens,
-
-    finished:{
-      red:redFinished,
-      yellow:yellowFinished
-    },
-
-    dice:0,
-
-    phase:
-      winner
-        ? "finished"
-        : "roll",
-
-    turn:
-      winner
-        ? role
-        : nextTurn,
-
+  /* One cell always takes the same time. The dice value changes only the
+     number of cells, never the speed of a cell. */
+  const steps = fromPosition === HOME_POSITION ? 1 : number;
+  const stepDuration = fromPosition === HOME_POSITION ? 500 : 150;
+  const duration = stepDuration * steps;
+
+  const result = {
+    tokens: updatedTokens,
+    finished:{red:redFinished,yellow:yellowFinished},
+    phase:winner ? "finished" : "roll",
+    turn:winner ? role : nextTurn,
     winner,
-
     sixCount:{
       ...gameState.sixCount,
-
-      [role]:
-        (
-          number === 6 ||
-          captured
-        )
-          ? newSixCount
-          : 0
-    },
-
-    updatedAt
-
+      [role]:(number === 6 || captured) ? newSixCount : 0
+    }
   };
 
+  const animationState = {
+    ...gameState,
+    /*
+      Persist the destination token state in the authoritative animation
+      snapshot immediately. The moving token is visually represented by
+      the movement proxy while the real token is hidden. This prevents a
+      HOME token from being restored on the next render/dice update.
+    */
+    tokens:updatedTokens,
+    finished:{red:redFinished,yellow:yellowFinished},
+    phase:"animating",
+    dice:number,
+    moveAnimation:{
+      id:moveId,
+      ownerUid:currentUser?.uid || null,
+      color:role,
+      tokenId,
+      fromPosition,
+      fromHomeIndex,
+      toPosition,
+      steps,
+      duration,
+      /* Give both clients a common scheduled start instead of one client animating immediately. */
+      /*
+        Small shared lead time lets Firebase deliver the animation state to
+        both clients without making the player wait visibly.
+      */
+      startedAt:Date.now() + 120,
+      finalUpdatedAt,
+      result
+    },
+    updatedAt
+  };
 
-  await set(
-    gameRef,
-    localState
-  );
+  isAnimating = true;
+  pendingRemoteState = null;
+  activeMoveId = moveId;
+  activeMoveRemote = false;
+  activeMoveAnimationStarted = false;
+  gameState = animationState;
+  renderGame();
 
-
-  finishLocalAction(
-    localState
-  );
-
-
-  if(captured){
-
-    status.textContent =
-      "💥 Opponent captured! Extra turn.";
-
+  try{
+    await set(gameRef,animationState);
+  }catch(error){
+    console.error("Movement sync failed.",error);
+    isAnimating = false;
+    activeMoveId = null;
+    activeMoveAnimationStarted = false;
+    renderGame();
+    return;
   }
 
-
-  if(number === 6){
-
-    status.textContent =
-      "🔥 You rolled 6! Extra turn.";
-
+  /* Normally the Firebase listener starts the animation. This fallback handles a delayed local echo. */
+  if(!activeMoveAnimationStarted){
+    void playSharedMoveAnimation(animationState);
   }
 
+  if(captured){ status.textContent = "💥 Opponent captured! Extra turn."; }
+  else if(number === 6){ status.textContent = "🔥 You rolled 6! Extra turn."; }
 }
-
 
 /* =========================================================
    CREATE / LOAD GAME
