@@ -1083,6 +1083,20 @@ function renderTokens() {
                     token.style.top =
                         "11%";
 
+                    if (
+                        color === role &&
+                        canMove(
+                            color,
+                            index
+                        )
+                    ) {
+
+                        token.classList.add(
+                            "selectable"
+                        );
+
+                    }
+
                 }
 
             }

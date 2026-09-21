@@ -172,7 +172,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     try {
       const result = await runTransaction(roomRef(code), (current) => {
-        if (!current || typeof current !== "object") return;
+        if (current === null) return current;
+        if (typeof current !== "object") return;
 
         const players = current.players && typeof current.players === "object"
           ? { ...current.players }

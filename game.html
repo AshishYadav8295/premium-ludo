@@ -3709,9 +3709,9 @@ async function moveMyToken(tokenId){
       excessively slow on higher dice values
   */
   /* One cell always takes the same time. The dice value changes only the
-     number of cells, never the speed of a cell. */
+     number of cells, never the speed of a cell. Every board cell uses the same faster movement speed. */
   const steps = fromPosition === HOME_POSITION ? 1 : number;
-  const stepDuration = fromPosition === HOME_POSITION ? 500 : 150;
+  const stepDuration = fromPosition === HOME_POSITION ? 420 : 120;
   const duration = stepDuration * steps;
 
   const result = {

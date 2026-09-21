@@ -603,7 +603,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const player = createPlayerRecord(currentUser, now);
 
     const result = await runTransaction(target, (current) => {
-      if (!current || typeof current !== "object") return;
+      if (current === null) return current;
+      if (typeof current !== "object") return;
 
       const players =
         current.players && typeof current.players === "object"
