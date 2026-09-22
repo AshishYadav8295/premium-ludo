@@ -3246,9 +3246,9 @@ async function playSharedMoveAnimation(state){
   }
 
   mover.classList.remove("moving");
-  await sleep(40);
-  mover.remove();
-  board.classList.remove("board-shared-animating");
+await sleep(40);
+
+board.classList.remove("board-shared-animating");
 
   const result = move.result;
 
@@ -3259,18 +3259,24 @@ async function playSharedMoveAnimation(state){
     activeMoveId === move.id &&
     String(move.ownerUid) === String(currentUser?.uid)
   ){
-    const finalState = {
-      ...state,
-      tokens:result.tokens,
-      finished:result.finished,
-      dice:0,
-      phase:result.phase,
-      turn:result.turn,
-      winner:result.winner,
-      sixCount:result.sixCount,
-      moveAnimation:null,
-      updatedAt:Number(move.finalUpdatedAt) || (Number(state.updatedAt)||0) + 1
-    };
+    const safeWinner =
+  result?.winner === "red" ||
+  result?.winner === "yellow"
+    ? result.winner
+    : null;
+
+const finalState = {
+  ...state,
+  tokens:result.tokens,
+  finished:result.finished,
+  dice:0,
+  phase:result.phase,
+  turn:result.turn,
+  winner:safeWinner,
+  sixCount:result.sixCount,
+  moveAnimation:null,
+  updatedAt:Number(move.finalUpdatedAt) || (Number(state.updatedAt) || 0) + 1
+};
 
     try{
       await set(gameRef,finalState);
@@ -3301,11 +3307,15 @@ async function playSharedMoveAnimation(state){
     });
 
     renderGame();
-    updatePlayerInformation();
+updatePlayerInformation();
 
-    if(gameState.winner){
-      showWinner(gameState.winner);
-    }
+if(mover && mover.isConnected){
+  mover.remove();
+}
+
+if(gameState.winner){
+  showWinner(gameState.winner);
+}
   }
 }
 
