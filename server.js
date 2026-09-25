@@ -40,6 +40,7 @@ const userSchema = new mongoose.Schema({
   gamesWon: { type: Number, default: 0 },
   createdAt: { type: Date, default: Date.now }
 });
+
 const User = mongoose.models.User || mongoose.model('User', userSchema);
 
 // 2. Deposit / Transaction Schema (QR & Gateway Deposits)
@@ -50,6 +51,7 @@ const depositSchema = new mongoose.Schema({
   status: { type: String, default: 'PENDING' }, // PENDING, APPROVED, REJECTED
   createdAt: { type: Date, default: Date.now }
 });
+
 const Deposit = mongoose.models.Deposit || mongoose.model('Deposit', depositSchema);
 
 // 3. Activity Transaction History Schema
@@ -59,6 +61,7 @@ const transactionSchema = new mongoose.Schema({
   coins: { type: Number, required: true }, // Positive for credit, negative for debit
   createdAt: { type: Date, default: Date.now }
 });
+
 const Transaction = mongoose.models.Transaction || mongoose.model('Transaction', transactionSchema);
 
 
@@ -141,6 +144,7 @@ app.post('/api/payment/verify-qr', async (req, res) => {
     });
 
     await newDeposit.save();
+
     res.json({ 
       ok: true, 
       message: "Secure verification passed! Deposit request submitted to Admin Panel successfully." 
@@ -230,4 +234,3 @@ app.post('/api/admin/reject-deposit', async (req, res) => {
 app.listen(PORT, () => {
   console.log(`🚀 LUDOVERSE backend running at http://127.0.0.1:${PORT}`);
 });
-
