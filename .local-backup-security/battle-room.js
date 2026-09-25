@@ -766,13 +766,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (summaryEntryMode) {
       summaryEntryMode.textContent =
-        room.entryMode === "coins" ? "VIRTUAL REWARD" : "FREE PLAY";
+        room.entryMode === "coins" ? "LUDOCOINS" : "FREE PLAY";
     }
 
     if (summaryCoinAmount) {
       summaryCoinAmount.textContent =
         room.entryMode === "coins"
-          ? `${safeNumber(room.coinAmount).toLocaleString("en-IN")} → ${Math.min(20000, safeNumber(room.coinAmount) * 2).toLocaleString("en-IN")} winner reward`
+          ? `${safeNumber(room.coinAmount).toLocaleString("en-IN")}`
           : "—";
     }
 
@@ -1131,7 +1131,7 @@ document.addEventListener("DOMContentLoaded", () => {
       roomMode.textContent =
         room.mode === "quick"
           ? "QUICK MATCH · FREE"
-          : `${room.mode === "public" ? "PUBLIC" : "PRIVATE"} · ${room.entryMode === "coins" ? `🪙 ${room.coinAmount.toLocaleString("en-IN")} REWARD TIER` : "FREE PLAY"}`;
+          : `${room.mode === "public" ? "PUBLIC" : "PRIVATE"} · ${room.entryMode === "coins" ? `🪙 ${room.coinAmount.toLocaleString("en-IN")} LUDOCOINS` : "FREE PLAY"}`;
     }
 
     renderStatus(room);

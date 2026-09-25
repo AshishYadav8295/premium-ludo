@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Panel | LUDOVERSE</title>
+  <style>
+    :root {
+      --bg-main: #0b0f19;
+      --card-bg: #151928;
+      --border-color: rgba(255, 255, 255, 0.08);
+      --neon-green: #10b981;
+      --neon-red: #ef4444;
+      --text-main: #ffffff;
+      --text-muted: #94a3b8;
+    }
+
+    body {
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 30px;
+    }
+
+    .admin-container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    /* Login Box Styles */
+    #adminLoginBox {
+      max-width: 420px;
+      margin: 120px auto;
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      padding: 40px;
+      border-radius: 20px;
+      text-align: center;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+    }
+    #adminLoginBox input {
+      width: 100%;
+      padding: 14px;
+      margin: 20px 0;
+      background: #0b0f19;
+      border: 1px solid #334155;
+      color: white;
+      border-radius: 10px;
+      box-sizing: border-box;
+      outline: none;
+      font-size: 16px;
+      transition: 0.3s;
+    }
+    #adminLoginBox input:focus {
+      border-color: var(--neon-green);
+      box-shadow: 0 0 10px rgba(16, 185, 129, 0.3);
+    }
+    #adminLoginBox button {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 16px;
+      transition: 0.3s;
+      box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+    }
+    #adminLoginBox button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(16, 185, 129, 0.6);
+    }
+
+    /* Dashboard Layout */
+    #adminDashboard {
+      display: none;
+    }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 20px;
+    }
+
+    /* Table Styles */
+    .table-wrapper {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th, td {
+      padding: 18px 20px;
+      text-align: left;
+      border-bottom: 1px solid var(--border-color);
+    }
+    th {
+      background: #1a2238;
+      color: var(--text-muted);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    tr:last-child td {
+      border-bottom: none;
+    }
+    tr:hover {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    /* Cinematic Action Buttons */
+    .action-buttons {
+      display: flex;
+      gap: 10px;
+    }
+    .btn {
+      padding: 8px 18px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 13px;
+      transition: all 0.3s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      letter-spacing: 0.5px;
+    }
+    
+    .btn-approve {
+      background: rgba(16, 185, 129, 0.15);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.4);
+      box-shadow: 0 0 10px rgba(16, 185, 129, 0.1);
+    }
+    .btn-approve:hover {
+      background: #10b981;
+      color: white;
+      box-shadow: 0 0 20px rgba(16, 185, 129, 0.6);
+      transform: translateY(-2px);
+    }
+
+    .btn-reject {
+      background: rgba(239, 68, 68, 0.15);
+      color: #f87171;
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      box-shadow: 0 0 10px rgba(239, 68, 68, 0.1);
+    }
+    .btn-reject:hover {
+      background: #ef4444;
+      color: white;
+      box-shadow: 0 0 20px rgba(239, 68, 68, 0.6);
+      transform: translateY(-2px);
+    }
+
+    .btn-logout {
+      background: rgba(239, 68, 68, 0.2);
+      color: #f87171;
+      border: 1px solid rgba(239, 68, 68, 0.5);
+    }
+    .btn-logout:hover {
+      background: #ef4444;
+      color: white;
+    }
+
+    .empty-state {
+      text-align: center;
+      color: var(--text-muted);
+      padding: 50px;
+      font-size: 15px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Direct Admin Login Screen -->
+  <div id="adminLoginBox">
+    <h2>🔐 Admin Security</h2>
+    <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 25px;">Enter Admin Security Key to Proceed</p>
+    <input type="password" id="adminPasswordInput" placeholder="Enter Admin Password">
+    <button onclick="verifyAdminPassword()">Login to Dashboard</button>
+    <p id="loginError" style="color: #ef4444; font-size: 13px; margin-top: 15px;"></p>
+  </div>
+
+  <!-- Actual Admin Dashboard -->
+  <div class="admin-container" id="adminDashboard">
+    <div class="header">
+      <div>
+        <h1 style="margin: 0; font-size: 26px; font-weight: 700; background: linear-gradient(135deg, #fff, #94a3b8); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">🛡️ LUDOVERSE Admin Panel</h1>
+        <p style="margin: 6px 0 0 0; color: var(--text-muted); font-size: 14px;">Manage user deposit requests with real-time verification.</p>
+      </div>
+      <button onclick="logoutAdmin()" class="btn btn-logout">Logout</button>
+    </div>
+
+    <h2 style="font-size: 18px; margin-bottom: 15px; color: #e2e8f0;">Pending Deposit Requests</h2>
+    
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Time</th>
+            <th>User ID</th>
+            <th>Amount</th>
+            <th>UTR Number</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="depositsTableBody">
+          <tr><td colspan="6" class="empty-state">Loading pending requests...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script src="admin.js"></script>
+</body>
+</html>

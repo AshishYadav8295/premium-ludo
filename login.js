@@ -234,6 +234,13 @@ async function loginWithGoogle() {
       result.user;
 
 
+    /* =============================================
+       SAVE FIREBASE AUTH TOKEN FOR BACKEND APIS
+    ============================================= */
+    const idToken = await user.getIdToken();
+    localStorage.setItem("ludoverse_token", idToken);
+
+
     console.log(
       "Google login successful:",
       user

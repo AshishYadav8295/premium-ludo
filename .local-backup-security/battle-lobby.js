@@ -111,53 +111,6 @@ document.addEventListener("DOMContentLoaded", () => {
   let busy = false;
   let profileOpen = false;
 
-  const API_BASE =
-    window.LUDOVERSE_API_BASE ||
-    (
-      location.hostname === "localhost" ||
-      location.hostname === "127.0.0.1"
-        ? "http://127.0.0.1:3000"
-        : ""
-    );
-
-  async function apiRequest(path) {
-    if (!API_BASE) {
-      throw new Error(
-        "LUDOVERSE backend is not configured for this deployment."
-      );
-    }
-
-    const user = auth.currentUser;
-
-    if (!user) {
-      throw new Error("Authentication required.");
-    }
-
-    const token = await user.getIdToken();
-
-    const response = await fetch(
-      `${API_BASE}${path}`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      }
-    );
-
-    const payload =
-      await response.json().catch(() => ({}));
-
-    if (!response.ok || payload.ok === false) {
-      throw new Error(
-        payload.error ||
-        `Request failed (${response.status}).`
-      );
-    }
-
-    return payload;
-  }
-
-
   /* =======================================================
      FIREBASE REFERENCES
      ======================================================= */
@@ -424,29 +377,26 @@ document.addEventListener("DOMContentLoaded", () => {
      ECONOMY
      ======================================================= */
 
-
   async function ensureEconomy(user) {
-    if (!user) return null;
+    const target = economyRef(user.uid);
+    const snapshot = await get(target);
 
-    const payload =
-      await apiRequest("/api/economy");
+    if (!snapshot.exists()) {
+      const starterEconomy = {
+        ludoCoins: STARTER_COINS,
+        xp: 0,
+        gamesPlayed: 0,
+        gamesWon: 0,
+        activityPoints: 0,
+        platformPoints: 0,
+        updatedAt: Date.now()
+      };
 
-    const economy =
-      payload.economy || {};
-
-    if (walletBalance) {
-      walletBalance.textContent =
-        formatNumber(
-          Math.max(
-            0,
-            safeNumber(
-              economy.ludoCoins
-            )
-          )
-        );
+      await set(target, starterEconomy);
+      return starterEconomy;
     }
 
-    return economy;
+    return normalizeEconomy(snapshot.val());
   }
 
   function listenToEconomy(user) {
@@ -945,7 +895,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 ${room.playerCount}/${room.maxPlayers} players
               </span>
               <span class="room-age">${age}</span>
-              <span class="room-entry">${room.entryMode === "coins" ? `🪙 ${formatNumber(room.coinAmount)} LudoCoin reward tier` : "FREE PLAY"}</span>
+              <span class="room-entry">${room.entryMode === "coins" ? `🪙 ${formatNumber(room.coinAmount)} LudoCoins` : "FREE PLAY"}</span>
             </div>
 
             <p class="room-description">

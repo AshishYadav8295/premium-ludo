@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
 
 <title>LUDOVERSE — Professional Multiplayer Ludo</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 64 64%27%3E%3Crect width=%2764%27 height=%2764%27 rx=%2714%27 fill=%27%23172137%27/%3E%3Ccircle cx=%2720%27 cy=%2720%27 r=%275%27 fill=%27%23fff%27/%3E%3Ccircle cx=%2744%27 cy=%2744%27 r=%275%27 fill=%27%23fff%27/%3E%3C/svg%3E">
 
 <style>
 :root{
@@ -145,22 +144,6 @@ main{
 .room-badge strong{
   color:#fff;
   letter-spacing:2px;
-}
-
-
-.battle-meta{
-  margin-top:10px;
-  display:inline-flex;
-  align-items:center;
-  gap:7px;
-  padding:7px 12px;
-  border:1px solid #ffffff18;
-  border-radius:999px;
-  background:#ffffff08;
-  color:#d7e1f2;
-  font-size:12px;
-  font-weight:800;
-  letter-spacing:.15px;
 }
 
 .layout{
@@ -1145,14 +1128,6 @@ main{
       <strong id="roomCodeDisplay">------</strong>
     </div>
 
-    <div
-      class="battle-meta"
-      id="battleMeta"
-      aria-live="polite"
-    >
-      🎮 Free Match
-    </div>
-
   </div>
 
   <div class="layout">
@@ -1247,7 +1222,7 @@ main{
 
         🔥 A <b>6</b> gives an extra turn.<br>
 
-        ⚠️ After two consecutive 6s, the next roll is 1–5; a third 6 cannot occur.<br>
+        ⚠️ Three consecutive 6s lose the turn.<br>
 
         💥 Capture opponents except on
         ⭐ safe cells.<br>
@@ -1319,69 +1294,6 @@ import {
   onAuthStateChanged
 } from "./firebase.js";
 
-const API_BASE =
-  window.LUDOVERSE_API_BASE ||
-  (
-    location.hostname === "localhost" ||
-    location.hostname === "127.0.0.1"
-      ? "http://127.0.0.1:3000"
-      : ""
-  );
-
-async function gameApiRequest(
-  path,
-  options = {}
-){
-  if(!API_BASE){
-    throw new Error(
-      "LUDOVERSE backend is not configured for this deployment."
-    );
-  }
-
-  const user =
-    auth.currentUser;
-
-  if(!user){
-    throw new Error(
-      "Authentication required."
-    );
-  }
-
-  const token =
-    await user.getIdToken();
-
-  const response =
-    await fetch(
-      `${API_BASE}${path}`,
-      {
-        ...options,
-        headers:{
-          "Content-Type":"application/json",
-          ...(options.headers || {}),
-          Authorization:
-            `Bearer ${token}`
-        }
-      }
-    );
-
-  const payload =
-    await response.json().catch(
-      () => ({})
-    );
-
-  if(
-    !response.ok ||
-    payload.ok === false
-  ){
-    throw new Error(
-      payload.error ||
-      `Request failed (${response.status}).`
-    );
-  }
-
-  return payload;
-}
-
 
 /* =========================================================
    DOM
@@ -1428,9 +1340,6 @@ const winText =
 
 const roomCodeDisplay =
   document.getElementById("roomCodeDisplay");
-
-const battleMeta =
-  document.getElementById("battleMeta");
 
 const connectionStatus =
   document.getElementById("connectionStatus");
@@ -1866,9 +1775,6 @@ let role =
 let battleData =
   null;
 
-let battleResultRecorded =
-  false;
-
 let gameRef =
   null;
 
@@ -1972,90 +1878,6 @@ function getRoomCode(){
   }
 
   return null;
-}
-
-
-function getMatchMeta(){
-
-  const mode =
-    String(
-      battleData?.entryMode ||
-      battleData?.mode ||
-      ""
-    ).toLowerCase();
-
-  const amount =
-    Number(
-      battleData?.coinAmount ??
-      battleData?.entryAmount ??
-      battleData?.entry ??
-      0
-    );
-
-  return {
-    isVirtualCoinMatch: mode === "coins" || amount > 0,
-    coinAmount: Number.isFinite(amount) ? Math.max(0,amount) : 0
-  };
-}
-
-function renderMatchMeta(){
-
-  if(!battleMeta){
-    return;
-  }
-
-  const meta = getMatchMeta();
-
-  if(meta.isVirtualCoinMatch && meta.coinAmount > 0){
-    battleMeta.textContent =
-      `🪙 Virtual Coin Match • ${meta.coinAmount.toLocaleString("en-IN")} LudoCoins`;
-  }else{
-    battleMeta.textContent =
-      "🎮 Free Match";
-  }
-}
-
-async function recordBattleResult(color){
-
-  if(
-    battleResultRecorded ||
-    !battleRef ||
-    !battleData ||
-    !color
-  ){
-    return;
-  }
-
-  const roomCode =
-    getRoomCode();
-
-  if(!roomCode){
-    return;
-  }
-
-  try{
-    const result =
-      await gameApiRequest(
-        "/api/game/result",
-        {
-          method:"POST",
-          body:JSON.stringify({
-            roomCode
-          })
-        }
-      );
-
-    battleResultRecorded =
-      true;
-
-    return result;
-
-  }catch(error){
-    console.warn(
-      "Could not settle virtual LudoCoin reward.",
-      error
-    );
-  }
 }
 
 
@@ -2664,12 +2486,6 @@ function valid(
 }
 
 
-function getLegalTokens(color, number, state = gameState){
-  return (state?.tokens?.[color] || [])
-    .filter(token => valid(token,number));
-}
-
-
 /* =========================================================
    TOKEN ELEMENT
    ========================================================= */
@@ -3088,12 +2904,8 @@ function updatePlayerInformation(){
 
     }else{
 
-      const legalTokens = getLegalTokens(role,Number(gameState.dice),gameState);
-
       status.textContent =
-        legalTokens.length === 1
-          ? "🎯 One legal token — moving automatically..."
-          : `🎯 You rolled ${gameState.dice}. Select a glowing token.`;
+        `🎯 You rolled ${gameState.dice}. Select a glowing token.`;
     }
 
   }else{
@@ -3230,22 +3042,15 @@ async function playSharedDiceRoll(state){
 
   renderGame();
 
-  const currentSixCount = Number(state.sixCount?.[roll.color]) || 0;
-  let finalNumber = Number(roll.number) || 1;
-
-  /* Defensive rule: a third consecutive 6 is never displayed or accepted. */
-  if(currentSixCount >= 2 && finalNumber === 6){
-    finalNumber = secureRandomInt(5);
-  }
-
+  const finalNumber = Number(roll.number) || 1;
   await rollAnimation(finalNumber);
 
   /* Only the player who pressed Roll Dice resolves the result. */
   if(String(roll.ownerUid) === String(currentUser?.uid)){
 
     const color = roll.color;
+    const currentSixCount = Number(state.sixCount?.[color]) || 0;
     const newSixCount = finalNumber === 6 ? currentSixCount + 1 : 0;
-    const legalTokens = getLegalTokens(color,finalNumber,state);
 
     let nextTurn = color;
     let nextPhase = "move";
@@ -3254,16 +3059,29 @@ async function playSharedDiceRoll(state){
       [color]:newSixCount
     };
 
-    if(legalTokens.length === 0){
-      nextTurn = finalNumber === 6
-        ? color
-        : (color === "red" ? "yellow" : "red");
+    if(newSixCount >= 3){
+      nextTurn = color === "red" ? "yellow" : "red";
       nextPhase = "roll";
       nextSixCount = {
         ...state.sixCount,
-        [color]:finalNumber === 6 ? newSixCount : 0,
-        [nextTurn]:nextTurn === color ? newSixCount : 0
+        [color]:0,
+        [nextTurn]:0
       };
+    }else{
+      const validTokens = (state.tokens?.[color] || [])
+        .filter(token => valid(token,finalNumber));
+
+      if(validTokens.length === 0){
+        nextTurn = finalNumber === 6
+          ? color
+          : (color === "red" ? "yellow" : "red");
+        nextPhase = "roll";
+        nextSixCount = {
+          ...state.sixCount,
+          [color]:finalNumber === 6 ? newSixCount : 0,
+          [nextTurn]:nextTurn === color ? newSixCount : 0
+        };
+      }
     }
 
     const finalUpdatedAt = Math.max(
@@ -3305,22 +3123,8 @@ async function playSharedDiceRoll(state){
     renderGame();
     updatePlayerInformation();
 
-    if(legalTokens.length === 1 && nextPhase === "move" && nextTurn === color){
-      const autoTokenId = legalTokens[0].id;
-      status.textContent = "🎯 Only one legal token — moving automatically.";
-
-      window.setTimeout(() => {
-        if(
-          !gameState?.winner &&
-          gameState?.turn === color &&
-          gameState?.phase === "move" &&
-          Number(gameState?.dice) === finalNumber &&
-          !isAnimating &&
-          !isDiceAnimating
-        ){
-          void moveMyToken(autoTokenId);
-        }
-      },80);
+    if(newSixCount >= 3){
+      status.textContent = "⚠️ Three consecutive 6s — your turn is lost.";
     }
 
     return;
@@ -3345,34 +3149,6 @@ async function playSharedDiceRoll(state){
   updatePlayerInformation();
 }
 
-async function animateMovementStep(mover, point, duration){
-
-  const currentLeft = Number.parseFloat(mover.style.left) || 0;
-  const currentTop = Number.parseFloat(mover.style.top) || 0;
-
-  const animation = mover.animate(
-    [
-      {left:`${currentLeft}px`,top:`${currentTop}px`},
-      {left:`${point.x}px`,top:`${point.y}px`}
-    ],
-    {
-      duration,
-      easing:"cubic-bezier(.22,.72,.22,1)",
-      fill:"forwards"
-    }
-  );
-
-  try{
-    await animation.finished;
-  }catch(error){
-    /* A cancelled animation should not break the shared game state. */
-  }
-
-  mover.style.left = `${point.x}px`;
-  mover.style.top = `${point.y}px`;
-  animation.cancel();
-}
-
 async function playSharedMoveAnimation(state){
 
   const move = state?.moveAnimation;
@@ -3387,12 +3163,19 @@ async function playSharedMoveAnimation(state){
   board.classList.add("board-shared-animating");
 
   const fromPosition = Number(move.fromPosition);
+  const toPosition = Number(move.toPosition);
   const tokenId = Number(move.tokenId);
   const color = move.color;
-  const steps = Math.max(1,Number(move.steps) || Math.abs(Number(move.toPosition)-fromPosition));
-  const stepDuration = Math.max(150,Math.min(220,Number(move.duration) / steps || 180));
+  const duration = Math.max(Number(move.duration) || 1000,900);
+  const steps = Math.max(1,Number(move.steps) || Math.abs(toPosition-fromPosition));
+  const stepDuration = duration / steps;
   const startAt = Number(move.startedAt) || Date.now();
 
+  /*
+    Create and position the movement copy BEFORE hiding the real token and
+    BEFORE waiting for the shared start timestamp. This removes the old
+    700ms/1s blank gap where the token appeared to disappear.
+  */
   const sourceToken = document.querySelector(
     `.token[data-color="${color}"][data-token-id="${tokenId}"]`
   );
@@ -3406,6 +3189,7 @@ async function playSharedMoveAnimation(state){
     move.fromHomeIndex
   );
 
+  mover.style.transition = "none";
   mover.style.left = `${from.x}px`;
   mover.style.top = `${from.y}px`;
   board.appendChild(mover);
@@ -3414,13 +3198,35 @@ async function playSharedMoveAnimation(state){
     sourceToken.classList.add("movement-source-hidden");
   }
 
-  /* All clients wait for the same start time, then play every step in order. */
+  void mover.offsetWidth;
+
+  /* Every device waits for the same scheduled start timestamp. */
   const wait = startAt - Date.now();
   if(wait > 0){
     await sleep(wait);
   }
 
-  for(let i=1;i<=steps;i++){
+  /* If a device received the event late, start at the correct step. */
+  const elapsed = Math.max(0,Date.now() - startAt);
+  let firstStep = Math.floor(elapsed / stepDuration) + 1;
+  if(firstStep > steps){ firstStep = steps; }
+
+  if(firstStep > 1){
+    const catchupPosition = fromPosition + firstStep - 1;
+    const catchupPoint = boardPointForPosition(
+      color,
+      catchupPosition,
+      tokenId,
+      state.tokens,
+      move.fromHomeIndex
+    );
+    mover.style.left = `${catchupPoint.x}px`;
+    mover.style.top = `${catchupPoint.y}px`;
+  }
+
+  mover.style.transition = "left var(--move-duration,300ms) cubic-bezier(.22,.72,.22,1), top var(--move-duration,300ms) cubic-bezier(.22,.72,.22,1)";
+
+  for(let i=firstStep;i<=steps;i++){
     const position = fromPosition + i;
     const nextPoint = boardPointForPosition(
       color,
@@ -3430,16 +3236,18 @@ async function playSharedMoveAnimation(state){
       move.fromHomeIndex
     );
 
-    if(!nextPoint){
-      continue;
-    }
-
+    mover.style.setProperty("--move-duration",`${stepDuration}ms`);
+    mover.style.left = `${nextPoint.x}px`;
+    mover.style.top = `${nextPoint.y}px`;
     mover.classList.add("moving");
     sound("move");
-    await animateMovementStep(mover,nextPoint,stepDuration);
-    mover.classList.remove("moving");
+
+    await sleep(Math.max(20,stepDuration));
   }
 
+  mover.classList.remove("moving");
+  await sleep(40);
+  mover.remove();
   board.classList.remove("board-shared-animating");
 
   const result = move.result;
@@ -3451,12 +3259,6 @@ async function playSharedMoveAnimation(state){
     activeMoveId === move.id &&
     String(move.ownerUid) === String(currentUser?.uid)
   ){
-    const safeWinner =
-      result?.winner === "red" ||
-      result?.winner === "yellow"
-        ? result.winner
-        : null;
-
     const finalState = {
       ...state,
       tokens:result.tokens,
@@ -3464,18 +3266,14 @@ async function playSharedMoveAnimation(state){
       dice:0,
       phase:result.phase,
       turn:result.turn,
-      winner:safeWinner,
+      winner:result.winner,
       sixCount:result.sixCount,
       moveAnimation:null,
-      updatedAt:Number(move.finalUpdatedAt) || (Number(state.updatedAt) || 0) + 1
+      updatedAt:Number(move.finalUpdatedAt) || (Number(state.updatedAt)||0) + 1
     };
 
     try{
       await set(gameRef,finalState);
-
-      if(safeWinner){
-        await recordBattleResult(safeWinner);
-      }
     }catch(error){
       console.warn("Could not publish movement final state.",error);
     }
@@ -3504,10 +3302,6 @@ async function playSharedMoveAnimation(state){
 
     renderGame();
     updatePlayerInformation();
-
-    if(mover && mover.isConnected){
-      mover.remove();
-    }
 
     if(gameState.winner){
       showWinner(gameState.winner);
@@ -3668,24 +3462,6 @@ function hasWon(color){
    CELEBRATION
    ========================================================= */
 
-function getVirtualReward(){
-  const meta =
-    getMatchMeta();
-
-  if(
-    !meta.isVirtualCoinMatch ||
-    meta.coinAmount <= 0
-  ){
-    return 0;
-  }
-
-  return Math.min(
-    20000,
-    meta.coinAmount * 2
-  );
-}
-
-
 function showWinner(
   color
 ){
@@ -3709,58 +3485,24 @@ function showWinner(
     role === color;
 
 
-  const reward =
-    getVirtualReward();
-
   winTitle.textContent =
     iWon
-      ? "🎉 YOU WON!"
-      : "YOU LOST";
+      ? "🎉 Congratulations!"
+      : "🏆 Game Over";
+
 
   winText.textContent =
     iWon
-      ? "You brought all four tokens home first."
+      ? "You brought all four tokens home!"
       : "Your opponent brought all four tokens home first.";
 
-  const winPrize =
-    document.getElementById("winPrize");
-
+  const winPrize = document.getElementById("winPrize");
   if(winPrize){
-    const meta =
-      getMatchMeta();
-
-    winPrize.innerHTML =
-      meta.isVirtualCoinMatch &&
-      meta.coinAmount > 0
-        ? `
-          <span>VIRTUAL MATCH RESULT</span>
-          <strong>${
-            iWon
-              ? `+${reward.toLocaleString("en-IN")} LudoCoins`
-              : "0 LudoCoins"
-          }</strong>
-          <small>
-            Reward tier: ${meta.coinAmount.toLocaleString("en-IN")} LudoCoins
-            · System-issued virtual reward · No player deduction
-          </small>
-        `
-        : `
-          <span>MATCH RESULT</span>
-          <strong>${
-            iWon
-              ? "FREE PLAY WIN"
-              : "FREE PLAY LOSS"
-          }</strong>
-          <small>
-            No LudoCoin reward tier was selected.
-          </small>
-        `;
-  }
-
-  if(!battleResultRecorded){
-    void recordBattleResult(
-      color
-    );
+    winPrize.innerHTML = `
+      <span>GAME TYPE</span>
+      <strong>FREE GAME</strong>
+      <small>Prize: ₹0 • No entry fee</small>
+    `;
   }
 
   celebration.style.display =
@@ -3836,28 +3578,6 @@ function hideCelebration(){
 }
 
 
-function secureRandomInt(max){
-
-  const upper = Math.floor(Number(max));
-  if(!Number.isInteger(upper) || upper < 1){
-    return 1;
-  }
-
-  if(window.crypto?.getRandomValues){
-    const limit = Math.floor(0x100000000 / upper) * upper;
-    const buffer = new Uint32Array(1);
-
-    do{
-      window.crypto.getRandomValues(buffer);
-    }while(buffer[0] >= limit);
-
-    return (buffer[0] % upper) + 1;
-  }
-
-  return Math.floor(Math.random() * upper) + 1;
-}
-
-
 /* =========================================================
    ROLL DICE
    ========================================================= */
@@ -3873,10 +3593,7 @@ async function rollDice(){
     return;
   }
 
-  const currentSixCount = Number(gameState.sixCount?.[role]) || 0;
-  /* After two consecutive sixes, the next roll is intentionally limited to 1–5.
-     This guarantees that a third consecutive six can never appear. */
-  const number = secureRandomInt(currentSixCount >= 2 ? 5 : 6);
+  const number = Math.floor(Math.random() * 6) + 1;
   const updatedAt = nextUpdatedAt();
   const rollId = `${role}-${currentUser.uid}-${updatedAt}-${Math.random().toString(36).slice(2,8)}`;
 
@@ -3994,7 +3711,7 @@ async function moveMyToken(tokenId){
   /* One cell always takes the same time. The dice value changes only the
      number of cells, never the speed of a cell. Every board cell uses the same faster movement speed. */
   const steps = fromPosition === HOME_POSITION ? 1 : number;
-  const stepDuration = fromPosition === HOME_POSITION ? 420 : 180;
+  const stepDuration = fromPosition === HOME_POSITION ? 420 : 120;
   const duration = stepDuration * steps;
 
   const result = {
@@ -4036,7 +3753,7 @@ async function moveMyToken(tokenId){
         Small shared lead time lets Firebase deliver the animation state to
         both clients without making the player wait visibly.
       */
-      startedAt:Date.now() + 650,
+      startedAt:Date.now() + 120,
       finalUpdatedAt,
       result
     },
@@ -4134,8 +3851,6 @@ async function loadGame(){
 
   battleData =
     battleSnapshot.val();
-
-  renderMatchMeta();
 
 
   /*
@@ -4308,8 +4023,6 @@ function startListeners(){
 
         battleData =
           snapshot.val();
-
-        renderMatchMeta();
 
 
         const players =
@@ -4531,9 +4244,6 @@ async function restartGame(){
 
   pendingRemoteState =
     null;
-
-  battleResultRecorded =
-    false;
 
   isAnimating =
     true;

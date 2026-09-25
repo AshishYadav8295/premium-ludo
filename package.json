@@ -1,0 +1,36 @@
+{
+  "name": "premium-ludo",
+  "version": "1.0.0",
+  "description": "LUDOVERSE Premium Multiplayer Ludo Platform",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AshishYadav8295/premium-ludo.git"
+  },
+  "keywords": [
+    "ludo",
+    "ludoverse",
+    "firebase",
+    "express"
+  ],
+  "author": "Ashish Yadav",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/AshishYadav8295/premium-ludo/issues"
+  },
+  "homepage": "https://github.com/AshishYadav8295/premium-ludo#readme",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "firebase-admin": "^13.1.0",
+    "mongoose": "^9.10.2",
+    "razorpay": "^2.9.8"
+  },
+  "type": "module"
+}
