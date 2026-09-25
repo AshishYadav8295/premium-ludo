@@ -111,15 +111,6 @@ document.addEventListener("DOMContentLoaded", () => {
   let busy = false;
   let profileOpen = false;
 
-  const API_BASE =
-    window.LUDOVERSE_API_BASE ||
-    (
-      location.hostname === "localhost" ||
-      location.hostname === "127.0.0.1"
-        ? "http://127.0.0.1:3000"
-        : ""
-    );
-
   async function apiRequest(path) {
     if (!API_BASE) {
       throw new Error(
@@ -423,7 +414,6 @@ document.addEventListener("DOMContentLoaded", () => {
   /* =======================================================
      ECONOMY
      ======================================================= */
-
 
   async function ensureEconomy(user) {
     if (!user) return null;
@@ -1260,6 +1250,7 @@ document.addEventListener("DOMContentLoaded", () => {
       showToast("Please login before creating a battle.", "Login Required", "error");
       return;
     }
+
     window.location.href = "battle-setup.html";
   }
 
@@ -1272,6 +1263,7 @@ document.addEventListener("DOMContentLoaded", () => {
       showToast("Please login before creating a room.", "Login Required", "error");
       return;
     }
+
     window.location.href = "battle-setup.html?mode=private";
   }
 
@@ -1280,12 +1272,14 @@ document.addEventListener("DOMContentLoaded", () => {
       showToast("Please login before creating a battle.", "Login Required", "error");
       return;
     }
+
     window.location.href = "battle-setup.html?mode=public";
   }
 
   function closeCreateModalFn() {
     createModal?.classList.remove("show");
   }
+
   // Compatibility alias: keeps older event paths from throwing a TypeError.
   const closeCreateModalLegacy = closeCreateModalFn;
 
@@ -1309,6 +1303,7 @@ document.addEventListener("DOMContentLoaded", () => {
   function closeJoinModalFn() {
     joinModal?.classList.remove("show");
   }
+
   // Compatibility alias for legacy navigation/event paths.
   const closeJoinModalLegacy = closeJoinModalFn;
 

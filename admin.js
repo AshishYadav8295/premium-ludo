@@ -4,6 +4,7 @@ document.addEventListener("DOMContentLoaded", () => {
     checkAdminAuthState();
 });
 
+
 // 1. Check Login State and Toggle Views based on admin.html IDs
 function checkAdminAuthState() {
     const adminAuth = sessionStorage.getItem("adminAuth");
@@ -14,6 +15,7 @@ function checkAdminAuthState() {
         if (adminLoginBox) adminLoginBox.style.display = "none";
         if (adminDashboard) adminDashboard.style.display = "block";
         loadPendingDeposits();
+
         // Auto refresh every 10 seconds
         setInterval(loadPendingDeposits, 10000);
     } else {
@@ -21,6 +23,7 @@ function checkAdminAuthState() {
         if (adminDashboard) adminDashboard.style.display = "none";
     }
 }
+
 
 // 2. Admin Login Handler (Matches admin.html onclick="verifyAdminPassword()")
 function verifyAdminPassword() {
@@ -48,9 +51,10 @@ function verifyAdminPassword() {
     }
 }
 
+
 // 3. Fetch and Render Pending Deposits cleanly (Matches admin.html table body ID)
 function loadPendingDeposits() {
-    fetch('/api/admin/pending-deposits')
+    fetch(`${API_BASE}/api/admin/pending-deposits`)
         .then(res => res.json())
         .then(data => {
             const tableBody = document.getElementById('depositsTableBody');
@@ -86,6 +90,7 @@ function loadPendingDeposits() {
         .catch(err => console.error("Error fetching pending deposits:", err));
 }
 
+
 // 4. Secure Approve Function
 function approveDeposit(txId) {
     if (!txId || txId === 'undefined') {
@@ -97,7 +102,7 @@ function approveDeposit(txId) {
         return;
     }
 
-    fetch('/api/admin/approve-deposit', {
+    fetch(`${API_BASE}/api/admin/approve-deposit`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ txId })
@@ -117,6 +122,7 @@ function approveDeposit(txId) {
     });
 }
 
+
 // 5. Secure Reject Function
 function rejectDeposit(txId) {
     if (!txId || txId === 'undefined') {
@@ -128,7 +134,7 @@ function rejectDeposit(txId) {
         return;
     }
 
-    fetch('/api/admin/reject-deposit', {
+    fetch(`${API_BASE}/api/admin/reject-deposit`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ txId })
@@ -147,6 +153,7 @@ function rejectDeposit(txId) {
         alert("Network error while rejecting deposit.");
     });
 }
+
 
 // 6. Logout Handler (Matches admin.html onclick="logoutAdmin()")
 function logoutAdmin() {

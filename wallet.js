@@ -14,15 +14,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const toast = document.getElementById("toast");
   const toastMessage = document.getElementById("toastMessage");
 
-  const API_BASE =
-    window.LUDOVERSE_API_BASE ||
-    (
-      location.hostname === "localhost" ||
-      location.hostname === "127.0.0.1"
-        ? "http://127.0.0.1:3000"
-        : ""
-    );
-
   function showToast(message) {
     if (!toast || !toastMessage) {
       alert(message);
@@ -85,7 +76,10 @@ document.addEventListener("DOMContentLoaded", () => {
       item.className = "transaction-item";
       const timestamp = Number(transaction.createdAt);
       const date = new Date(timestamp);
-      const formattedDate = Number.isFinite(timestamp) && !Number.isNaN(date.getTime()) ? date.toLocaleString() : "";
+      const formattedDate =
+        Number.isFinite(timestamp) && !Number.isNaN(date.getTime())
+          ? date.toLocaleString()
+          : "";
       const coins = Number(transaction.coins) || 0;
       const positive = coins > 0;
 
@@ -116,6 +110,7 @@ document.addEventListener("DOMContentLoaded", () => {
         economy.cashBalance !== undefined ? economy.cashBalance : economy.ludoCoins
       );
     }
+
     const cashBalanceElement = document.getElementById("cashBalance");
     if (cashBalanceElement) cashBalanceElement.textContent = formatCoins(economy.cashBalance || 0);
 
@@ -130,6 +125,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const won = Number(economy.gamesWon) || 0;
       winRateElement.textContent = played > 0 ? `${Math.round((won / played) * 100)}%` : "0%";
     }
+
     renderTransactions(payload.transactions || []);
   }
 
@@ -178,9 +174,10 @@ window.processAddMoney = async function() {
       window.location.href = 'login.html';
       return;
     }
+
     const token = await user.getIdToken(true);
 
-    const res = await fetch('http://127.0.0.1:3000/api/payment/create-order', {
+    const res = await fetch(`${API_BASE}/api/payment/create-order`, {
       method: 'POST',
       headers: { 
         'Content-Type': 'application/json',
@@ -188,6 +185,7 @@ window.processAddMoney = async function() {
       },
       body: JSON.stringify({ amount })
     });
+
     const data = await res.json();
 
     if (!data.ok) {
@@ -203,7 +201,7 @@ window.processAddMoney = async function() {
       "description": "Wallet Deposit",
       "order_id": data.order.id,
       "handler": async function (response) {
-        const verifyRes = await fetch('http://127.0.0.1:3000/api/payment/verify', {
+        const verifyRes = await fetch(`${API_BASE}/api/payment/verify`, {
           method: 'POST',
           headers: { 
             'Content-Type': 'application/json',
@@ -216,7 +214,9 @@ window.processAddMoney = async function() {
             amount: amount
           })
         });
+
         const verifyData = await verifyRes.json();
+
         if (verifyData.ok) {
           alert('Payment Successful & Credited to Wallet!');
           window.closeModals();
@@ -244,6 +244,7 @@ window.processWithdrawal = async function() {
     alert('Please enter a valid withdrawal amount!');
     return;
   }
+
   if (!upiId) {
     alert('Please enter your UPI ID!');
     return;
@@ -256,9 +257,10 @@ window.processWithdrawal = async function() {
       window.location.href = 'login.html';
       return;
     }
+
     const token = await user.getIdToken(true);
 
-    const res = await fetch('http://127.0.0.1:3000/api/wallet/withdraw', {
+    const res = await fetch(`${API_BASE}/api/wallet/withdraw`, {
       method: 'POST',
       headers: { 
         'Content-Type': 'application/json',
@@ -266,6 +268,7 @@ window.processWithdrawal = async function() {
       },
       body: JSON.stringify({ amount, upiId })
     });
+
     const data = await res.json();
 
     if (data.ok) {
@@ -292,6 +295,7 @@ async function processQRPayment() {
     alert('Kripya sahi amount darj karein!');
     return;
   }
+
   if (!utrNumber) {
     alert('Kripya valid UTR / Transaction ID daalein!');
     return;
@@ -303,9 +307,10 @@ async function processQRPayment() {
       window.location.href = 'login.html';
       return;
     }
+
     const token = await currentUser.getIdToken(true);
 
-    const res = await fetch('http://127.0.0.1:3000/api/payment/verify-qr', {
+    const res = await fetch(`${API_BASE}/api/payment/verify-qr`, {
       method: 'POST',
       headers: { 
         'Content-Type': 'application/json',
@@ -313,6 +318,7 @@ async function processQRPayment() {
       },
       body: JSON.stringify({ amount, utrNumber })
     });
+
     const data = await res.json();
 
     if (data.ok) {
@@ -327,4 +333,5 @@ async function processQRPayment() {
     alert('Server communication error.');
   }
 }
+
 window.processQRPayment = processQRPayment;
