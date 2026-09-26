@@ -33,8 +33,8 @@
   // 2. Select the backend base URL
   // -------------------------------------------------------
   const apiBase = isLocalhost
-    ? "http://127.0.0.1:3000"
-    : window.location.origin;
+  ? "http://127.0.0.1:3000"
+  : "https://ludoverse-backend.onrender.com";
 
   // -------------------------------------------------------
   // 3. Normalize the URL
