@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import express from 'express';
 import mongoose from 'mongoose';
 import path from 'path';
@@ -11,6 +12,32 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// ================= CORS =================
+const allowedOrigins = [
+  "https://premium-ludo.onrender.com"
+];
+
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+
+  if (allowedOrigins.includes(origin)) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+  }
+
+  res.setHeader("Vary", "Origin");
+  res.setHeader("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS");
+  res.setHeader(
+    "Access-Control-Allow-Headers",
+    "Content-Type, Authorization"
+  );
+
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(204);
+  }
+
+  next();
+});
+
 // ================= MIDDLEWARES =================
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -19,7 +46,11 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static(__dirname));
 
 // ================= MONGODB DATABASE CONNECTION =================
-const MONGO_URI = process.env.MONGO_URI || 'mongodb+srv://rajeshyadav190701_db_user:ashishyadav190701@cluster0.wwbvsbd.mongodb.net/ludoverse?retryWrites=true&w=majority&appName=Cluster0';
+const MONGO_URI = process.env.MONGO_URI;
+
+if (!MONGO_URI) {
+  throw new Error("MONGO_URI environment variable is not configured.");
+}
 
 mongoose.connect(MONGO_URI, { 
   serverSelectionTimeoutMS: 5000 
