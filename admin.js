@@ -1,20 +1,23 @@
-// ================= LUDOVERSE ADMIN PANEL SCRIPT =================
+"use strict";
 
-// ================================================================
-// INITIALIZATION
-// ================================================================
-
-document.addEventListener("DOMContentLoaded", () => {
-    checkAdminAuthState();
-});
+/* =========================================================
+   LUDOVERSE ADMIN PANEL
+   Secure Admin Authentication + Deposit Management
+========================================================= */
 
 
-// ================================================================
-// ADMIN SESSION HELPERS
-// ================================================================
+/* =========================================================
+   ADMIN SESSION HELPERS
+========================================================= */
 
 function getAdminToken() {
     return sessionStorage.getItem("adminToken");
+}
+
+
+function setAdminSession(token) {
+    sessionStorage.setItem("adminAuth", "true");
+    sessionStorage.setItem("adminToken", token);
 }
 
 
@@ -24,7 +27,26 @@ function clearAdminSession() {
 }
 
 
+function isAdminAuthenticated() {
+    const adminAuth =
+        sessionStorage.getItem("adminAuth");
+
+    const adminToken =
+        getAdminToken();
+
+    return (
+        adminAuth === "true" &&
+        Boolean(adminToken)
+    );
+}
+
+
+/* =========================================================
+   ADMIN UNAUTHORIZED HANDLER
+========================================================= */
+
 function handleAdminUnauthorized() {
+
     clearAdminSession();
 
     const adminLoginBox =
@@ -33,16 +55,19 @@ function handleAdminUnauthorized() {
     const adminDashboard =
         document.getElementById("adminDashboard");
 
+    const errorMsg =
+        document.getElementById("loginError");
+
+
     if (adminLoginBox) {
         adminLoginBox.style.display = "block";
     }
+
 
     if (adminDashboard) {
         adminDashboard.style.display = "none";
     }
 
-    const errorMsg =
-        document.getElementById("loginError");
 
     if (errorMsg) {
         errorMsg.innerText =
@@ -51,17 +76,99 @@ function handleAdminUnauthorized() {
 }
 
 
-// ================================================================
-// 1. CHECK ADMIN AUTH STATE
-// ================================================================
+/* =========================================================
+   SAFE JSON RESPONSE
+========================================================= */
+
+async function parseJsonResponse(response) {
+
+    try {
+        return await response.json();
+    } catch {
+        return {};
+    }
+}
+
+
+/* =========================================================
+   ADMIN API REQUEST
+========================================================= */
+
+async function adminApiRequest(
+    endpoint,
+    options = {}
+) {
+
+    const token =
+        getAdminToken();
+
+
+    if (!token) {
+        handleAdminUnauthorized();
+        throw new Error(
+            "Admin authentication required."
+        );
+    }
+
+
+    const headers = {
+        ...(options.headers || {}),
+        "Authorization": `Bearer ${token}`
+    };
+
+
+    if (
+        options.body &&
+        !headers["Content-Type"]
+    ) {
+        headers["Content-Type"] =
+            "application/json";
+    }
+
+
+    const response =
+        await fetch(
+            `${API_BASE}${endpoint}`,
+            {
+                ...options,
+                headers
+            }
+        );
+
+
+    const data =
+        await parseJsonResponse(
+            response
+        );
+
+
+    if (response.status === 401) {
+        handleAdminUnauthorized();
+
+        throw new Error(
+            data.error ||
+            "Admin session expired."
+        );
+    }
+
+
+    if (!response.ok) {
+        throw new Error(
+            data.error ||
+            `Request failed (${response.status}).`
+        );
+    }
+
+
+    return data;
+}
+
+
+/* =========================================================
+   1. CHECK ADMIN AUTH STATE
+========================================================= */
 
 function checkAdminAuthState() {
-
-    const adminAuth =
-        sessionStorage.getItem("adminAuth");
-
-    const adminToken =
-        getAdminToken();
 
     const adminLoginBox =
         document.getElementById("adminLoginBox");
@@ -70,51 +177,62 @@ function checkAdminAuthState() {
         document.getElementById("adminDashboard");
 
 
-    // Both authentication flag AND token are required.
-    if (adminAuth === "true" && adminToken) {
+    if (isAdminAuthenticated()) {
 
         if (adminLoginBox) {
-            adminLoginBox.style.display = "none";
+            adminLoginBox.style.display =
+                "none";
         }
+
 
         if (adminDashboard) {
-            adminDashboard.style.display = "block";
+            adminDashboard.style.display =
+                "block";
         }
 
-        loadPendingDeposits();
 
-        // Auto refresh every 10 seconds.
-        setInterval(loadPendingDeposits, 10000);
+        loadPendingDeposits();
 
     } else {
 
         clearAdminSession();
 
+
         if (adminLoginBox) {
-            adminLoginBox.style.display = "block";
+            adminLoginBox.style.display =
+                "block";
         }
 
+
         if (adminDashboard) {
-            adminDashboard.style.display = "none";
+            adminDashboard.style.display =
+                "none";
         }
     }
 }
 
 
-// ================================================================
-// 2. ADMIN LOGIN
-// ================================================================
+/* =========================================================
+   2. ADMIN LOGIN
+========================================================= */
 
 async function verifyAdminPassword() {
 
     const passwordInput =
-        document.getElementById("adminPasswordInput");
+        document.getElementById(
+            "adminPasswordInput"
+        );
 
     const errorMsg =
-        document.getElementById("loginError");
+        document.getElementById(
+            "loginError"
+        );
 
 
     if (!passwordInput) {
+        console.error(
+            "Admin password input not found."
+        );
         return;
     }
 
@@ -127,7 +245,7 @@ async function verifyAdminPassword() {
 
         if (errorMsg) {
             errorMsg.innerText =
-                "Please enter the admin password!";
+                "Please enter the admin password.";
         }
 
         return;
@@ -136,6 +254,12 @@ async function verifyAdminPassword() {
 
     try {
 
+        if (errorMsg) {
+            errorMsg.innerText =
+                "Checking credentials...";
+        }
+
+
         const response =
             await fetch(
                 `${API_BASE}/api/admin/login`,
@@ -143,41 +267,50 @@ async function verifyAdminPassword() {
                     method: "POST",
 
                     headers: {
-                        "Content-Type": "application/json"
+                        "Content-Type":
+                            "application/json"
                     },
 
                     body: JSON.stringify({
-                        password: enteredPassword
+                        password:
+                            enteredPassword
                     })
                 }
             );
 
 
         const data =
-            await response.json();
+            await parseJsonResponse(
+                response
+            );
 
 
-        if (!response.ok || !data.ok || !data.token) {
+        if (
+            !response.ok ||
+            !data.ok ||
+            !data.token
+        ) {
 
             if (errorMsg) {
                 errorMsg.innerText =
-                    data.error || "Admin login failed.";
+                    data.error ||
+                    "Admin login failed.";
             }
 
             return;
         }
 
 
-        // Save admin session.
-        sessionStorage.setItem(
-            "adminAuth",
-            "true"
-        );
+        /* -----------------------------------------
+           SAVE SECURE ADMIN SESSION
+        ----------------------------------------- */
 
-        sessionStorage.setItem(
-            "adminToken",
+        setAdminSession(
             data.token
         );
+
+
+        passwordInput.value = "";
 
 
         if (errorMsg) {
@@ -185,12 +318,35 @@ async function verifyAdminPassword() {
         }
 
 
-        // Clear password field.
-        passwordInput.value = "";
+        /* -----------------------------------------
+           Show dashboard immediately
+        ----------------------------------------- */
+
+        const adminLoginBox =
+            document.getElementById(
+                "adminLoginBox"
+            );
+
+        const adminDashboard =
+            document.getElementById(
+                "adminDashboard"
+            );
 
 
-        // Reload dashboard.
-        window.location.reload();
+        if (adminLoginBox) {
+            adminLoginBox.style.display =
+                "none";
+        }
+
+
+        if (adminDashboard) {
+            adminDashboard.style.display =
+                "block";
+        }
+
+
+        await loadPendingDeposits();
+
 
     } catch (error) {
 
@@ -202,81 +358,61 @@ async function verifyAdminPassword() {
 
         if (errorMsg) {
             errorMsg.innerText =
-                "Unable to connect to server.";
+                "Unable to connect to server. Please try again.";
         }
     }
 }
 
 
-// ================================================================
-// 3. FETCH PENDING DEPOSITS
-// ================================================================
+/* =========================================================
+   3. FETCH PENDING DEPOSITS
+========================================================= */
 
 async function loadPendingDeposits() {
 
-    const adminToken =
-        getAdminToken();
-
-
-    if (!adminToken) {
+    if (!isAdminAuthenticated()) {
         handleAdminUnauthorized();
+        return;
+    }
+
+
+    const tableBody =
+        document.getElementById(
+            "depositsTableBody"
+        );
+
+
+    if (!tableBody) {
+        console.warn(
+            "depositsTableBody element not found."
+        );
         return;
     }
 
 
     try {
 
-        const response =
-            await fetch(
-                `${API_BASE}/api/admin/pending-deposits`,
+        const data =
+            await adminApiRequest(
+                "/api/admin/pending-deposits",
                 {
-                    method: "GET",
-
-                    headers: {
-                        "Authorization":
-                            `Bearer ${adminToken}`
-                    }
+                    method: "GET"
                 }
             );
 
 
-        const data =
-            await response.json();
-
-
-        // Admin session invalid/expired.
-        if (response.status === 401) {
-            handleAdminUnauthorized();
-            return;
-        }
-
-
-        if (!response.ok) {
-
-            throw new Error(
-                data.error ||
-                "Failed to load pending deposits."
-            );
-        }
-
-
-        const tableBody =
-            document.getElementById(
-                "depositsTableBody"
-            );
-
-
-        if (!tableBody) {
-            return;
-        }
-
-
         const requests =
-            data.requests || [];
+            Array.isArray(data.requests)
+                ? data.requests
+                : [];
 
 
         tableBody.innerHTML = "";
 
+
+        /* -----------------------------------------
+           NO PENDING REQUESTS
+        ----------------------------------------- */
 
         if (requests.length === 0) {
 
@@ -295,61 +431,129 @@ async function loadPendingDeposits() {
         }
 
 
+        /* -----------------------------------------
+           RENDER REQUESTS
+        ----------------------------------------- */
+
         requests.forEach((request) => {
 
             const txId =
-                request._id || request.id;
+                request._id ||
+                request.id;
+
+
+            if (!txId) {
+                return;
+            }
+
+
+            const createdAt =
+                request.createdAt
+                    ? new Date(
+                        request.createdAt
+                    )
+                    : new Date();
 
 
             const formattedDate =
-                new Date(
-                    request.createdAt || Date.now()
-                ).toLocaleString();
+                Number.isNaN(
+                    createdAt.getTime()
+                )
+                    ? "N/A"
+                    : createdAt.toLocaleString();
+
+
+            const amount =
+                Number(request.amount) || 0;
+
+
+            const uid =
+                request.uid ||
+                "N/A";
+
+
+            const utrNumber =
+                request.utrNumber ||
+                "N/A";
+
+
+            const status =
+                request.status ||
+                "PENDING";
 
 
             const row =
-                document.createElement("tr");
+                document.createElement(
+                    "tr"
+                );
 
 
             row.innerHTML = `
-                <td>${formattedDate}</td>
-
-                <td style="font-family: monospace;">
-                    ${request.uid || "N/A"}
+                <td>
+                    ${escapeHTML(
+                        formattedDate
+                    )}
                 </td>
 
-                <td style="color: #10B981; font-weight: bold;">
-                    ₹${request.amount}
+                <td
+                    style="font-family: monospace;"
+                >
+                    ${escapeHTML(uid)}
                 </td>
 
-                <td style="font-family: monospace;">
-                    ${request.utrNumber || "N/A"}
+                <td
+                    style="
+                        color: #10B981;
+                        font-weight: bold;
+                    "
+                >
+                    ₹${formatAmount(amount)}
                 </td>
 
-                <td style="color: #F59E0B; font-weight: bold;">
-                    ${request.status || "PENDING"}
+                <td
+                    style="font-family: monospace;"
+                >
+                    ${escapeHTML(
+                        utrNumber
+                    )}
+                </td>
+
+                <td
+                    style="
+                        color: #F59E0B;
+                        font-weight: bold;
+                    "
+                >
+                    ${escapeHTML(status)}
                 </td>
 
                 <td>
+
                     <button
-                        onclick="approveDeposit('${txId}')"
+                        type="button"
+                        onclick="approveDeposit('${escapeAttribute(txId)}')"
                         class="btn btn-approve"
                     >
                         Approve
                     </button>
 
                     <button
-                        onclick="rejectDeposit('${txId}')"
+                        type="button"
+                        onclick="rejectDeposit('${escapeAttribute(txId)}')"
                         class="btn btn-reject"
                     >
                         Reject
                     </button>
+
                 </td>
             `;
 
 
-            tableBody.appendChild(row);
+            tableBody.appendChild(
+                row
+            );
         });
+
 
     } catch (error) {
 
@@ -361,36 +565,35 @@ async function loadPendingDeposits() {
 }
 
 
-// ================================================================
-// 4. APPROVE DEPOSIT
-// ================================================================
+/* =========================================================
+   4. APPROVE DEPOSIT
+========================================================= */
 
 async function approveDeposit(txId) {
 
-    if (!txId || txId === "undefined") {
+    if (
+        !txId ||
+        txId === "undefined" ||
+        txId === "null"
+    ) {
 
         alert(
-            "Security Error: Invalid Transaction ID!"
+            "Security Error: Invalid Transaction ID."
         );
 
         return;
     }
 
 
-    const adminToken =
-        getAdminToken();
-
-
-    if (!adminToken) {
-
+    if (!isAdminAuthenticated()) {
         handleAdminUnauthorized();
         return;
     }
 
 
     const confirmed =
-        confirm(
-            "Are you sure you want to APPROVE this deposit? Wallet balance will be credited."
+        window.confirm(
+            "Are you sure you want to APPROVE this deposit? The wallet balance will be credited."
         );
 
 
@@ -401,18 +604,15 @@ async function approveDeposit(txId) {
 
     try {
 
-        const response =
-            await fetch(
-                `${API_BASE}/api/admin/approve-deposit`,
+        const data =
+            await adminApiRequest(
+                "/api/admin/approve-deposit",
                 {
                     method: "POST",
 
                     headers: {
                         "Content-Type":
-                            "application/json",
-
-                        "Authorization":
-                            `Bearer ${adminToken}`
+                            "application/json"
                     },
 
                     body: JSON.stringify({
@@ -422,25 +622,11 @@ async function approveDeposit(txId) {
             );
 
 
-        const data =
-            await response.json();
-
-
-        if (response.status === 401) {
-
-            handleAdminUnauthorized();
-            return;
-        }
-
-
-        if (!response.ok || !data.ok) {
+        if (!data.ok) {
 
             alert(
-                "Failed: " +
-                (
-                    data.error ||
-                    "Unknown error"
-                )
+                data.error ||
+                "Deposit approval failed."
             );
 
             return;
@@ -452,8 +638,8 @@ async function approveDeposit(txId) {
         );
 
 
-        // Refresh table.
-        loadPendingDeposits();
+        await loadPendingDeposits();
+
 
     } catch (error) {
 
@@ -462,42 +648,51 @@ async function approveDeposit(txId) {
             error
         );
 
-        alert(
-            "Network error while approving deposit."
-        );
+
+        if (
+            error.message &&
+            !error.message.includes(
+                "Admin session"
+            )
+        ) {
+
+            alert(
+                error.message ||
+                "Network error while approving deposit."
+            );
+        }
     }
 }
 
 
-// ================================================================
-// 5. REJECT DEPOSIT
-// ================================================================
+/* =========================================================
+   5. REJECT DEPOSIT
+========================================================= */
 
 async function rejectDeposit(txId) {
 
-    if (!txId || txId === "undefined") {
+    if (
+        !txId ||
+        txId === "undefined" ||
+        txId === "null"
+    ) {
 
         alert(
-            "Security Error: Invalid Transaction ID!"
+            "Security Error: Invalid Transaction ID."
         );
 
         return;
     }
 
 
-    const adminToken =
-        getAdminToken();
-
-
-    if (!adminToken) {
-
+    if (!isAdminAuthenticated()) {
         handleAdminUnauthorized();
         return;
     }
 
 
     const confirmed =
-        confirm(
+        window.confirm(
             "Are you sure you want to REJECT this deposit request?"
         );
 
@@ -509,18 +704,15 @@ async function rejectDeposit(txId) {
 
     try {
 
-        const response =
-            await fetch(
-                `${API_BASE}/api/admin/reject-deposit`,
+        const data =
+            await adminApiRequest(
+                "/api/admin/reject-deposit",
                 {
                     method: "POST",
 
                     headers: {
                         "Content-Type":
-                            "application/json",
-
-                        "Authorization":
-                            `Bearer ${adminToken}`
+                            "application/json"
                     },
 
                     body: JSON.stringify({
@@ -530,25 +722,11 @@ async function rejectDeposit(txId) {
             );
 
 
-        const data =
-            await response.json();
-
-
-        if (response.status === 401) {
-
-            handleAdminUnauthorized();
-            return;
-        }
-
-
-        if (!response.ok || !data.ok) {
+        if (!data.ok) {
 
             alert(
-                "Failed: " +
-                (
-                    data.error ||
-                    "Unknown error"
-                )
+                data.error ||
+                "Deposit rejection failed."
             );
 
             return;
@@ -560,8 +738,8 @@ async function rejectDeposit(txId) {
         );
 
 
-        // Refresh table.
-        loadPendingDeposits();
+        await loadPendingDeposits();
+
 
     } catch (error) {
 
@@ -570,16 +748,26 @@ async function rejectDeposit(txId) {
             error
         );
 
-        alert(
-            "Network error while rejecting deposit."
-        );
+
+        if (
+            error.message &&
+            !error.message.includes(
+                "Admin session"
+            )
+        ) {
+
+            alert(
+                error.message ||
+                "Network error while rejecting deposit."
+            );
+        }
     }
 }
 
 
-// ================================================================
-// 6. ADMIN LOGOUT
-// ================================================================
+/* =========================================================
+   6. ADMIN LOGOUT
+========================================================= */
 
 function logoutAdmin() {
 
@@ -587,3 +775,155 @@ function logoutAdmin() {
 
     window.location.reload();
 }
+
+
+/* =========================================================
+   7. FORMATTING HELPERS
+========================================================= */
+
+function formatAmount(value) {
+
+    const number =
+        Number(value);
+
+
+    if (!Number.isFinite(number)) {
+        return "0";
+    }
+
+
+    return number.toLocaleString(
+        "en-IN",
+        {
+            maximumFractionDigits: 2
+        }
+    );
+}
+
+
+function escapeHTML(value) {
+
+    return String(value ?? "")
+        .replaceAll(
+            "&",
+            "&amp;"
+        )
+        .replaceAll(
+            "<",
+            "&lt;"
+        )
+        .replaceAll(
+            ">",
+            "&gt;"
+        )
+        .replaceAll(
+            '"',
+            "&quot;"
+        )
+        .replaceAll(
+            "'",
+            "&#039;"
+        );
+}
+
+
+/*
+ * Transaction IDs are normally MongoDB ObjectIds.
+ * This helper prevents quote-breaking when the ID
+ * is inserted into an onclick attribute.
+ */
+function escapeAttribute(value) {
+
+    return String(value ?? "")
+        .replaceAll(
+            "\\",
+            "\\\\"
+        )
+        .replaceAll(
+            "'",
+            "\\'"
+        )
+        .replaceAll(
+            "\n",
+            "\\n"
+        )
+        .replaceAll(
+            "\r",
+            "\\r"
+        );
+}
+
+
+/* =========================================================
+   8. AUTO REFRESH
+========================================================= */
+
+let adminRefreshTimer = null;
+
+
+function startAdminAutoRefresh() {
+
+    if (adminRefreshTimer) {
+        clearInterval(
+            adminRefreshTimer
+        );
+    }
+
+
+    adminRefreshTimer =
+        setInterval(
+            () => {
+
+                if (
+                    isAdminAuthenticated()
+                ) {
+                    loadPendingDeposits();
+                }
+
+            },
+            10000
+        );
+}
+
+
+function stopAdminAutoRefresh() {
+
+    if (adminRefreshTimer) {
+
+        clearInterval(
+            adminRefreshTimer
+        );
+
+        adminRefreshTimer = null;
+    }
+}
+
+
+/* =========================================================
+   9. INITIALIZATION
+========================================================= */
+
+document.addEventListener(
+    "DOMContentLoaded",
+    () => {
+
+        checkAdminAuthState();
+
+
+        if (
+            isAdminAuthenticated()
+        ) {
+
+            startAdminAutoRefresh();
+
+        } else {
+
+            stopAdminAutoRefresh();
+        }
+
+
+        console.log(
+            "LUDOVERSE Admin Panel Ready"
+        );
+    }
+);

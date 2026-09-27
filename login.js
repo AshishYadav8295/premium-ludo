@@ -1,7 +1,8 @@
 "use strict";
 
 /* =========================================================
-   LUDOVERSE GOOGLE LOGIN
+   LUDOVERSE — GOOGLE LOGIN
+   Firebase Authentication + User Profile Sync
 ========================================================= */
 
 import {
@@ -16,7 +17,7 @@ import {
 
 
 /* =========================================================
-   DOM ELEMENTS
+   DOM ELEMENT
 ========================================================= */
 
 const googleLoginBtn =
@@ -31,17 +32,18 @@ let isProcessing = false;
 
 
 /* =========================================================
-   CREATE STATUS MESSAGE
+   STATUS MESSAGE
 ========================================================= */
 
 const statusMessage =
   document.createElement("div");
 
-statusMessage.className =
-  "login-status";
+statusMessage.className = "login-status";
+
 
 const loginCard =
   document.querySelector(".login-card");
+
 
 if (loginCard) {
   loginCard.appendChild(statusMessage);
@@ -52,90 +54,95 @@ if (loginCard) {
    SHOW STATUS
 ========================================================= */
 
-function showStatus(
-  message,
-  type = "info"
-) {
-  statusMessage.textContent =
-    message;
+function showStatus(message, type = "info") {
 
-  statusMessage.className =
-    "login-status";
+  statusMessage.textContent = message;
+
+  statusMessage.className = "login-status";
 
   statusMessage.classList.add(type);
   statusMessage.classList.add("show");
 
-  setTimeout(() => {
+  window.clearTimeout(showStatus.timer);
+
+  showStatus.timer = window.setTimeout(() => {
     statusMessage.classList.remove("show");
   }, 5000);
 }
 
 
 /* =========================================================
-   SAVE USER TO FIREBASE DATABASE
+   SAVE / UPDATE USER PROFILE
 ========================================================= */
 
 async function saveUserToDatabase(user) {
 
+  if (!user?.uid) {
+    throw new Error("Firebase user information is missing.");
+  }
+
+
   const userReference =
-    ref(
-      database,
-      `users/${user.uid}`
-    );
+    ref(database, `users/${user.uid}`);
+
 
   const snapshot =
     await get(userReference);
 
 
-  /* =============================================
+  const now =
+    new Date().toISOString();
+
+
+  /* =======================================================
      EXISTING USER
-  ============================================= */
+  ======================================================= */
 
   if (snapshot.exists()) {
 
     const existingUser =
-      snapshot.val();
+      snapshot.val() || {};
+
+
+    const updatedUser = {
+      ...existingUser,
+
+      uid: user.uid,
+
+      displayName:
+        user.displayName || existingUser.displayName || null,
+
+      email:
+        user.email || existingUser.email || null,
+
+      photoURL:
+        user.photoURL || existingUser.photoURL || null,
+
+      provider: "google",
+
+      lastLogin: now,
+
+      loggedIn: true
+    };
+
 
     await set(
       userReference,
-      {
-        ...existingUser,
-
-        uid:
-          user.uid,
-
-        displayName:
-          user.displayName || null,
-
-        email:
-          user.email || null,
-
-        photoURL:
-          user.photoURL || null,
-
-        provider:
-          "google",
-
-        lastLogin:
-          new Date().toISOString(),
-
-        loggedIn:
-          true
-      }
+      updatedUser
     );
 
-    return;
+
+    return updatedUser;
   }
 
 
-  /* =============================================
+  /* =======================================================
      NEW USER
-  ============================================= */
+  ======================================================= */
 
   const newUser = {
 
-    uid:
-      user.uid,
+    uid: user.uid,
 
     displayName:
       user.displayName || "LUDOVERSE Player",
@@ -159,10 +166,10 @@ async function saveUserToDatabase(user) {
       false,
 
     createdAt:
-      new Date().toISOString(),
+      now,
 
     lastLogin:
-      new Date().toISOString(),
+      now,
 
     loggedIn:
       true,
@@ -188,6 +195,91 @@ async function saveUserToDatabase(user) {
     userReference,
     newUser
   );
+
+
+  return newUser;
+}
+
+
+/* =========================================================
+   SAVE LOCAL LOGIN STATE
+========================================================= */
+
+function saveLocalLoginState(user) {
+
+  const userData = {
+
+    uid:
+      user.uid,
+
+    displayName:
+      user.displayName || null,
+
+    email:
+      user.email || null,
+
+    photoURL:
+      user.photoURL || null,
+
+    provider:
+      "google",
+
+    loggedIn:
+      true,
+
+    loginTime:
+      new Date().toISOString()
+  };
+
+
+  localStorage.setItem(
+    "ludoverseUser",
+    JSON.stringify(userData)
+  );
+
+
+  localStorage.setItem(
+    "ludoverseLoggedIn",
+    "true"
+  );
+}
+
+
+/* =========================================================
+   SAVE FIREBASE ID TOKEN
+========================================================= */
+
+async function saveFirebaseToken(user) {
+
+  const idToken =
+    await user.getIdToken(true);
+
+
+  localStorage.setItem(
+    "ludoverse_token",
+    idToken
+  );
+}
+
+
+/* =========================================================
+   RESET LOGIN BUTTON
+========================================================= */
+
+function resetLoginButton() {
+
+  if (!googleLoginBtn) {
+    return;
+  }
+
+
+  googleLoginBtn.disabled = false;
+
+
+  googleLoginBtn.innerHTML = `
+    <span class="google-icon">G</span>
+    Continue with Google
+  `;
 }
 
 
@@ -201,27 +293,34 @@ async function loginWithGoogle() {
     return;
   }
 
+
   if (!googleLoginBtn) {
+
     console.error(
-      "Google login button not found!"
+      "Google login button not found."
     );
+
     return;
   }
 
 
   isProcessing = true;
 
-  googleLoginBtn.disabled =
-    true;
 
-  googleLoginBtn.innerHTML =
-    `
-      <span class="google-icon">G</span>
-      Connecting to Google...
-    `;
+  googleLoginBtn.disabled = true;
+
+
+  googleLoginBtn.innerHTML = `
+    <span class="google-icon">G</span>
+    Connecting to Google...
+  `;
 
 
   try {
+
+    /* =====================================================
+       FIREBASE GOOGLE SIGN-IN
+    ===================================================== */
 
     const result =
       await signInWithPopup(
@@ -231,101 +330,71 @@ async function loginWithGoogle() {
 
 
     const user =
-  result.user;
-
-console.log("MY FIREBASE UID:", user.uid);
-
-    /* =============================================
-       SAVE FIREBASE AUTH TOKEN FOR BACKEND APIS
-    ============================================= */
-    const idToken = await user.getIdToken();
-    localStorage.setItem("ludoverse_token", idToken);
+      result?.user;
 
 
-    console.log(
-      "Google login successful:",
-      user
-    );
+    if (!user?.uid) {
+      throw new Error(
+        "Google authentication did not return a valid user."
+      );
+    }
 
 
-    /* Save user to database */
+    /* =====================================================
+       SAVE FIREBASE TOKEN
+    ===================================================== */
 
-    await saveUserToDatabase(
-      user
-    );
+    await saveFirebaseToken(user);
 
 
-    /* =============================================
+    /* =====================================================
+       SAVE USER PROFILE
+    ===================================================== */
+
+    await saveUserToDatabase(user);
+
+
+    /* =====================================================
        SAVE LOCAL LOGIN STATE
-    ============================================= */
+    ===================================================== */
 
-    const userData = {
-
-      uid:
-        user.uid,
-
-      displayName:
-        user.displayName,
-
-      email:
-        user.email,
-
-      photoURL:
-        user.photoURL,
-
-      provider:
-        "google",
-
-      loggedIn:
-        true,
-
-      loginTime:
-        new Date().toISOString()
-    };
+    saveLocalLoginState(user);
 
 
-    localStorage.setItem(
-      "ludoverseUser",
-      JSON.stringify(userData)
-    );
-
-
-    localStorage.setItem(
-      "ludoverseLoggedIn",
-      "true"
-    );
-
-
-    /* =============================================
+    /* =====================================================
        SUCCESS
-    ============================================= */
+    ===================================================== */
 
-    googleLoginBtn.innerHTML =
-      `
-        <span class="google-icon">✓</span>
-        Login Successful!
-      `;
+    googleLoginBtn.innerHTML = `
+      <span class="google-icon">✓</span>
+      Login Successful!
+    `;
 
 
     showStatus(
-      `Welcome, ${
-        user.displayName || "Player"
-      }!`,
+      `Welcome, ${user.displayName || "Player"}!`,
       "success"
     );
 
 
-    /* Redirect to main website */
+    /* =====================================================
+       REDIRECT
+    ===================================================== */
 
-    setTimeout(() => {
+    window.setTimeout(() => {
 
       window.location.href =
         "index.html";
 
     }, 1200);
 
-
   }
+
+
+  /* =======================================================
+     ERROR HANDLING
+  ======================================================= */
+
   catch (error) {
 
     console.error(
@@ -338,48 +407,58 @@ console.log("MY FIREBASE UID:", user.uid);
       "Google login failed. Please try again.";
 
 
-    /* =============================================
-       ERROR HANDLING
-    ============================================= */
+    switch (error?.code) {
 
-    if (
-      error.code ===
-      "auth/popup-closed-by-user"
-    ) {
+      case "auth/popup-closed-by-user":
 
-      message =
-        "Google login was cancelled.";
+        message =
+          "Google login was cancelled.";
 
-    }
+        break;
 
-    else if (
-      error.code ===
-      "auth/popup-blocked"
-    ) {
 
-      message =
-        "Popup was blocked. Please allow popups and try again.";
+      case "auth/popup-blocked":
 
-    }
+        message =
+          "Popup was blocked. Please allow popups and try again.";
 
-    else if (
-      error.code ===
-      "auth/unauthorized-domain"
-    ) {
+        break;
 
-      message =
-        "This website domain is not authorized in Firebase.";
 
-    }
+      case "auth/unauthorized-domain":
 
-    else if (
-      error.code ===
-      "auth/network-request-failed"
-    ) {
+        message =
+          "This website domain is not authorized in Firebase.";
 
-      message =
-        "Network error. Please check your internet connection.";
+        break;
 
+
+      case "auth/network-request-failed":
+
+        message =
+          "Network error. Please check your internet connection.";
+
+        break;
+
+
+      case "auth/account-exists-with-different-credential":
+
+        message =
+          "An account already exists with a different sign-in method.";
+
+        break;
+
+
+      default:
+
+        if (error?.message) {
+          console.error(
+            "Firebase error:",
+            error.message
+          );
+        }
+
+        break;
     }
 
 
@@ -389,51 +468,33 @@ console.log("MY FIREBASE UID:", user.uid);
     );
 
 
-    console.log(
-      "Error code:",
-      error.code
-    );
-
-    console.log(
-      "Error message:",
-      error.message
-    );
-
-
-    googleLoginBtn.disabled =
-      false;
-
-
-    googleLoginBtn.innerHTML =
-      `
-        <span class="google-icon">G</span>
-        Continue with Google
-      `;
-
+    resetLoginButton();
   }
+
 
   finally {
 
-    isProcessing =
-      false;
-
+    isProcessing = false;
   }
+}
+
+
+/* =========================================================
+   GOOGLE LOGIN BUTTON
+========================================================= */
+
+if (googleLoginBtn) {
+
+  googleLoginBtn.addEventListener(
+    "click",
+    loginWithGoogle
+  );
 
 }
 
 
 /* =========================================================
-   GOOGLE LOGIN BUTTON EVENT
-========================================================= */
-
-googleLoginBtn?.addEventListener(
-  "click",
-  loginWithGoogle
-);
-
-
-/* =========================================================
-   INITIALIZE
+   INITIALIZATION
 ========================================================= */
 
 document.addEventListener(
