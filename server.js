@@ -4,17 +4,120 @@ import mongoose from 'mongoose';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import crypto from 'crypto';
+import fs from 'node:fs';
+
+import {
+  cert,
+  getApps,
+  initializeApp
+} from 'firebase-admin/app';
+
+import {
+  getAuth
+} from 'firebase-admin/auth';
 
 // ES Module __filename & __dirname setup
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
+
+// ================= ADMIN SESSION TOKENS =================
+
+const adminTokens = new Set();
+
+function requireAdmin(req, res, next) {
+  const authHeader = req.headers.authorization || "";
+
+  if (!authHeader.startsWith("Bearer ")) {
+    return res.status(401).json({
+      ok: false,
+      error: "Admin authentication required."
+    });
+  }
+
+  const token = authHeader.substring(7).trim();
+
+  if (!token || !adminTokens.has(token)) {
+    return res.status(401).json({
+      ok: false,
+      error: "Invalid or expired admin session."
+    });
+  }
+
+  next();
+}
+
 const PORT = process.env.PORT || 3000;
+
+// ================= FIREBASE ADMIN =================
+const serviceAccountPath = process.env.FIREBASE_SERVICE_ACCOUNT_PATH;
+
+if (!serviceAccountPath) {
+  throw new Error("FIREBASE_SERVICE_ACCOUNT_PATH is not configured.");
+}
+
+if (!fs.existsSync(serviceAccountPath)) {
+  throw new Error(
+    `Firebase service account file not found: ${serviceAccountPath}`
+  );
+}
+
+const serviceAccount = JSON.parse(
+  fs.readFileSync(serviceAccountPath, "utf8")
+);
+
+const firebaseApp =
+  getApps().length > 0
+    ? getApps()[0]
+    : initializeApp({
+        credential: cert(serviceAccount),
+        databaseURL:
+          "https://ludoverse-d4338-default-rtdb.firebaseio.com"
+      });
+
+const firebaseAuth = getAuth(firebaseApp);
+
+async function requireAuth(req, res, next) {
+  try {
+    const authHeader = req.headers.authorization || "";
+
+    if (!authHeader.startsWith("Bearer ")) {
+      return res.status(401).json({
+        ok: false,
+        error: "Authentication required."
+      });
+    }
+
+    const idToken = authHeader.substring(7).trim();
+
+    if (!idToken) {
+      return res.status(401).json({
+        ok: false,
+        error: "Authentication token is missing."
+      });
+    }
+
+    const decodedToken = await firebaseAuth.verifyIdToken(idToken);
+
+    req.uid = decodedToken.uid;
+
+    next();
+  } catch (error) {
+    console.error("Firebase authentication failed:", error.message);
+
+    return res.status(401).json({
+      ok: false,
+      error: "Invalid or expired authentication token."
+    });
+  }
+}
 
 // ================= CORS =================
 const allowedOrigins = [
-  "https://premium-ludo.onrender.com"
+  "https://premium-ludo.onrender.com",
+  "http://127.0.0.1:5500",
+  "http://localhost:5500"
 ];
 
 app.use((req, res, next) => {
@@ -99,10 +202,10 @@ const Transaction = mongoose.models.Transaction || mongoose.model('Transaction',
 // ================= USER & WALLET API ENDPOINTS =================
 
 // Get user economy stats and transaction history
-app.get('/api/economy', async (req, res) => {
+app.get('/api/economy', requireAuth, async (req, res) => {
   try {
     // Note: Production mein yahan Firebase token verify kiya jata hai
-    const uid = req.query.uid || "sample-user-uid";
+    const uid = req.uid;
     
     let user = await User.findOne({ uid });
     if (!user) {
@@ -129,10 +232,10 @@ app.get('/api/economy', async (req, res) => {
 });
 
 // QR / Manual Deposit Verification Request
-app.post('/api/payment/verify-qr', async (req, res) => {
+app.post('/api/payment/verify-qr', requireAuth, async (req, res) => {
   try {
     const { amount, utrNumber } = req.body;
-    const uid = req.body.uid || "sample-user-uid";
+    const uid = req.uid;
 
     if (!amount || !utrNumber) {
       return res.status(400).json({ ok: false, error: "Amount and UTR number are required." });
@@ -191,7 +294,7 @@ app.post('/api/payment/verify-qr', async (req, res) => {
 // ================= ADMIN PANEL API ENDPOINTS =================
 
 // 1. Fetch all pending deposit requests
-app.get('/api/admin/pending-deposits', async (req, res) => {
+app.get('/api/admin/pending-deposits', requireAdmin, async (req, res) => {
   try {
     const requests = await Deposit.find({ status: 'PENDING' }).sort({ createdAt: -1 });
     res.json({ requests });
@@ -202,7 +305,7 @@ app.get('/api/admin/pending-deposits', async (req, res) => {
 });
 
 // 2. Approve Deposit Request & Credit User Wallet
-app.post('/api/admin/approve-deposit', async (req, res) => {
+app.post('/api/admin/approve-deposit', requireAdmin, async (req, res) => {
   try {
     const { txId } = req.body;
 
@@ -241,7 +344,7 @@ app.post('/api/admin/approve-deposit', async (req, res) => {
 });
 
 // 3. Reject Deposit Request
-app.post('/api/admin/reject-deposit', async (req, res) => {
+app.post('/api/admin/reject-deposit', requireAdmin, async (req, res) => {
   try {
     const { txId } = req.body;
 
@@ -262,6 +365,46 @@ app.post('/api/admin/reject-deposit', async (req, res) => {
 
 
 // ================= SERVER STARTUP =================
+// ================= ADMIN AUTHENTICATION =================
+
+app.post('/api/admin/login', async (req, res) => {
+  try {
+    const { password } = req.body;
+
+    if (!password) {
+      return res.status(400).json({
+        ok: false,
+        error: "Admin password is required."
+      });
+    }
+
+    if (password !== process.env.ADMIN_PASSWORD) {
+      return res.status(401).json({
+        ok: false,
+        error: "Invalid admin password."
+      });
+    }
+
+    const adminToken = crypto.randomBytes(32).toString('hex');
+
+adminTokens.add(adminToken);
+
+res.json({
+  ok: true,
+  token: adminToken
+});
+
+  } catch (error) {
+    console.error("Admin login error:", error);
+
+    res.status(500).json({
+      ok: false,
+      error: "Admin login failed."
+    });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`🚀 LUDOVERSE backend running at http://127.0.0.1:${PORT}`);
 });
+

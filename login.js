@@ -231,8 +231,9 @@ async function loginWithGoogle() {
 
 
     const user =
-      result.user;
+  result.user;
 
+console.log("MY FIREBASE UID:", user.uid);
 
     /* =============================================
        SAVE FIREBASE AUTH TOKEN FOR BACKEND APIS
