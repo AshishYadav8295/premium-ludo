@@ -357,7 +357,6 @@ const userSchema = new mongoose.Schema(
     }
   },
   {
-    versionKey: true
   }
 );
 
@@ -419,7 +418,6 @@ const depositSchema = new mongoose.Schema(
     }
   },
   {
-    versionKey: true
   }
 );
 
@@ -459,7 +457,6 @@ const transactionSchema =
       }
     },
     {
-      versionKey: true
     }
   );
 
