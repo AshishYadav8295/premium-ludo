@@ -430,7 +430,7 @@ document.addEventListener("DOMContentLoaded", () => {
           Math.max(
             0,
             safeNumber(
-              economy.ludoCoins
+              economy.cashBalance
             )
           )
         );
@@ -453,7 +453,7 @@ document.addEventListener("DOMContentLoaded", () => {
           : normalizeEconomy({});
 
         if (walletBalance) {
-          walletBalance.textContent = formatNumber(economy.ludoCoins);
+          walletBalance.textContent = formatNumber(economy.cashBalance);
         }
       },
       (error) => {
